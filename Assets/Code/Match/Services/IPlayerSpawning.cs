@@ -4,5 +4,7 @@ namespace Code.Match {
     public interface IPlayerSpawning {
 
         void StartSpawning();
+        // Spawns nobody until StartSpawning is called again.
+        void StopSpawning();
     }
 }

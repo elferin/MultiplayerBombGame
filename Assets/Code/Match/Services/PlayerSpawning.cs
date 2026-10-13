@@ -12,12 +12,20 @@ namespace Code.Match {
         private const string MISSING_SPAWNER = "PlayerSpawning needs a PlayerSpawner in the scene.";
 
         public void StartSpawning() {
+            SetSpawning(true);
+        }
+
+        public void StopSpawning() {
+            SetSpawning(false);
+        }
+
+        private void SetSpawning(bool isSpawning) {
             var spawner = Object.FindAnyObjectByType<PlayerSpawner>(FindObjectsInactive.Include);
             if (spawner == null) {
                 Debug.LogError(MISSING_SPAWNER);
                 return;
             }
-            spawner.gameObject.SetActive(true);
+            spawner.gameObject.SetActive(isSpawning);
         }
     }
 }

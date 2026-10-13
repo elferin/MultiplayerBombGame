@@ -1,7 +1,9 @@
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
 using PurrNet;
+using PurrNet.Transports;
 using PurrNet.UTP;
 using Unity.Services.Relay;
 using UnityEngine;
@@ -13,6 +15,10 @@ namespace Code.Match {
     public class MatchNetwork : IMatchNetwork {
 
         private const string MISSING_NETWORK = "MatchNetwork needs a NetworkManager in the scene that uses a UTPTransport.";
+
+        public event Action Disconnected = delegate { };
+
+        private NetworkManager _startedNetwork;
 
         public async UniTask<string> StartHost(int maxPlayers, CancellationToken cancellation) {
             if (!TryGetNetwork(out var network, out var transport)) {
@@ -31,6 +37,7 @@ namespace Code.Match {
                 }
                 cancellation.ThrowIfCancellationRequested();
 
+                Listen(network);
                 network.StartHost();
                 return joinCode;
             }
@@ -52,6 +59,7 @@ namespace Code.Match {
                 return false;
             }
 
+            Listen(network);
             network.StartClient();
             return true;
         }
@@ -61,8 +69,35 @@ namespace Code.Match {
             return network != null && network.isServer ? network.playerCount : 0;
         }
 
+        public void Stop() {
+            if (_startedNetwork == null) {
+                return;
+            }
+
+            // Stopped on purpose, so this isn't reported as a lost connection.
+            _startedNetwork.onClientConnectionState -= OnClientConnectionState;
+            if (_startedNetwork.isServer) {
+                _startedNetwork.StopServer();
+            }
+            if (_startedNetwork.isClient) {
+                _startedNetwork.StopClient();
+            }
+            _startedNetwork = null;
+        }
+
+        private void Listen(NetworkManager network) {
+            _startedNetwork = network;
+            network.onClientConnectionState += OnClientConnectionState;
+        }
+
+        private void OnClientConnectionState(ConnectionState state) {
+            if (state == ConnectionState.Disconnected) {
+                Disconnected.Invoke();
+            }
+        }
+
         private NetworkManager GetNetworkManager() {
-            return NetworkManager.main != null ? NetworkManager.main : Object.FindAnyObjectByType<NetworkManager>();
+            return NetworkManager.main != null ? NetworkManager.main : UnityEngine.Object.FindAnyObjectByType<NetworkManager>();
         }
 
         private bool TryGetNetwork(out NetworkManager network, out UTPTransport transport) {

@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using Code.Match;
 using Cysharp.Threading.Tasks;
@@ -7,6 +8,8 @@ namespace Code.Tests {
     // Answers immediately with the configured results.
     public class FakeMatchNetwork : IMatchNetwork {
 
+        public event Action Disconnected = delegate { };
+
         public string HostJoinCode { get; set; } = "RELAY1";
         public bool ClientSucceeds { get; set; } = true;
         public int ConnectedPlayerCount { get; set; }
@@ -15,6 +18,7 @@ namespace Code.Tests {
         public int LastHostMaxPlayers { get; private set; }
         public int ClientStartCount { get; private set; }
         public string LastClientJoinCode { get; private set; }
+        public int StopCount { get; private set; }
 
         public UniTask<string> StartHost(int maxPlayers, CancellationToken cancellation) {
             HostStartCount++;
@@ -31,5 +35,11 @@ namespace Code.Tests {
         public int GetConnectedPlayerCount() {
             return ConnectedPlayerCount;
         }
+
+        public void Stop() {
+            StopCount++;
+        }
+
+        public void RaiseDisconnected() => Disconnected();
     }
 }
