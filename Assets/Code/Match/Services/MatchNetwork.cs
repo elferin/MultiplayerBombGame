@@ -61,11 +61,11 @@ namespace Code.Match {
             return network != null && network.isServer ? network.playerCount : 0;
         }
 
-        private static NetworkManager GetNetworkManager() {
+        private NetworkManager GetNetworkManager() {
             return NetworkManager.main != null ? NetworkManager.main : Object.FindAnyObjectByType<NetworkManager>();
         }
 
-        private static bool TryGetNetwork(out NetworkManager network, out UTPTransport transport) {
+        private bool TryGetNetwork(out NetworkManager network, out UTPTransport transport) {
             network = GetNetworkManager();
             transport = network != null ? network.transport as UTPTransport : null;
             if (transport == null) {

@@ -200,7 +200,7 @@ namespace Code.MainMenu {
             _viewController.Refresh();
         }
 
-        private static bool IsJoinFailure(JoinLobbyStatus status) {
+        private bool IsJoinFailure(JoinLobbyStatus status) {
             return status == JoinLobbyStatus.Failed
                    || status == JoinLobbyStatus.MatchInProgress
                    || status == JoinLobbyStatus.LobbyFull;

@@ -47,7 +47,7 @@ namespace Code.Lobby {
             return lobby.IsOwner && (status == LobbyStatus.Ready || status == LobbyStatus.StartFailed);
         }
 
-        private static string GetPlayersText(LobbyState lobby) {
+        private string GetPlayersText(LobbyState lobby) {
             var players = new StringBuilder();
             players.Append(string.Format(PLAYER_COUNT_FORMAT, lobby.PlayerNames.Count, lobby.MaxPlayers));
             foreach (var playerName in lobby.PlayerNames) {

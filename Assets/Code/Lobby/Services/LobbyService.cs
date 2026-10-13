@@ -125,7 +125,7 @@ namespace Code.Lobby {
             LobbyUpdated.Invoke(CurrentLobby);
         }
 
-        private static LobbyState ToLobbyState(PurrLobby.Lobby lobby) {
+        private LobbyState ToLobbyState(PurrLobby.Lobby lobby) {
             if (!lobby.IsValid) {
                 return LobbyState.None;
             }
@@ -150,7 +150,7 @@ namespace Code.Lobby {
             }
         }
 
-        private static string GetMatchJoinCode(PurrLobby.Lobby lobby) {
+        private string GetMatchJoinCode(PurrLobby.Lobby lobby) {
             if (lobby.Properties != null && lobby.Properties.TryGetValue(MATCH_JOIN_CODE_KEY, out var joinCode)) {
                 return joinCode ?? string.Empty;
             }

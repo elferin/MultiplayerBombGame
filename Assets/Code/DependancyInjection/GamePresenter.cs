@@ -60,7 +60,7 @@ namespace Code.DependancyInjection {
             }
         }
 
-        private static void Quit() {
+        private void Quit() {
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else

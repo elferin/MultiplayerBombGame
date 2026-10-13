@@ -36,7 +36,7 @@ namespace Code.Lobby {
             return true;
         }
 
-        private static JoinLobbyStatus GetFailedStatus(LobbyJoinFailure failure) {
+        private JoinLobbyStatus GetFailedStatus(LobbyJoinFailure failure) {
             switch (failure) {
                 case LobbyJoinFailure.MatchInProgress: return JoinLobbyStatus.MatchInProgress;
                 case LobbyJoinFailure.LobbyFull: return JoinLobbyStatus.LobbyFull;

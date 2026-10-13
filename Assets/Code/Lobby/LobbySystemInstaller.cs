@@ -44,7 +44,7 @@ namespace Code.Lobby {
             exports.Expose<IJoinLobbyGetter>();
         }
 
-        private static UnityLobbyProvider CreateLobbyProvider() {
+        private UnityLobbyProvider CreateLobbyProvider() {
             // The provider is a MonoBehaviour, so it needs a GameObject that survives scene changes.
             var providerObject = new GameObject(LOBBY_PROVIDER_NAME);
             Object.DontDestroyOnLoad(providerObject);
