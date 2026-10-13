@@ -1,0 +1,158 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using PurrLobby;
+using PurrLobby.Providers;
+using UnityEngine;
+// Our class is also called LobbyService.
+using UnityLobbies = Unity.Services.Lobbies;
+
+namespace Code.Lobby {
+
+    public class LobbyService : ILobbyService, IDisposable {
+
+        private const string DATA_HOLDER_NAME = "LobbyDataHolder";
+        // The lobby property UnityLobbyProvider creates for the relay join code.
+        private const string MATCH_JOIN_CODE_KEY = "JoinCode";
+
+        public event Action<LobbyState> LobbyUpdated = delegate { };
+
+        // The Unity provider specifically: joining by code isn't part of PurrLobby's ILobbyProvider.
+        private readonly UnityLobbyProvider _provider;
+        private LobbyDataHolder _dataHolder;
+        private PurrLobby.Lobby _currentLobby;
+        private bool _isDisposed;
+
+        public LobbyState CurrentLobby { get; private set; } = LobbyState.None;
+
+        public LobbyService(UnityLobbyProvider provider) {
+            _provider = provider;
+            _provider.OnLobbyUpdated += OnProviderLobbyUpdated;
+        }
+
+        public async UniTask<LobbyState> CreateLobby(int maxPlayers, string playerName, CancellationToken cancellation) {
+            // Signs in to Unity Services on first use; does nothing once signed in.
+            await _provider.InitializeAsync();
+            cancellation.ThrowIfCancellationRequested();
+
+            // The provider sends this as the player's name when it creates or joins a lobby.
+            _provider.playerName = playerName;
+
+            // The provider's request can't be interrupted, so cancellation is checked once it finishes.
+            var lobby = await _provider.CreateLobbyAsync(maxPlayers, new Dictionary<string, string>());
+            if (cancellation.IsCancellationRequested) {
+                // Created after the caller stopped waiting; leave so it doesn't stay open on the server.
+                if (lobby.IsValid) {
+                    await _provider.LeaveLobbyAsync(lobby.LobbyId);
+                }
+                cancellation.ThrowIfCancellationRequested();
+            }
+
+            SetCurrentLobby(lobby);
+            return CurrentLobby;
+        }
+
+        // Returns LobbyState.None if the code is wrong or the lobby is full.
+        public async UniTask<LobbyState> JoinLobby(string lobbyCode, string playerName, CancellationToken cancellation) {
+            await _provider.InitializeAsync();
+            cancellation.ThrowIfCancellationRequested();
+
+            _provider.playerName = playerName;
+
+            var lobby = await _provider.JoinLobbyByCodeAsync(lobbyCode);
+            if (cancellation.IsCancellationRequested) {
+                // Joined after the caller stopped waiting; leave so the player doesn't stay in it.
+                if (lobby.IsValid) {
+                    await _provider.LeaveLobbyAsync(lobby.LobbyId);
+                }
+                cancellation.ThrowIfCancellationRequested();
+            }
+
+            SetCurrentLobby(lobby);
+            return CurrentLobby;
+        }
+
+        public async UniTask LeaveLobby() {
+            if (!_currentLobby.IsValid) {
+                return;
+            }
+
+            await _provider.LeaveLobbyAsync();
+            SetCurrentLobby(default);
+        }
+
+        public async UniTask StartMatch(string joinCode) {
+            // A locked lobby rejects new joins on the server. PurrLobby's provider can't lock, so this uses the SDK directly.
+            // Locking first means nobody can join after the code is shared.
+            try {
+                await UnityLobbies.LobbyService.Instance.UpdateLobbyAsync(_currentLobby.LobbyId,
+                    new UnityLobbies.UpdateLobbyOptions { IsLocked = true });
+            }
+            catch (UnityLobbies.LobbyServiceException exception) {
+                // The match still starts; new players can then still join it.
+                Debug.LogException(exception);
+            }
+
+            // Through the provider, so its copy of the lobby data stays up to date.
+            await _provider.SetLobbyDataAsync(MATCH_JOIN_CODE_KEY, joinCode);
+        }
+
+        public void Dispose() {
+            _isDisposed = true;
+            _provider.OnLobbyUpdated -= OnProviderLobbyUpdated;
+        }
+
+        private void OnProviderLobbyUpdated(PurrLobby.Lobby lobby) {
+            // Lobby events can arrive off the main thread; Unity objects must only be touched on it.
+            UniTask.Post(() => {
+                if (!_currentLobby.IsValid || !lobby.IsValid) {
+                    return;
+                }
+                SetCurrentLobby(lobby);
+            });
+        }
+
+        private void SetCurrentLobby(PurrLobby.Lobby lobby) {
+            // A request can finish after the scope is gone (e.g. Play mode ended); creating objects then would put them in the edit-mode scene.
+            if (_isDisposed) {
+                return;
+            }
+
+            _currentLobby = lobby;
+            CurrentLobby = ToLobbyState(lobby);
+            // PurrLobby's ConnectionStarter reads the lobby from here when the game scene starts the network.
+            GetDataHolder().SetCurrentLobby(lobby);
+            LobbyUpdated.Invoke(CurrentLobby);
+        }
+
+        private static LobbyState ToLobbyState(PurrLobby.Lobby lobby) {
+            if (!lobby.IsValid) {
+                return LobbyState.None;
+            }
+
+            var playerNames = new List<string>();
+            foreach (var member in lobby.Members) {
+                playerNames.Add(member.DisplayName);
+            }
+            return new LobbyState(true, lobby.LobbyCode, lobby.MaxPlayers, playerNames, lobby.IsOwner, GetMatchJoinCode(lobby));
+        }
+
+        private static string GetMatchJoinCode(PurrLobby.Lobby lobby) {
+            if (lobby.Properties != null && lobby.Properties.TryGetValue(MATCH_JOIN_CODE_KEY, out var joinCode)) {
+                return joinCode ?? string.Empty;
+            }
+            return string.Empty;
+        }
+
+        private LobbyDataHolder GetDataHolder() {
+            if (_dataHolder == null) {
+                _dataHolder = UnityEngine.Object.FindAnyObjectByType<LobbyDataHolder>();
+            }
+            if (_dataHolder == null) {
+                _dataHolder = new GameObject(DATA_HOLDER_NAME).AddComponent<LobbyDataHolder>();
+            }
+            return _dataHolder;
+        }
+    }
+}

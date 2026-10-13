@@ -1,0 +1,24 @@
+{
+    "name": "Code",
+    "rootNamespace": "Code",
+    "references": [
+        "UniTask",
+        "VContainer",
+        "PurrNetLobbySetup",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
+        "PurrNet.Runtime",
+        "PurrNet.UTP.Runtime",
+        "Unity.Services.Multiplayer",
+        "Unity.Services.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
