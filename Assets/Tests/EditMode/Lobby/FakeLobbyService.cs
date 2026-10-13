@@ -32,6 +32,7 @@ namespace Code.Tests {
 
         public string MatchJoinCode { get; private set; } = string.Empty;
         public bool IsLocked { get; private set; }
+        public int EndMatchCount { get; private set; }
 
         public async UniTask<LobbyState> CreateLobby(int maxPlayers, string playerName, CancellationToken cancellation) {
             CreateCount++;
@@ -92,6 +93,13 @@ namespace Code.Tests {
         public UniTask StartMatch(string joinCode) {
             IsLocked = true;
             MatchJoinCode = joinCode;
+            return UniTask.CompletedTask;
+        }
+
+        public UniTask EndMatch() {
+            EndMatchCount++;
+            IsLocked = false;
+            MatchJoinCode = string.Empty;
             return UniTask.CompletedTask;
         }
 

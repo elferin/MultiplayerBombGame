@@ -1,10 +1,13 @@
 namespace Code.Lobby {
     public class LobbyFlowResult : UniTaskResult {
 
-        // The host started the match and the lobby is still joined. Otherwise the player left the lobby.
+        // A match should start and the lobby stays joined. Otherwise the player left the lobby.
         public bool ShouldStartMatch { get; set; }
-        // Set when the match started.
+        // Set when the match should start.
         public bool IsHost { get; set; }
+        public int MaxPlayers { get; set; }
         public int PlayerCount { get; set; }
+        // The host's relay join code a client connects with; empty for the host.
+        public string MatchJoinCode { get; set; } = string.Empty;
     }
 }

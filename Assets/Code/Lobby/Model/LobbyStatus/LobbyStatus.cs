@@ -4,7 +4,7 @@ namespace Code.Lobby {
         Ready,
         Failed,
         Leaving,
-        Starting,
+        // The last match failed to start; the host can try again.
         StartFailed
     }
 }

@@ -14,6 +14,7 @@ namespace Code.Lobby {
             builder.Register<ILobbyService, LobbyService>(Lifetime.Singleton);
             builder.Register<LobbyJoiner>(Lifetime.Singleton);
             builder.Register<LobbyCreator>(Lifetime.Singleton);
+            builder.Register<MatchJoinCodeSharer>(Lifetime.Singleton);
             builder.Register<IPlayerNameStorage, PlayerNameStorage>(Lifetime.Singleton);
 
             // Lobby state, each registered as its getter, setter and combined interface.
@@ -32,6 +33,8 @@ namespace Code.Lobby {
 
         protected override void InstallPublic(SystemExports exports) {
             exports.Expose<LobbyFlowInstantiator>();
+            // GamePresenter hands the host's join code from the match to the lobby.
+            exports.Expose<MatchJoinCodeSharer>();
             // The main menu joins lobbies by code before the lobby screen opens.
             exports.Expose<LobbyJoiner>();
 

@@ -1,5 +1,4 @@
 using System.Threading;
-using Code.Match;
 using Cysharp.Threading.Tasks;
 
 namespace Code.Lobby {
@@ -9,7 +8,6 @@ namespace Code.Lobby {
         private readonly LobbyFlowArgs _args;
         private readonly ILobbyViewControllerFactory _viewControllerFactory;
         private readonly ILobbyService _lobbyService;
-        private readonly IMatchNetwork _matchNetwork;
         private readonly LobbyCreator _lobbyCreator;
         private readonly ILobbyStatus _status;
         private readonly ICurrentLobby _currentLobby;
@@ -18,11 +16,10 @@ namespace Code.Lobby {
         private UniTaskCompletionSource<LobbyFlowExit> _exitRequested;
 
         public LobbyFlow(LobbyFlowArgs args, ILobbyViewControllerFactory viewControllerFactory, ILobbyService lobbyService,
-            IMatchNetwork matchNetwork, LobbyCreator lobbyCreator, ILobbyStatus status, ICurrentLobby currentLobby) {
+            LobbyCreator lobbyCreator, ILobbyStatus status, ICurrentLobby currentLobby) {
             _args = args;
             _viewControllerFactory = viewControllerFactory;
             _lobbyService = lobbyService;
-            _matchNetwork = matchNetwork;
             _lobbyCreator = lobbyCreator;
             _status = status;
             _currentLobby = currentLobby;
@@ -42,29 +39,21 @@ namespace Code.Lobby {
 
                 isInLobby = await lobbyRequest;
                 _viewController.Refresh();
+                // The host may have started the next match while this player was still finishing the last one.
+                CheckMatchStarted(_currentLobby.GetCurrentLobby());
 
-                while (!flowResult.ShouldStartMatch) {
-                    var exit = await _exitRequested.Task.AttachExternalCancellation(cancellation);
-                    if (exit == LobbyFlowExit.Leave) {
-                        break;
+                var exit = await _exitRequested.Task.AttachExternalCancellation(cancellation);
+                if (exit == LobbyFlowExit.Leave) {
+                    if (isInLobby) {
+                        _status.SetStatus(LobbyStatus.Leaving);
+                        _viewController.Refresh();
+                        await _lobbyService.LeaveLobby();
+                        isInLobby = false;
                     }
-
-                    flowResult.ShouldStartMatch = await StartMatch(exit, cancellation);
-                    if (flowResult.ShouldStartMatch) {
-                        var lobby = _currentLobby.GetCurrentLobby();
-                        flowResult.IsHost = lobby.IsOwner;
-                        flowResult.PlayerCount = lobby.PlayerNames.Count;
-                    }
-                    // A failed start keeps the player in the lobby to try again or leave.
-                    _exitRequested = new UniTaskCompletionSource<LobbyFlowExit>();
                 }
-
-                // The match is played with this lobby, so it stays joined once started.
-                if (!flowResult.ShouldStartMatch && isInLobby) {
-                    _status.SetStatus(LobbyStatus.Leaving);
-                    _viewController.Refresh();
-                    await _lobbyService.LeaveLobby();
-                    isInLobby = false;
+                else {
+                    // The match is played with this lobby, so it stays joined.
+                    SetMatchResult(flowResult, exit);
                 }
 
                 _viewController.Close();
@@ -87,43 +76,41 @@ namespace Code.Lobby {
             if (_args.CreatesLobby) {
                 return _lobbyCreator.TryCreateLobby(_args.MaxPlayers, _args.PlayerName, cancellation);
             }
+            return GetJoinedLobby();
+        }
 
-            // Joined from the main menu, so the lobby already exists.
+        // Joined from the main menu or back from a match, so the lobby already exists.
+        private async UniTask<bool> GetJoinedLobby() {
             var lobby = _lobbyService.CurrentLobby;
             _currentLobby.SetCurrentLobby(lobby);
-            _status.SetStatus(lobby.IsValid ? LobbyStatus.Ready : LobbyStatus.Failed);
-            return UniTask.FromResult(lobby.IsValid);
+            _status.SetStatus(GetJoinedStatus(lobby));
+
+            // The host reopens the lobby so the next match can start.
+            if (_args.ReturnsFromMatch && lobby.IsOwner) {
+                await _lobbyService.EndMatch();
+            }
+            return lobby.IsValid;
         }
 
-        private async UniTask<bool> StartMatch(LobbyFlowExit exit, CancellationToken cancellation) {
-            _status.SetStatus(LobbyStatus.Starting);
-            _viewController.Refresh();
+        private LobbyStatus GetJoinedStatus(LobbyState lobby) {
+            if (!lobby.IsValid) {
+                return LobbyStatus.Failed;
+            }
+            return _args.MatchStartFailed ? LobbyStatus.StartFailed : LobbyStatus.Ready;
+        }
 
+        private void SetMatchResult(LobbyFlowResult flowResult, LobbyFlowExit exit) {
             var lobby = _currentLobby.GetCurrentLobby();
-            var isStarted = exit == LobbyFlowExit.StartAsHost
-                ? await StartAsHost(lobby, cancellation)
-                : await _matchNetwork.StartClient(lobby.MatchJoinCode, cancellation);
-
-            if (!isStarted) {
-                _status.SetStatus(LobbyStatus.StartFailed);
-                _viewController.Refresh();
-            }
-            return isStarted;
-        }
-
-        private async UniTask<bool> StartAsHost(LobbyState lobby, CancellationToken cancellation) {
-            var joinCode = await _matchNetwork.StartHost(lobby.MaxPlayers, cancellation);
-            if (string.IsNullOrEmpty(joinCode)) {
-                return false;
-            }
-
-            // The other players start their clients when this code reaches them through the lobby.
-            await _lobbyService.StartMatch(joinCode);
-            return true;
+            flowResult.ShouldStartMatch = true;
+            flowResult.IsHost = exit == LobbyFlowExit.StartAsHost;
+            flowResult.MaxPlayers = lobby.MaxPlayers;
+            flowResult.PlayerCount = lobby.PlayerNames.Count;
+            flowResult.MatchJoinCode = flowResult.IsHost ? string.Empty : lobby.MatchJoinCode;
         }
 
         private void CheckMatchStarted(LobbyState lobby) {
-            if (!lobby.IsOwner && !string.IsNullOrEmpty(lobby.MatchJoinCode)) {
+            // The code of the match just played may still be in the lobby until the host clears it.
+            if (!lobby.IsOwner && !string.IsNullOrEmpty(lobby.MatchJoinCode) && lobby.MatchJoinCode != _args.UsedJoinCode) {
                 _exitRequested.TrySetResult(LobbyFlowExit.JoinStartedMatch);
             }
         }

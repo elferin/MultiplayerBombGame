@@ -7,7 +7,6 @@ namespace Code.Lobby {
         private const string CREATING_LOBBY = "Creating lobby...";
         private const string FAILED_TO_CREATE_LOBBY = "Failed to create lobby";
         private const string LEAVING_LOBBY = "Leaving lobby...";
-        private const string STARTING_MATCH = "Starting match...";
         private const string FAILED_TO_START_MATCH = "Failed to start match";
         private const string LOBBY_CODE_FORMAT = "Code: {0}";
         private const string PLAYER_COUNT_FORMAT = "Players ({0}/{1})";
@@ -35,7 +34,6 @@ namespace Code.Lobby {
                 case LobbyStatus.Creating: return CREATING_LOBBY;
                 case LobbyStatus.Failed: return FAILED_TO_CREATE_LOBBY;
                 case LobbyStatus.Leaving: return LEAVING_LOBBY;
-                case LobbyStatus.Starting: return STARTING_MATCH;
                 case LobbyStatus.StartFailed: return FAILED_TO_START_MATCH;
                 default: return string.Empty;
             }

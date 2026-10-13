@@ -17,5 +17,7 @@ namespace Code.Lobby {
         UniTask LeaveLobby();
         // Locks the lobby so nobody new can join, then shares the match's join code with everyone in it.
         UniTask StartMatch(string joinCode);
+        // Unlocks the lobby and clears the join code, so the next match can start.
+        UniTask EndMatch();
     }
 }

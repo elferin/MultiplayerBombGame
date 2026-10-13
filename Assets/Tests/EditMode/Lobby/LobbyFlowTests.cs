@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Threading;
 using Code.Lobby;
-using Code.Match;
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine.TestTools;
@@ -17,7 +16,6 @@ namespace Code.Tests {
         private CurrentLobbyHolder _currentLobby;
         private FakeLobbyViewController _view;
         private FakeLobbyService _lobbyService;
-        private FakeMatchNetwork _matchNetwork;
         private CancellationTokenSource _cancellation;
 
         [SetUp]
@@ -26,7 +24,6 @@ namespace Code.Tests {
             _currentLobby = new CurrentLobbyHolder();
             _view = new FakeLobbyViewController(_status);
             _lobbyService = new FakeLobbyService();
-            _matchNetwork = new FakeMatchNetwork();
             _cancellation = new CancellationTokenSource(TIMEOUT_MS);
         }
 
@@ -87,7 +84,7 @@ namespace Code.Tests {
         });
 
         [UnityTest]
-        public IEnumerator StartingHostsMatchAndSharesJoinCode() => UniTask.ToCoroutine(async () => {
+        public IEnumerator StartClickEndsFlowAsHost() => UniTask.ToCoroutine(async () => {
             var run = StartFlow(LobbyFlowArgs.CreateLobby(6, "Luka"));
             _lobbyService.SucceedCreate();
 
@@ -96,38 +93,17 @@ namespace Code.Tests {
 
             Assert.IsTrue(result.ShouldStartMatch);
             Assert.IsTrue(result.IsHost);
+            Assert.AreEqual(6, result.MaxPlayers);
             Assert.AreEqual(1, result.PlayerCount);
-            Assert.AreEqual(1, _matchNetwork.HostStartCount);
-            Assert.AreEqual(6, _matchNetwork.LastHostMaxPlayers);
-            Assert.AreEqual("RELAY1", _lobbyService.MatchJoinCode);
-            Assert.IsTrue(_lobbyService.IsLocked);
+            Assert.AreEqual(string.Empty, result.MatchJoinCode);
+            // The match locks the lobby once its network runs, not the lobby flow.
+            Assert.IsFalse(_lobbyService.IsLocked);
             Assert.AreEqual(0, _lobbyService.LeaveCount);
             Assert.IsTrue(_view.IsClosed);
         });
 
         [UnityTest]
-        public IEnumerator FailedHostStartStaysInLobby() => UniTask.ToCoroutine(async () => {
-            _matchNetwork.HostJoinCode = string.Empty;
-            var run = StartFlow(LobbyFlowArgs.CreateLobby(6, "Luka"));
-            _lobbyService.SucceedCreate();
-
-            _view.ClickStart();
-
-            Assert.AreEqual(LobbyStatus.StartFailed, _status.GetStatus());
-            Assert.AreEqual(string.Empty, _lobbyService.MatchJoinCode);
-            Assert.IsFalse(_lobbyService.IsLocked);
-            Assert.IsFalse(_view.IsClosed);
-
-            _view.ClickLeave();
-            _lobbyService.CompleteLeave();
-            var result = await run;
-
-            Assert.IsFalse(result.ShouldStartMatch);
-            Assert.AreEqual(1, _lobbyService.LeaveCount);
-        });
-
-        [UnityTest]
-        public IEnumerator JoinedPlayerStartsClientWhenHostSharesJoinCode() => UniTask.ToCoroutine(async () => {
+        public IEnumerator JoinedPlayerEndsFlowWhenHostSharesJoinCode() => UniTask.ToCoroutine(async () => {
             _lobbyService.CurrentLobby = CreateJoinedLobby(string.Empty);
             var run = StartFlow(LobbyFlowArgs.JoinedLobby());
 
@@ -136,21 +112,44 @@ namespace Code.Tests {
 
             Assert.IsTrue(result.ShouldStartMatch);
             Assert.IsFalse(result.IsHost);
-            Assert.AreEqual("RELAY1", _matchNetwork.LastClientJoinCode);
-            Assert.AreEqual(0, _matchNetwork.HostStartCount);
+            Assert.AreEqual("RELAY1", result.MatchJoinCode);
             Assert.AreEqual(0, _lobbyService.LeaveCount);
         });
 
         [Test]
-        public void FailedClientStartShowsStartFailed() {
-            _matchNetwork.ClientSucceeds = false;
-            _lobbyService.CurrentLobby = CreateJoinedLobby(string.Empty);
-            StartFlow(LobbyFlowArgs.JoinedLobby());
+        public void HostReturningFromMatchReopensLobby() {
+            _lobbyService.CurrentLobby = CreateHostedLobby("RELAY1");
+
+            StartFlow(LobbyFlowArgs.ReturnFromMatch(string.Empty, false));
+
+            Assert.AreEqual(1, _lobbyService.EndMatchCount);
+            Assert.AreEqual(LobbyStatus.Ready, _status.GetStatus());
+            Assert.IsFalse(_view.IsClosed);
+        }
+
+        [UnityTest]
+        public IEnumerator ReturningClientIgnoresUsedJoinCode() => UniTask.ToCoroutine(async () => {
+            _lobbyService.CurrentLobby = CreateJoinedLobby("RELAY1");
+            var run = StartFlow(LobbyFlowArgs.ReturnFromMatch("RELAY1", false));
 
             _lobbyService.RaiseLobbyUpdated(CreateJoinedLobby("RELAY1"));
+            Assert.IsFalse(_view.IsClosed);
+            Assert.AreEqual(0, _lobbyService.EndMatchCount);
+
+            _lobbyService.RaiseLobbyUpdated(CreateJoinedLobby("RELAY2"));
+            var result = await run;
+
+            Assert.IsTrue(result.ShouldStartMatch);
+            Assert.AreEqual("RELAY2", result.MatchJoinCode);
+        });
+
+        [Test]
+        public void FailedMatchStartShowsStartFailed() {
+            _lobbyService.CurrentLobby = CreateHostedLobby(string.Empty);
+
+            StartFlow(LobbyFlowArgs.ReturnFromMatch(string.Empty, true));
 
             Assert.AreEqual(LobbyStatus.StartFailed, _status.GetStatus());
-            Assert.IsFalse(_view.IsClosed);
         }
 
         [UnityTest]
@@ -280,9 +279,13 @@ namespace Code.Tests {
             return new LobbyState(true, "ABC123", 4, new[] { "Ana", "Luka" }, false, matchJoinCode);
         }
 
+        private static LobbyState CreateHostedLobby(string matchJoinCode) {
+            return new LobbyState(true, "ABC123", 4, new[] { "Luka", "Ana" }, true, matchJoinCode);
+        }
+
         // LobbyFlow has no initial await, so the view is running as soon as this returns.
         private UniTask<LobbyFlowResult> StartFlow(LobbyFlowArgs args) {
-            var flow = new LobbyFlow(args, _view, _lobbyService, _matchNetwork, new LobbyCreator(_lobbyService, _status, _currentLobby), _status, _currentLobby);
+            var flow = new LobbyFlow(args, _view, _lobbyService, new LobbyCreator(_lobbyService, _status, _currentLobby), _status, _currentLobby);
             return flow.RunAsync(_cancellation.Token).Preserve();
         }
     }

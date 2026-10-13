@@ -97,6 +97,19 @@ namespace Code.Lobby {
             await _provider.SetLobbyDataAsync(MATCH_JOIN_CODE_KEY, joinCode);
         }
 
+        public async UniTask EndMatch() {
+            try {
+                await UnityLobbies.LobbyService.Instance.UpdateLobbyAsync(_currentLobby.LobbyId,
+                    new UnityLobbies.UpdateLobbyOptions { IsLocked = false });
+            }
+            catch (UnityLobbies.LobbyServiceException exception) {
+                // New players then can't join until the next match ends.
+                Debug.LogException(exception);
+            }
+
+            await _provider.SetLobbyDataAsync(MATCH_JOIN_CODE_KEY, string.Empty);
+        }
+
         public void Dispose() {
             _isDisposed = true;
             _provider.OnLobbyUpdated -= OnProviderLobbyUpdated;
