@@ -193,7 +193,8 @@ namespace Code.MainMenu {
 
         private void OnLobbyCodeChanged(string text) {
             _joinLobby.SetLobbyCode(text);
-            if (_joinLobby.GetJoinStatus() == JoinLobbyStatus.Failed) {
+            var joinStatus = _joinLobby.GetJoinStatus();
+            if (joinStatus == JoinLobbyStatus.Failed || joinStatus == JoinLobbyStatus.MatchInProgress) {
                 _joinLobby.SetJoinStatus(JoinLobbyStatus.Idle);
             }
             _viewController.Refresh();

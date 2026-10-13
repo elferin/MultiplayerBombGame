@@ -12,8 +12,8 @@ namespace Code.Lobby {
         LobbyState CurrentLobby { get; }
 
         UniTask<LobbyState> CreateLobby(int maxPlayers, string playerName, CancellationToken cancellation);
-        // Returns LobbyState.None if the code is wrong or the lobby is full.
-        UniTask<LobbyState> JoinLobby(string lobbyCode, string playerName, CancellationToken cancellation);
+        // The result's lobby is LobbyState.None if joining failed; its failure says why.
+        UniTask<LobbyJoinResult> JoinLobby(string lobbyCode, string playerName, CancellationToken cancellation);
         UniTask LeaveLobby();
         // Locks the lobby so nobody new can join, then shares the match's join code with everyone in it.
         UniTask StartMatch(string joinCode);

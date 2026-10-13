@@ -53,8 +53,7 @@ namespace Code.Lobby {
             return CurrentLobby;
         }
 
-        // Returns LobbyState.None if the code is wrong or the lobby is full.
-        public async UniTask<LobbyState> JoinLobby(string lobbyCode, string playerName, CancellationToken cancellation) {
+        public async UniTask<LobbyJoinResult> JoinLobby(string lobbyCode, string playerName, CancellationToken cancellation) {
             await _provider.InitializeAsync();
             cancellation.ThrowIfCancellationRequested();
 
@@ -70,7 +69,7 @@ namespace Code.Lobby {
             }
 
             SetCurrentLobby(lobby);
-            return CurrentLobby;
+            return new LobbyJoinResult(CurrentLobby, lobby.IsValid ? LobbyJoinFailure.None : GetJoinFailure());
         }
 
         public async UniTask LeaveLobby() {
@@ -136,6 +135,15 @@ namespace Code.Lobby {
                 playerNames.Add(member.DisplayName);
             }
             return new LobbyState(true, lobby.LobbyCode, lobby.MaxPlayers, playerNames, lobby.IsOwner, GetMatchJoinCode(lobby));
+        }
+
+        private LobbyJoinFailure GetJoinFailure() {
+            // StartMatch locks the lobby, so a locked lobby means its match is running.
+            if (_provider.LastJoinException is UnityLobbies.LobbyServiceException exception
+                && exception.Reason == UnityLobbies.LobbyExceptionReason.LobbyLocked) {
+                return LobbyJoinFailure.MatchInProgress;
+            }
+            return LobbyJoinFailure.Other;
         }
 
         private static string GetMatchJoinCode(PurrLobby.Lobby lobby) {

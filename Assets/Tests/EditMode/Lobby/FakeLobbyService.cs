@@ -12,7 +12,7 @@ namespace Code.Tests {
         public event Action<LobbyState> LobbyUpdated = delegate { };
 
         private UniTaskCompletionSource<LobbyState> _pendingCreate;
-        private UniTaskCompletionSource<LobbyState> _pendingJoin;
+        private UniTaskCompletionSource<LobbyJoinResult> _pendingJoin;
         private UniTaskCompletionSource _pendingLeave;
 
         public LobbyState CurrentLobby { get; set; } = LobbyState.None;
@@ -44,15 +44,15 @@ namespace Code.Tests {
             return lobby;
         }
 
-        public async UniTask<LobbyState> JoinLobby(string lobbyCode, string playerName, CancellationToken cancellation) {
+        public async UniTask<LobbyJoinResult> JoinLobby(string lobbyCode, string playerName, CancellationToken cancellation) {
             JoinCount++;
             LastJoinCode = lobbyCode;
             LastJoinPlayerName = playerName;
-            _pendingJoin = new UniTaskCompletionSource<LobbyState>();
+            _pendingJoin = new UniTaskCompletionSource<LobbyJoinResult>();
 
-            var lobby = await _pendingJoin.Task.AttachExternalCancellation(cancellation);
-            CurrentLobby = lobby;
-            return lobby;
+            var result = await _pendingJoin.Task.AttachExternalCancellation(cancellation);
+            CurrentLobby = result.Lobby;
+            return result;
         }
 
         public async UniTask LeaveLobby() {
@@ -72,11 +72,15 @@ namespace Code.Tests {
         }
 
         public void SucceedJoin() {
-            Answer(ref _pendingJoin, CreateLobbyState(LastJoinCode, 4, LastJoinPlayerName));
+            SucceedJoin(CreateLobbyState(LastJoinCode, 4, LastJoinPlayerName));
         }
 
-        public void FailJoin() {
-            Answer(ref _pendingJoin, LobbyState.None);
+        public void SucceedJoin(LobbyState lobby) {
+            Answer(ref _pendingJoin, new LobbyJoinResult(lobby, LobbyJoinFailure.None));
+        }
+
+        public void FailJoin(LobbyJoinFailure failure = LobbyJoinFailure.Other) {
+            Answer(ref _pendingJoin, new LobbyJoinResult(LobbyState.None, failure));
         }
 
         public void CompleteLeave() {
@@ -100,10 +104,10 @@ namespace Code.Tests {
             return new LobbyState(true, code, maxPlayers, new List<string>(playerNames), true, string.Empty);
         }
 
-        private static void Answer(ref UniTaskCompletionSource<LobbyState> pending, LobbyState lobby) {
+        private static void Answer<T>(ref UniTaskCompletionSource<T> pending, T result) {
             var request = pending;
             pending = null;
-            request.TrySetResult(lobby);
+            request.TrySetResult(result);
         }
     }
 }

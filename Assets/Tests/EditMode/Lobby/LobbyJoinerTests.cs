@@ -74,6 +74,31 @@ namespace Code.Tests {
         });
 
         [UnityTest]
+        public IEnumerator LockedLobbyShowsMatchInProgress() => UniTask.ToCoroutine(async () => {
+            _joinLobby.SetLobbyCode("ABC123");
+            var join = _joiner.TryJoinLobby("Luka", _cancellation.Token);
+
+            _lobbyService.FailJoin(LobbyJoinFailure.MatchInProgress);
+
+            Assert.IsFalse(await join);
+            Assert.AreEqual(JoinLobbyStatus.MatchInProgress, _joinLobby.GetJoinStatus());
+        });
+
+        [UnityTest]
+        public IEnumerator JoiningStartedMatchLeavesAndShowsMatchInProgress() => UniTask.ToCoroutine(async () => {
+            _joinLobby.SetLobbyCode("ABC123");
+            var join = _joiner.TryJoinLobby("Luka", _cancellation.Token);
+
+            _lobbyService.SucceedJoin(new LobbyState(true, "ABC123", 4, new[] { "Ana", "Luka" }, false, "RELAY1"));
+            Assert.IsTrue(_lobbyService.IsLeavePending);
+            _lobbyService.CompleteLeave();
+
+            Assert.IsFalse(await join);
+            Assert.AreEqual(1, _lobbyService.LeaveCount);
+            Assert.AreEqual(JoinLobbyStatus.MatchInProgress, _joinLobby.GetJoinStatus());
+        });
+
+        [UnityTest]
         public IEnumerator CancellingThrows() => UniTask.ToCoroutine(async () => {
             _joinLobby.SetLobbyCode("ABC123");
             var join = _joiner.TryJoinLobby("Luka", _cancellation.Token);

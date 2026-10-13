@@ -18,9 +18,25 @@ namespace Code.Lobby {
         public async UniTask<bool> TryJoinLobby(string playerName, CancellationToken cancellation) {
             _joinLobby.SetJoinStatus(JoinLobbyStatus.Joining);
 
-            var lobby = await _lobbyService.JoinLobby(_joinLobby.GetLobbyCode().Trim(), playerName, cancellation);
-            _joinLobby.SetJoinStatus(lobby.IsValid ? JoinLobbyStatus.Idle : JoinLobbyStatus.Failed);
-            return lobby.IsValid;
+            var result = await _lobbyService.JoinLobby(_joinLobby.GetLobbyCode().Trim(), playerName, cancellation);
+            var lobby = result.Lobby;
+            if (!lobby.IsValid) {
+                _joinLobby.SetJoinStatus(result.Failure == LobbyJoinFailure.MatchInProgress
+                    ? JoinLobbyStatus.MatchInProgress
+                    : JoinLobbyStatus.Failed);
+                return false;
+            }
+
+            // Joined in the moment between the host starting the match and the lobby being locked.
+            if (!string.IsNullOrEmpty(lobby.MatchJoinCode)) {
+                await _lobbyService.LeaveLobby();
+                _joinLobby.SetJoinStatus(JoinLobbyStatus.MatchInProgress);
+                return false;
+            }
+
+            _joinLobby.SetJoinStatus(JoinLobbyStatus.Idle);
+            return true;
+        }
         }
     }
 }

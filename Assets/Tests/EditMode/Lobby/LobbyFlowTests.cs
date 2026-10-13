@@ -154,20 +154,6 @@ namespace Code.Tests {
         }
 
         [UnityTest]
-        public IEnumerator JoiningStartedMatchLeavesLobby() => UniTask.ToCoroutine(async () => {
-            _lobbyService.CurrentLobby = CreateJoinedLobby("RELAY1");
-            var run = StartFlow(LobbyFlowArgs.JoinedLobby());
-
-            _lobbyService.CompleteLeave();
-            var result = await run;
-
-            Assert.IsFalse(result.ShouldStartMatch);
-            Assert.AreEqual(1, _lobbyService.LeaveCount);
-            Assert.AreEqual(0, _matchNetwork.ClientStartCount);
-            Assert.IsTrue(_view.IsClosed);
-        });
-
-        [UnityTest]
         public IEnumerator LeavingDoesNotStartMatch() => UniTask.ToCoroutine(async () => {
             var run = StartFlow(LobbyFlowArgs.CreateLobby(6, "Luka"));
             _lobbyService.SucceedCreate();

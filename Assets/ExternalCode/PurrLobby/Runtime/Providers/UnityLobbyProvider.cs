@@ -77,6 +77,10 @@ namespace PurrLobby.Providers {
                 return _localPlayer;
             }
         }
+
+        // Manual edit (not part of PurrLobby): keeps why the last join by code failed, which PurrLobby otherwise only logs.
+        public Exception LastJoinException { get; private set; }
+
         public bool IsLocalPlayerHost { get { return CurrentLobby != null && LocalPlayerId == CurrentLobby.HostId; } }
 
         private Unity.Services.Lobbies.Models.Lobby CurrentLobby = null;
@@ -203,6 +207,7 @@ namespace PurrLobby.Providers {
         }
 
         public async Task<Lobby> JoinLobbyByCodeAsync(string lobbyCode) {
+            LastJoinException = null;
             if(!IsUnityServiceAvailable || string.IsNullOrEmpty(lobbyCode)) { return default; }
 
             try {
@@ -216,6 +221,7 @@ namespace PurrLobby.Providers {
 
                 return OnLobbyUpdate();
             } catch(Exception ex) {
+                LastJoinException = ex;
                 PurrLogger.LogError($"Failed to Join Lobby with Code '{lobbyCode}': {ex}");
                 OnLobbyJoinFailed?.Invoke($"Failed to Join Lobby with Code '{lobbyCode}'");
                 return new Lobby { IsValid = false };

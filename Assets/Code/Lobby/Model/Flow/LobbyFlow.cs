@@ -42,8 +42,6 @@ namespace Code.Lobby {
 
                 isInLobby = await lobbyRequest;
                 _viewController.Refresh();
-                // The host may have started the match before this player joined.
-                LeaveIfMatchStarted(_currentLobby.GetCurrentLobby());
 
                 while (!flowResult.ShouldStartMatch) {
                     var exit = await _exitRequested.Task.AttachExternalCancellation(cancellation);
@@ -127,12 +125,6 @@ namespace Code.Lobby {
         private void CheckMatchStarted(LobbyState lobby) {
             if (!lobby.IsOwner && !string.IsNullOrEmpty(lobby.MatchJoinCode)) {
                 _exitRequested.TrySetResult(LobbyFlowExit.JoinStartedMatch);
-            }
-        }
-
-        private void LeaveIfMatchStarted(LobbyState lobby) {
-            if (!lobby.IsOwner && !string.IsNullOrEmpty(lobby.MatchJoinCode)) {
-                _exitRequested.TrySetResult(LobbyFlowExit.Leave);
             }
         }
 

@@ -11,6 +11,7 @@ namespace Code.MainMenu {
         private const string PLAYER_RANGE_FORMAT = "{0}-{1} players";
         private const string JOINING_LOBBY = "Joining lobby...";
         private const string JOIN_FAILED = "Couldn't join. Check the code.";
+        private const string MATCH_IN_PROGRESS = "Match already in progress";
 
         private readonly IMainMenuScreenLocationGetter _screenLocationGetter;
         private readonly IPlayerNameGetter _playerNameGetter;
@@ -69,6 +70,7 @@ namespace Code.MainMenu {
             switch (_joinLobbyGetter.GetJoinStatus()) {
                 case JoinLobbyStatus.Joining: status = JOINING_LOBBY; break;
                 case JoinLobbyStatus.Failed: status = JOIN_FAILED; break;
+                case JoinLobbyStatus.MatchInProgress: status = MATCH_IN_PROGRESS; break;
                 default: status = _playerNameGetter.HasPlayerName() ? string.Empty : ENTER_NAME; break;
             }
 
