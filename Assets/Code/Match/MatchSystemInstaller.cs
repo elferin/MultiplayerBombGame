@@ -22,8 +22,6 @@ namespace Code.Match {
 
         protected override void InstallPublic(SystemExports exports) {
             exports.Expose<MatchFlowInstantiator>();
-            // GamePresenter spawns the players once the match has started.
-            exports.Expose<MatchPlayerSpawner>();
         }
 
     }

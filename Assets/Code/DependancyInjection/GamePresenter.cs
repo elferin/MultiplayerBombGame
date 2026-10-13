@@ -12,13 +12,15 @@ namespace Code.DependancyInjection {
         
         private readonly MainMenuFlowInstantiator _mainMenuFlowInstantiator;
         private readonly LobbyFlowInstantiator _lobbyFlowInstantiator;
-        private readonly MatchPlayerSpawner _matchPlayerSpawner;
+        private readonly MatchFlowInstantiator _matchFlowInstantiator;
+        private readonly MatchJoinCodeSharer _joinCodeSharer;
 
-        public GamePresenter(MainMenuFlowInstantiator mainMenuFlowInstantiator,
-            LobbyFlowInstantiator lobbyFlowInstantiator, MatchPlayerSpawner matchPlayerSpawner) {
+        public GamePresenter(MainMenuFlowInstantiator mainMenuFlowInstantiator, LobbyFlowInstantiator lobbyFlowInstantiator,
+            MatchFlowInstantiator matchFlowInstantiator, MatchJoinCodeSharer joinCodeSharer) {
             _mainMenuFlowInstantiator = mainMenuFlowInstantiator;
             _lobbyFlowInstantiator = lobbyFlowInstantiator;
-            _matchPlayerSpawner = matchPlayerSpawner;
+            _matchFlowInstantiator = matchFlowInstantiator;
+            _joinCodeSharer = joinCodeSharer;
         }
 
         // The token is cancelled when the lifetime scope is destroyed, e.g. when Play mode ends.
@@ -43,21 +45,34 @@ namespace Code.DependancyInjection {
                         return;
                     }
 
-                    var lobbyResult = await _lobbyFlowInstantiator.StartFlow(lobbyArgs, cancellation);
-                    if (lobbyResult.ShouldStartMatch) {
-                        // Only the host's server spawns players; clients receive them over the network.
-                        if (lobbyResult.IsHost) {
-                            await _matchPlayerSpawner.SpawnWhenAllJoined(lobbyResult.PlayerCount, cancellation);
-                        }
-                        // TODO: run the match flow here once it exists.
-                        return;
-                    }
+                    await RunLobbyAndMatches(lobbyArgs, cancellation);
                     // Leaving the lobby returns to the main menu.
                 }
             }
             catch (OperationCanceledException) when (cancellation.IsCancellationRequested) {
                 // Expected when the scope is destroyed; VContainer would otherwise log it as an error.
             }
+        }
+
+        // Every match returns to the lobby; only leaving the lobby ends this.
+        private async UniTask RunLobbyAndMatches(LobbyFlowArgs lobbyArgs, CancellationToken cancellation) {
+            while (true) {
+                var lobbyResult = await _lobbyFlowInstantiator.StartFlow(lobbyArgs, cancellation);
+                if (!lobbyResult.ShouldStartMatch) {
+                    return;
+                }
+
+                var matchResult = await _matchFlowInstantiator.StartFlow(GetMatchArgs(lobbyResult), cancellation);
+                lobbyArgs = LobbyFlowArgs.ReturnFromMatch(matchResult.UsedJoinCode, matchResult.StartFailed);
+            }
+        }
+
+        private MatchFlowArgs GetMatchArgs(LobbyFlowResult lobbyResult) {
+            if (lobbyResult.IsHost) {
+                // The host's join code reaches the other players through the lobby.
+                return MatchFlowArgs.Host(lobbyResult.MaxPlayers, lobbyResult.PlayerCount, _joinCodeSharer.ShareJoinCode);
+            }
+            return MatchFlowArgs.Client(lobbyResult.MatchJoinCode);
         }
 
         private void Quit() {
