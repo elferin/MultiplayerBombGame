@@ -72,6 +72,7 @@ namespace Code.Tests {
         [TestCase(JoinLobbyStatus.Joining, "Joining lobby...")]
         [TestCase(JoinLobbyStatus.Failed, "Couldn't join. Check the code.")]
         [TestCase(JoinLobbyStatus.MatchInProgress, "Match already in progress")]
+        [TestCase(JoinLobbyStatus.LobbyFull, "Lobby is full")]
         public void JoinPanelShowsStatus(JoinLobbyStatus status, string expected) {
             _joinLobby.SetJoinStatus(status);
 

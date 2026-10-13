@@ -193,11 +193,17 @@ namespace Code.MainMenu {
 
         private void OnLobbyCodeChanged(string text) {
             _joinLobby.SetLobbyCode(text);
-            var joinStatus = _joinLobby.GetJoinStatus();
-            if (joinStatus == JoinLobbyStatus.Failed || joinStatus == JoinLobbyStatus.MatchInProgress) {
+            // A new code makes the last failure's message out of date.
+            if (IsJoinFailure(_joinLobby.GetJoinStatus())) {
                 _joinLobby.SetJoinStatus(JoinLobbyStatus.Idle);
             }
             _viewController.Refresh();
+        }
+
+        private static bool IsJoinFailure(JoinLobbyStatus status) {
+            return status == JoinLobbyStatus.Failed
+                   || status == JoinLobbyStatus.MatchInProgress
+                   || status == JoinLobbyStatus.LobbyFull;
         }
     }
 }

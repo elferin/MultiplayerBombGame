@@ -21,9 +21,7 @@ namespace Code.Lobby {
             var result = await _lobbyService.JoinLobby(_joinLobby.GetLobbyCode().Trim(), playerName, cancellation);
             var lobby = result.Lobby;
             if (!lobby.IsValid) {
-                _joinLobby.SetJoinStatus(result.Failure == LobbyJoinFailure.MatchInProgress
-                    ? JoinLobbyStatus.MatchInProgress
-                    : JoinLobbyStatus.Failed);
+                _joinLobby.SetJoinStatus(GetFailedStatus(result.Failure));
                 return false;
             }
 
@@ -37,6 +35,13 @@ namespace Code.Lobby {
             _joinLobby.SetJoinStatus(JoinLobbyStatus.Idle);
             return true;
         }
+
+        private static JoinLobbyStatus GetFailedStatus(LobbyJoinFailure failure) {
+            switch (failure) {
+                case LobbyJoinFailure.MatchInProgress: return JoinLobbyStatus.MatchInProgress;
+                case LobbyJoinFailure.LobbyFull: return JoinLobbyStatus.LobbyFull;
+                default: return JoinLobbyStatus.Failed;
+            }
         }
     }
 }

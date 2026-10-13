@@ -138,12 +138,16 @@ namespace Code.Lobby {
         }
 
         private LobbyJoinFailure GetJoinFailure() {
-            // StartMatch locks the lobby, so a locked lobby means its match is running.
-            if (_provider.LastJoinException is UnityLobbies.LobbyServiceException exception
-                && exception.Reason == UnityLobbies.LobbyExceptionReason.LobbyLocked) {
-                return LobbyJoinFailure.MatchInProgress;
+            if (!(_provider.LastJoinException is UnityLobbies.LobbyServiceException exception)) {
+                return LobbyJoinFailure.Other;
             }
-            return LobbyJoinFailure.Other;
+
+            switch (exception.Reason) {
+                // StartMatch locks the lobby, so a locked lobby means its match is running.
+                case UnityLobbies.LobbyExceptionReason.LobbyLocked: return LobbyJoinFailure.MatchInProgress;
+                case UnityLobbies.LobbyExceptionReason.LobbyFull: return LobbyJoinFailure.LobbyFull;
+                default: return LobbyJoinFailure.Other;
+            }
         }
 
         private static string GetMatchJoinCode(PurrLobby.Lobby lobby) {

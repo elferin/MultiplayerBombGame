@@ -3,6 +3,7 @@ namespace Code.Lobby {
         Idle,
         Joining,
         Failed,
-        MatchInProgress
+        MatchInProgress,
+        LobbyFull
     }
 }

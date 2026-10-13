@@ -4,7 +4,8 @@ namespace Code.Lobby {
         None,
         // The lobby is locked because its match has started.
         MatchInProgress,
-        // Wrong code, full lobby, network error and anything else.
+        LobbyFull,
+        // Wrong code, network error and anything else.
         Other
     }
 }

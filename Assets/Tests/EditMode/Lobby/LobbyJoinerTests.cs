@@ -85,6 +85,17 @@ namespace Code.Tests {
         });
 
         [UnityTest]
+        public IEnumerator FullLobbyShowsLobbyFull() => UniTask.ToCoroutine(async () => {
+            _joinLobby.SetLobbyCode("ABC123");
+            var join = _joiner.TryJoinLobby("Luka", _cancellation.Token);
+
+            _lobbyService.FailJoin(LobbyJoinFailure.LobbyFull);
+
+            Assert.IsFalse(await join);
+            Assert.AreEqual(JoinLobbyStatus.LobbyFull, _joinLobby.GetJoinStatus());
+        });
+
+        [UnityTest]
         public IEnumerator JoiningStartedMatchLeavesAndShowsMatchInProgress() => UniTask.ToCoroutine(async () => {
             _joinLobby.SetLobbyCode("ABC123");
             var join = _joiner.TryJoinLobby("Luka", _cancellation.Token);

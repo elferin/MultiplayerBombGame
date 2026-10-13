@@ -145,6 +145,20 @@ namespace Code.Tests {
         });
 
         [UnityTest]
+        public IEnumerator TypingCodeClearsLobbyFullStatus() => UniTask.ToCoroutine(async () => {
+            var run = await StartFlow();
+            _view.ClickJoin();
+            _joinLobby.SetJoinStatus(JoinLobbyStatus.LobbyFull);
+
+            _view.TypeLobbyCode("XYZ");
+
+            Assert.AreEqual(JoinLobbyStatus.Idle, _joinLobby.GetJoinStatus());
+
+            _view.ClickQuit();
+            await run;
+        });
+
+        [UnityTest]
         public IEnumerator InputChangesRefreshTheView() => UniTask.ToCoroutine(async () => {
             var run = await StartFlow();
             var refreshCount = _view.RefreshCount;
