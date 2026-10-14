@@ -10,7 +10,8 @@
         "PurrNet.Runtime",
         "PurrNet.UTP.Runtime",
         "Unity.Services.Multiplayer",
-        "Unity.Services.Core"
+        "Unity.Services.Core",
+        "ParrelSync"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
