@@ -5,5 +5,6 @@ namespace Code.Lobby {
 
         event Action LeaveClicked;
         event Action StartClicked;
+        event Action CopyCodeClicked;
     }
 }

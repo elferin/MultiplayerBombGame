@@ -11,6 +11,7 @@ namespace Code.Tests {
 
         public event Action LeaveClicked = delegate { };
         public event Action StartClicked = delegate { };
+        public event Action CopyCodeClicked = delegate { };
 
         private readonly ILobbyStatusGetter _statusGetter;
         private readonly UniTaskCompletionSource _closed = new UniTaskCompletionSource();
@@ -43,5 +44,6 @@ namespace Code.Tests {
 
         public void ClickLeave() => LeaveClicked();
         public void ClickStart() => StartClicked();
+        public void ClickCopyCode() => CopyCodeClicked();
     }
 }

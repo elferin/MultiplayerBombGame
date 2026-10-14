@@ -13,5 +13,6 @@ namespace Code.MainMenu {
         event Action CreateLobbyClicked;
         event Action JoinLobbyClicked;
         event Action BackClicked;
+        event Action PasteCodeClicked;
     }
 }

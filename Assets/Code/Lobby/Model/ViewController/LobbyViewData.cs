@@ -9,14 +9,16 @@ namespace Code.Lobby {
         public bool ShowsStartButton { get; }
         // Shown but greyed out while the host waits for more players.
         public bool CanStartMatch { get; }
+        public bool ShowsCopyButton { get; }
 
         public LobbyViewData(string statusText, string lobbyCodeText, string playersText, bool showsStartButton,
-            bool canStartMatch) {
+            bool canStartMatch, bool showsCopyButton) {
             StatusText = statusText;
             LobbyCodeText = lobbyCodeText;
             PlayersText = playersText;
             ShowsStartButton = showsStartButton;
             CanStartMatch = canStartMatch;
+            ShowsCopyButton = showsCopyButton;
         }
     }
 }

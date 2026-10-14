@@ -8,6 +8,7 @@ namespace Code.Lobby {
 
         public event Action LeaveClicked = delegate { };
         public event Action StartClicked = delegate { };
+        public event Action CopyCodeClicked = delegate { };
 
         private readonly LobbyAssetLoader _assetLoader;
         private readonly IViewDataGatherer<LobbyViewData> _dataGatherer;
@@ -56,11 +57,13 @@ namespace Code.Lobby {
         private void AddListeners() {
             _view.LeaveClicked += OnLeaveClicked;
             _view.StartClicked += OnStartClicked;
+            _view.CopyCodeClicked += OnCopyCodeClicked;
         }
 
         private void RemoveListeners() {
             _view.LeaveClicked -= OnLeaveClicked;
             _view.StartClicked -= OnStartClicked;
+            _view.CopyCodeClicked -= OnCopyCodeClicked;
         }
 
         private void OnLeaveClicked() {
@@ -69,6 +72,10 @@ namespace Code.Lobby {
 
         private void OnStartClicked() {
             StartClicked.Invoke();
+        }
+
+        private void OnCopyCodeClicked() {
+            CopyCodeClicked.Invoke();
         }
     }
 }

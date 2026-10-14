@@ -6,5 +6,6 @@ namespace Code.MainMenu {
         bool CanCreateLobby();
         bool CanJoinLobby();
         bool CanGoBack();
+        bool CanPasteLobbyCode();
     }
 }

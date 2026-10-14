@@ -18,6 +18,7 @@ namespace Code.MainMenu {
         public event Action CreateLobbyClicked = delegate { };
         public event Action JoinLobbyClicked = delegate { };
         public event Action BackClicked = delegate { };
+        public event Action PasteCodeClicked = delegate { };
 
         [SerializeField] private Button quitButton;
         [SerializeField] private Button hostButton;
@@ -40,6 +41,7 @@ namespace Code.MainMenu {
             joinLobbyView.CodeChanged += OnLobbyCodeChanged;
             joinLobbyView.JoinClicked += OnJoinLobbyClicked;
             joinLobbyView.BackClicked += OnBackClicked;
+            joinLobbyView.PasteClicked += OnPasteCodeClicked;
         }
 
         public void Show(MainMenuViewData data) {
@@ -84,6 +86,10 @@ namespace Code.MainMenu {
 
         private void OnBackClicked() {
             BackClicked.Invoke();
+        }
+
+        private void OnPasteCodeClicked() {
+            PasteCodeClicked.Invoke();
         }
     }
 }

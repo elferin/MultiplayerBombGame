@@ -81,7 +81,8 @@ namespace Code.MainMenu {
                 _joinLobbyGetter.GetLobbyCode(),
                 status,
                 _lobbyRules.CanJoinLobby(),
-                _lobbyRules.CanGoBack());
+                _lobbyRules.CanGoBack(),
+                _lobbyRules.CanPasteLobbyCode());
         }
     }
 }

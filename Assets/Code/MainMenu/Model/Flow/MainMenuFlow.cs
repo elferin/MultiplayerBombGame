@@ -1,5 +1,6 @@
 using System.Threading;
 using Code.Lobby;
+using Code.Util;
 using Cysharp.Threading.Tasks;
 
 namespace Code.MainMenu {
@@ -22,13 +23,14 @@ namespace Code.MainMenu {
         private readonly IHostLobbySettings _hostLobbySettings;
         private readonly IJoinLobby _joinLobby;
         private readonly IMainMenuLobbyRules _lobbyRules;
+        private readonly IClipboard _clipboard;
 
         private IMainMenuViewController _viewController;
         private UniTaskCompletionSource<MainMenuAction> _action;
 
         public MainMenuFlow(IMainMenuViewControllerFactory viewControllerFactory, LobbyJoiner lobbyJoiner,
             IMainMenuScreenLocation screenLocation, IPlayerName playerName,
-            IHostLobbySettings hostLobbySettings, IJoinLobby joinLobby, IMainMenuLobbyRules lobbyRules) {
+            IHostLobbySettings hostLobbySettings, IJoinLobby joinLobby, IMainMenuLobbyRules lobbyRules, IClipboard clipboard) {
             _viewControllerFactory = viewControllerFactory;
             _lobbyJoiner = lobbyJoiner;
             _screenLocation = screenLocation;
@@ -36,6 +38,7 @@ namespace Code.MainMenu {
             _hostLobbySettings = hostLobbySettings;
             _joinLobby = joinLobby;
             _lobbyRules = lobbyRules;
+            _clipboard = clipboard;
         }
 
         public async UniTask<MainMenuFlowResult> RunAsync(CancellationToken cancellation) {
@@ -134,6 +137,7 @@ namespace Code.MainMenu {
             _viewController.CreateLobbyClicked += OnCreateLobbyClicked;
             _viewController.JoinLobbyClicked += OnJoinLobbyClicked;
             _viewController.BackClicked += OnBackClicked;
+            _viewController.PasteCodeClicked += OnPasteCodeClicked;
         }
 
         private void RemoveListeners() {
@@ -146,6 +150,7 @@ namespace Code.MainMenu {
             _viewController.CreateLobbyClicked -= OnCreateLobbyClicked;
             _viewController.JoinLobbyClicked -= OnJoinLobbyClicked;
             _viewController.BackClicked -= OnBackClicked;
+            _viewController.PasteCodeClicked -= OnPasteCodeClicked;
         }
 
         private void OnQuitClicked() {
@@ -189,6 +194,14 @@ namespace Code.MainMenu {
         private void OnPlayerCountChanged(string text) {
             _hostLobbySettings.SetPlayerCount(text);
             _viewController.Refresh();
+        }
+
+        private void OnPasteCodeClicked() {
+            if (!_lobbyRules.CanPasteLobbyCode()) {
+                return;
+            }
+            // The same as typing it: lobby codes are upper case, and copied text often has stray spaces.
+            OnLobbyCodeChanged(_clipboard.GetText().Trim().ToUpperInvariant());
         }
 
         private void OnLobbyCodeChanged(string text) {

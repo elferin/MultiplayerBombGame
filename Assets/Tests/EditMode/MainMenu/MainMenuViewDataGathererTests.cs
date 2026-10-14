@@ -97,5 +97,14 @@ namespace Code.Tests {
             Assert.IsTrue(joinLobby.CanJoin);
             Assert.IsTrue(joinLobby.CanGoBack);
         }
+
+        [TestCase(JoinLobbyStatus.Idle, true)]
+        [TestCase(JoinLobbyStatus.Joining, false)]
+        [TestCase(JoinLobbyStatus.Failed, true)]
+        public void PasteIsDisabledWhileJoining(JoinLobbyStatus status, bool expected) {
+            _joinLobby.SetJoinStatus(status);
+
+            Assert.AreEqual(expected, _gatherer.Get().JoinLobby.CanPaste);
+        }
     }
 }

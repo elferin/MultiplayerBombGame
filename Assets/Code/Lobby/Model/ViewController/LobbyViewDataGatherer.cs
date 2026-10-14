@@ -28,11 +28,11 @@ namespace Code.Lobby {
         public LobbyViewData Get() {
             var lobby = _currentLobbyGetter.GetCurrentLobby();
             if (!lobby.IsValid) {
-                return new LobbyViewData(GetStatusText(), string.Empty, string.Empty, false, false);
+                return new LobbyViewData(GetStatusText(), string.Empty, string.Empty, false, false, false);
             }
 
             return new LobbyViewData(GetStatusText(), string.Format(LOBBY_CODE_FORMAT, lobby.Code), GetPlayersText(lobby),
-                _startRules.IsStartOffered(), _startRules.CanStart());
+                _startRules.IsStartOffered(), _startRules.CanStart(), !string.IsNullOrEmpty(lobby.Code));
         }
 
         private string GetStatusText() {

@@ -16,6 +16,7 @@ namespace Code.Tests {
         private CurrentLobbyHolder _currentLobby;
         private FakeLobbyViewController _view;
         private FakeLobbyService _lobbyService;
+        private FakeClipboard _clipboard;
         private CancellationTokenSource _cancellation;
 
         [SetUp]
@@ -24,6 +25,7 @@ namespace Code.Tests {
             _currentLobby = new CurrentLobbyHolder();
             _view = new FakeLobbyViewController(_status);
             _lobbyService = new FakeLobbyService();
+            _clipboard = new FakeClipboard();
             _cancellation = new CancellationTokenSource(TIMEOUT_MS);
         }
 
@@ -103,6 +105,16 @@ namespace Code.Tests {
             Assert.AreEqual(0, _lobbyService.LeaveCount);
             Assert.IsTrue(_view.IsClosed);
         });
+
+        [Test]
+        public void CopyPutsLobbyCodeOnClipboard() {
+            StartFlow(LobbyFlowData.CreateLobby(6, "Luka"));
+            _lobbyService.SucceedCreate();
+
+            _view.ClickCopyCode();
+
+            Assert.AreEqual("NEW123", _clipboard.Text);
+        }
 
         [Test]
         public void StartClickIsIgnoredWhileHostIsAlone() {
@@ -333,7 +345,7 @@ namespace Code.Tests {
         // LobbyFlow has no initial await, so the view is running as soon as this returns.
         private UniTask<LobbyFlowResult> StartFlow(LobbyFlowData data) {
             var flow = new LobbyFlow(data, _view, _lobbyService, new LobbyCreator(_lobbyService, _status, _currentLobby),
-                new LobbyStartRules(_status, _currentLobby), new MissingPlayerRemover(_lobbyService, _currentLobby), _status, _currentLobby);
+                new LobbyStartRules(_status, _currentLobby), new MissingPlayerRemover(_lobbyService, _currentLobby), _clipboard, _status, _currentLobby);
             return flow.RunAsync(_cancellation.Token).Preserve();
         }
     }

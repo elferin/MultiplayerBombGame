@@ -11,12 +11,14 @@ namespace Code.MainMenu {
         public event Action<string> CodeChanged = delegate { };
         public event Action JoinClicked = delegate { };
         public event Action BackClicked = delegate { };
+        public event Action PasteClicked = delegate { };
 
         [SerializeField] private TMP_InputField playerNameInput;
         [SerializeField] private TMP_InputField codeInput;
         [SerializeField] private TMP_Text statusText;
         [SerializeField] private Button joinButton;
         [SerializeField] private Button backButton;
+        [SerializeField] private Button pasteButton;
 
         private void Awake() {
             // Lobby codes are upper case.
@@ -25,6 +27,7 @@ namespace Code.MainMenu {
             codeInput.onValueChanged.AddListener(OnCodeChanged);
             joinButton.onClick.AddListener(Join);
             backButton.onClick.AddListener(Back);
+            pasteButton.onClick.AddListener(Paste);
         }
 
         public void Show(JoinLobbyViewData data) {
@@ -37,6 +40,7 @@ namespace Code.MainMenu {
             statusText.text = data.StatusText;
             joinButton.interactable = data.CanJoin;
             backButton.interactable = data.CanGoBack;
+            pasteButton.interactable = data.CanPaste;
         }
 
         private void OnPlayerNameChanged(string text) {
@@ -53,6 +57,10 @@ namespace Code.MainMenu {
 
         private void Back() {
             BackClicked.Invoke();
+        }
+
+        private void Paste() {
+            PasteClicked.Invoke();
         }
     }
 }

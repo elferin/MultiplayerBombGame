@@ -15,6 +15,7 @@ namespace Code.MainMenu {
         public event Action CreateLobbyClicked = delegate { };
         public event Action JoinLobbyClicked = delegate { };
         public event Action BackClicked = delegate { };
+        public event Action PasteCodeClicked = delegate { };
 
         private readonly MainMenuAssetLoader _assetLoader;
         private readonly IViewDataGatherer<MainMenuViewData> _dataGatherer;
@@ -70,6 +71,7 @@ namespace Code.MainMenu {
             _view.CreateLobbyClicked += OnCreateLobbyClicked;
             _view.JoinLobbyClicked += OnJoinLobbyClicked;
             _view.BackClicked += OnBackClicked;
+            _view.PasteCodeClicked += OnPasteCodeClicked;
         }
 
         private void RemoveListeners() {
@@ -82,6 +84,7 @@ namespace Code.MainMenu {
             _view.CreateLobbyClicked -= OnCreateLobbyClicked;
             _view.JoinLobbyClicked -= OnJoinLobbyClicked;
             _view.BackClicked -= OnBackClicked;
+            _view.PasteCodeClicked -= OnPasteCodeClicked;
         }
 
         private void OnQuitClicked() {
@@ -118,6 +121,10 @@ namespace Code.MainMenu {
 
         private void OnBackClicked() {
             BackClicked.Invoke();
+        }
+
+        private void OnPasteCodeClicked() {
+            PasteCodeClicked.Invoke();
         }
     }
 }

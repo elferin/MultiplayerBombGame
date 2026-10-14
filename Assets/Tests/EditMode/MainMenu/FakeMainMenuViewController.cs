@@ -17,6 +17,7 @@ namespace Code.Tests {
         public event Action CreateLobbyClicked = delegate { };
         public event Action JoinLobbyClicked = delegate { };
         public event Action BackClicked = delegate { };
+        public event Action PasteCodeClicked = delegate { };
 
         private readonly UniTaskCompletionSource _closed = new UniTaskCompletionSource();
 
@@ -48,6 +49,7 @@ namespace Code.Tests {
         public void ClickCreateLobby() => CreateLobbyClicked();
         public void ClickJoinLobby() => JoinLobbyClicked();
         public void ClickBack() => BackClicked();
+        public void ClickPasteCode() => PasteCodeClicked();
         public void TypePlayerName(string text) => PlayerNameChanged(text);
         public void TypePlayerCount(string text) => PlayerCountChanged(text);
         public void TypeLobbyCode(string text) => LobbyCodeChanged(text);

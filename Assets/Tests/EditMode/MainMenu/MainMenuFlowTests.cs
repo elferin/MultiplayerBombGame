@@ -20,6 +20,7 @@ namespace Code.Tests {
         private PlayerNameHolder _playerName;
         private HostLobbySettings _hostLobbySettings;
         private JoinLobbyState _joinLobby;
+        private FakeClipboard _clipboard;
         private MainMenuFlow _flow;
         private CancellationTokenSource _cancellation;
 
@@ -32,9 +33,10 @@ namespace Code.Tests {
             _playerName = new PlayerNameHolder(_storage);
             _hostLobbySettings = new HostLobbySettings();
             _joinLobby = new JoinLobbyState();
+            _clipboard = new FakeClipboard();
             var rules = new MainMenuLobbyRules(_playerName, _hostLobbySettings, _joinLobby);
             var lobbyJoiner = new LobbyJoiner(_lobbyService, _joinLobby);
-            _flow = new MainMenuFlow(_view, lobbyJoiner, _screenLocation, _playerName, _hostLobbySettings, _joinLobby, rules);
+            _flow = new MainMenuFlow(_view, lobbyJoiner, _screenLocation, _playerName, _hostLobbySettings, _joinLobby, rules, _clipboard);
             _cancellation = new CancellationTokenSource(TIMEOUT_MS);
         }
 
@@ -153,6 +155,38 @@ namespace Code.Tests {
             _view.TypeLobbyCode("XYZ");
 
             Assert.AreEqual(JoinLobbyStatus.Idle, _joinLobby.GetJoinStatus());
+
+            _view.ClickQuit();
+            await run;
+        });
+
+        [UnityTest]
+        public IEnumerator PasteSetsTrimmedUpperCaseCodeAndClearsFailure() => UniTask.ToCoroutine(async () => {
+            var run = await StartFlow();
+            _view.ClickJoin();
+            _joinLobby.SetJoinStatus(JoinLobbyStatus.Failed);
+            _clipboard.Text = "  abc123\n";
+
+            _view.ClickPasteCode();
+
+            Assert.AreEqual("ABC123", _joinLobby.GetLobbyCode());
+            Assert.AreEqual(JoinLobbyStatus.Idle, _joinLobby.GetJoinStatus());
+
+            _view.ClickQuit();
+            await run;
+        });
+
+        [UnityTest]
+        public IEnumerator PasteIsIgnoredWhileJoining() => UniTask.ToCoroutine(async () => {
+            var run = await StartFlow();
+            _view.ClickJoin();
+            _joinLobby.SetLobbyCode("OLD123");
+            _joinLobby.SetJoinStatus(JoinLobbyStatus.Joining);
+            _clipboard.Text = "NEW123";
+
+            _view.ClickPasteCode();
+
+            Assert.AreEqual("OLD123", _joinLobby.GetLobbyCode());
 
             _view.ClickQuit();
             await run;

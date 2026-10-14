@@ -32,6 +32,11 @@ namespace Code.MainMenu {
             return !IsJoining();
         }
 
+        // The code can't change while it's being used to join.
+        public bool CanPasteLobbyCode() {
+            return !IsJoining();
+        }
+
         private bool IsJoining() {
             return _joinLobbyGetter.GetJoinStatus() == JoinLobbyStatus.Joining;
         }

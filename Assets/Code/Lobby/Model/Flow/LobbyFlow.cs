@@ -1,4 +1,5 @@
 using System.Threading;
+using Code.Util;
 using Cysharp.Threading.Tasks;
 
 namespace Code.Lobby {
@@ -11,6 +12,7 @@ namespace Code.Lobby {
         private readonly LobbyCreator _lobbyCreator;
         private readonly LobbyStartRules _startRules;
         private readonly MissingPlayerRemover _missingPlayerRemover;
+        private readonly IClipboard _clipboard;
         private readonly ILobbyStatus _status;
         private readonly ICurrentLobby _currentLobby;
 
@@ -18,13 +20,15 @@ namespace Code.Lobby {
         private UniTaskCompletionSource<LobbyFlowExit> _exitRequested;
 
         public LobbyFlow(LobbyFlowData data, ILobbyViewControllerFactory viewControllerFactory, ILobbyService lobbyService,
-            LobbyCreator lobbyCreator, LobbyStartRules startRules, MissingPlayerRemover missingPlayerRemover, ILobbyStatus status, ICurrentLobby currentLobby) {
+            LobbyCreator lobbyCreator, LobbyStartRules startRules, MissingPlayerRemover missingPlayerRemover,
+            IClipboard clipboard, ILobbyStatus status, ICurrentLobby currentLobby) {
             _data = data;
             _viewControllerFactory = viewControllerFactory;
             _lobbyService = lobbyService;
             _lobbyCreator = lobbyCreator;
             _startRules = startRules;
             _missingPlayerRemover = missingPlayerRemover;
+            _clipboard = clipboard;
             _status = status;
             _currentLobby = currentLobby;
         }
@@ -145,12 +149,14 @@ namespace Code.Lobby {
         private void AddListeners() {
             _viewController.LeaveClicked += OnLeaveClicked;
             _viewController.StartClicked += OnStartClicked;
+            _viewController.CopyCodeClicked += OnCopyCodeClicked;
             _lobbyService.LobbyUpdated += OnLobbyUpdated;
         }
 
         private void RemoveListeners() {
             _viewController.LeaveClicked -= OnLeaveClicked;
             _viewController.StartClicked -= OnStartClicked;
+            _viewController.CopyCodeClicked -= OnCopyCodeClicked;
             _lobbyService.LobbyUpdated -= OnLobbyUpdated;
         }
 
@@ -164,6 +170,13 @@ namespace Code.Lobby {
                 return;
             }
             _exitRequested.TrySetResult(LobbyFlowExit.StartAsHost);
+        }
+
+        private void OnCopyCodeClicked() {
+            var lobby = _currentLobby.GetCurrentLobby();
+            if (lobby.IsValid) {
+                _clipboard.SetText(lobby.Code);
+            }
         }
 
         private void OnLobbyUpdated(LobbyState lobby) {

@@ -1,4 +1,5 @@
 using Code.Lobby;
+using Code.Util;
 
 namespace Code.MainMenu {
 
@@ -11,10 +12,11 @@ namespace Code.MainMenu {
         private readonly IHostLobbySettings _hostLobbySettings;
         private readonly IJoinLobby _joinLobby;
         private readonly IMainMenuLobbyRules _lobbyRules;
+        private readonly IClipboard _clipboard;
 
         public MainMenuFlowFactory(IMainMenuViewControllerFactory viewControllerFactory, LobbyJoiner lobbyJoiner,
             IMainMenuScreenLocation screenLocation, IPlayerName playerName,
-            IHostLobbySettings hostLobbySettings, IJoinLobby joinLobby, IMainMenuLobbyRules lobbyRules) {
+            IHostLobbySettings hostLobbySettings, IJoinLobby joinLobby, IMainMenuLobbyRules lobbyRules, IClipboard clipboard) {
             _viewControllerFactory = viewControllerFactory;
             _lobbyJoiner = lobbyJoiner;
             _screenLocation = screenLocation;
@@ -22,11 +24,12 @@ namespace Code.MainMenu {
             _hostLobbySettings = hostLobbySettings;
             _joinLobby = joinLobby;
             _lobbyRules = lobbyRules;
+            _clipboard = clipboard;
         }
 
         public IMainMenuFlow Create() {
             return new MainMenuFlow(_viewControllerFactory, _lobbyJoiner,
-                _screenLocation, _playerName, _hostLobbySettings, _joinLobby, _lobbyRules);
+                _screenLocation, _playerName, _hostLobbySettings, _joinLobby, _lobbyRules, _clipboard);
         }
     }
 }

@@ -101,6 +101,15 @@ namespace Code.Tests {
         }
 
         [Test]
+        public void ShowsCopyButtonOnlyWithALobby() {
+            Assert.IsFalse(_gatherer.Get().ShowsCopyButton);
+
+            _currentLobby.SetCurrentLobby(new LobbyState(true, "XYZ", 4, FakeLobbyService.CreatePlayers("Luka"), true, string.Empty));
+
+            Assert.IsTrue(_gatherer.Get().ShowsCopyButton);
+        }
+
+        [Test]
         public void HidesStartButtonWithoutALobby() {
             _status.SetStatus(LobbyStatus.Ready);
 
