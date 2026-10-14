@@ -9,6 +9,7 @@ namespace Code.Lobby {
         private readonly ILobbyViewControllerFactory _viewControllerFactory;
         private readonly ILobbyService _lobbyService;
         private readonly LobbyCreator _lobbyCreator;
+        private readonly LobbyStartRules _startRules;
         private readonly ILobbyStatus _status;
         private readonly ICurrentLobby _currentLobby;
 
@@ -16,11 +17,12 @@ namespace Code.Lobby {
         private UniTaskCompletionSource<LobbyFlowExit> _exitRequested;
 
         public LobbyFlow(LobbyFlowArgs args, ILobbyViewControllerFactory viewControllerFactory, ILobbyService lobbyService,
-            LobbyCreator lobbyCreator, ILobbyStatus status, ICurrentLobby currentLobby) {
+            LobbyCreator lobbyCreator, LobbyStartRules startRules, ILobbyStatus status, ICurrentLobby currentLobby) {
             _args = args;
             _viewControllerFactory = viewControllerFactory;
             _lobbyService = lobbyService;
             _lobbyCreator = lobbyCreator;
+            _startRules = startRules;
             _status = status;
             _currentLobby = currentLobby;
         }
@@ -132,6 +134,10 @@ namespace Code.Lobby {
         }
 
         private void OnStartClicked() {
+            // The button can still be clicked in the moment a player leaves and the view hasn't refreshed yet.
+            if (!_startRules.CanStart()) {
+                return;
+            }
             _exitRequested.TrySetResult(LobbyFlowExit.StartAsHost);
         }
 

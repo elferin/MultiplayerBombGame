@@ -13,7 +13,7 @@ namespace Code.Tests {
         public void SetUp() {
             _status = new LobbyStatusHolder();
             _currentLobby = new CurrentLobbyHolder();
-            _gatherer = new LobbyViewDataGatherer(_status, _currentLobby);
+            _gatherer = new LobbyViewDataGatherer(_status, _currentLobby, new LobbyStartRules(_status, _currentLobby));
         }
 
         [TestCase(LobbyStatus.Creating, "Creating lobby...")]
@@ -55,6 +55,29 @@ namespace Code.Tests {
             _currentLobby.SetCurrentLobby(new LobbyState(true, "XYZ", 4, new[] { "Luka" }, isOwner, string.Empty));
 
             Assert.AreEqual(expected, _gatherer.Get().ShowsStartButton);
+        }
+
+        [Test]
+        public void GreysOutStartWhileHostIsAlone() {
+            _status.SetStatus(LobbyStatus.Ready);
+            _currentLobby.SetCurrentLobby(new LobbyState(true, "XYZ", 4, new[] { "Luka" }, true, string.Empty));
+
+            var data = _gatherer.Get();
+
+            Assert.IsTrue(data.ShowsStartButton);
+            Assert.IsFalse(data.CanStartMatch);
+            Assert.AreEqual("Waiting for players...", data.StatusText);
+        }
+
+        [Test]
+        public void EnablesStartWithTwoPlayers() {
+            _status.SetStatus(LobbyStatus.Ready);
+            _currentLobby.SetCurrentLobby(new LobbyState(true, "XYZ", 4, new[] { "Luka", "Ana" }, true, string.Empty));
+
+            var data = _gatherer.Get();
+
+            Assert.IsTrue(data.CanStartMatch);
+            Assert.AreEqual(string.Empty, data.StatusText);
         }
 
         [Test]

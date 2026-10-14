@@ -15,6 +15,7 @@ namespace Code.Lobby {
             builder.Register<LobbyJoiner>(Lifetime.Singleton);
             builder.Register<LobbyCreator>(Lifetime.Singleton);
             builder.Register<MatchJoinCodeSharer>(Lifetime.Singleton);
+            builder.Register<LobbyStartRules>(Lifetime.Singleton);
             builder.Register<IPlayerNameStorage, PlayerNameStorage>(Lifetime.Singleton);
 
             // Lobby state, each registered as its getter, setter and combined interface.

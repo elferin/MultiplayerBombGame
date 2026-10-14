@@ -8,25 +8,29 @@ namespace Code.Lobby {
         private const string FAILED_TO_CREATE_LOBBY = "Failed to create lobby";
         private const string LEAVING_LOBBY = "Leaving lobby...";
         private const string FAILED_TO_START_MATCH = "Failed to start match";
+        private const string WAITING_FOR_PLAYERS = "Waiting for players...";
         private const string LOBBY_CODE_FORMAT = "Code: {0}";
         private const string PLAYER_COUNT_FORMAT = "Players ({0}/{1})";
 
         private readonly ILobbyStatusGetter _statusGetter;
         private readonly ICurrentLobbyGetter _currentLobbyGetter;
+        private readonly LobbyStartRules _startRules;
 
-        public LobbyViewDataGatherer(ILobbyStatusGetter statusGetter, ICurrentLobbyGetter currentLobbyGetter) {
+        public LobbyViewDataGatherer(ILobbyStatusGetter statusGetter, ICurrentLobbyGetter currentLobbyGetter,
+            LobbyStartRules startRules) {
             _statusGetter = statusGetter;
             _currentLobbyGetter = currentLobbyGetter;
+            _startRules = startRules;
         }
 
         public LobbyViewData Get() {
             var lobby = _currentLobbyGetter.GetCurrentLobby();
             if (!lobby.IsValid) {
-                return new LobbyViewData(GetStatusText(), string.Empty, string.Empty, false);
+                return new LobbyViewData(GetStatusText(), string.Empty, string.Empty, false, false);
             }
 
             return new LobbyViewData(GetStatusText(), string.Format(LOBBY_CODE_FORMAT, lobby.Code), GetPlayersText(lobby),
-                ShowsStartButton(lobby));
+                _startRules.IsStartOffered(), _startRules.CanStart());
         }
 
         private string GetStatusText() {
@@ -35,14 +39,14 @@ namespace Code.Lobby {
                 case LobbyStatus.Failed: return FAILED_TO_CREATE_LOBBY;
                 case LobbyStatus.Leaving: return LEAVING_LOBBY;
                 case LobbyStatus.StartFailed: return FAILED_TO_START_MATCH;
+                case LobbyStatus.Ready: return GetReadyText();
                 default: return string.Empty;
             }
         }
 
-        // Only the host starts the match, and only while nothing else is in progress; a failed start can be retried.
-        private bool ShowsStartButton(LobbyState lobby) {
-            var status = _statusGetter.GetStatus();
-            return lobby.IsOwner && (status == LobbyStatus.Ready || status == LobbyStatus.StartFailed);
+        // Tells the host why Start is greyed out.
+        private string GetReadyText() {
+            return _startRules.IsStartOffered() && !_startRules.HasEnoughPlayers() ? WAITING_FOR_PLAYERS : string.Empty;
         }
 
         private string GetPlayersText(LobbyState lobby) {

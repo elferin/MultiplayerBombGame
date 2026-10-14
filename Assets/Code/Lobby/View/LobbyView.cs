@@ -26,6 +26,7 @@ namespace Code.Lobby {
             lobbyCodeText.text = data.LobbyCodeText;
             membersText.text = data.PlayersText;
             startButton.gameObject.SetActive(data.ShowsStartButton);
+            startButton.interactable = data.CanStartMatch;
         }
 
         private void Leave() {

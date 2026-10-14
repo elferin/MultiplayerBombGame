@@ -87,6 +87,7 @@ namespace Code.Tests {
         public IEnumerator StartClickEndsFlowAsHost() => UniTask.ToCoroutine(async () => {
             var run = StartFlow(LobbyFlowArgs.CreateLobby(6, "Luka"));
             _lobbyService.SucceedCreate();
+            _lobbyService.RaiseLobbyUpdated(FakeLobbyService.CreateLobbyState("NEW123", 6, "Luka", "Ana"));
 
             _view.ClickStart();
             var result = await run;
@@ -94,13 +95,24 @@ namespace Code.Tests {
             Assert.IsTrue(result.ShouldStartMatch);
             Assert.IsTrue(result.IsHost);
             Assert.AreEqual(6, result.MaxPlayers);
-            Assert.AreEqual(1, result.PlayerCount);
+            Assert.AreEqual(2, result.PlayerCount);
             Assert.AreEqual(string.Empty, result.MatchJoinCode);
             // The match locks the lobby once its network runs, not the lobby flow.
             Assert.IsFalse(_lobbyService.IsLocked);
             Assert.AreEqual(0, _lobbyService.LeaveCount);
             Assert.IsTrue(_view.IsClosed);
         });
+
+        [Test]
+        public void StartClickIsIgnoredWhileHostIsAlone() {
+            StartFlow(LobbyFlowArgs.CreateLobby(6, "Luka"));
+            _lobbyService.SucceedCreate();
+
+            _view.ClickStart();
+
+            Assert.IsFalse(_view.IsClosed);
+            Assert.AreEqual(LobbyStatus.Ready, _status.GetStatus());
+        }
 
         [UnityTest]
         public IEnumerator JoinedPlayerEndsFlowWhenHostSharesJoinCode() => UniTask.ToCoroutine(async () => {
@@ -285,7 +297,8 @@ namespace Code.Tests {
 
         // LobbyFlow has no initial await, so the view is running as soon as this returns.
         private UniTask<LobbyFlowResult> StartFlow(LobbyFlowArgs args) {
-            var flow = new LobbyFlow(args, _view, _lobbyService, new LobbyCreator(_lobbyService, _status, _currentLobby), _status, _currentLobby);
+            var flow = new LobbyFlow(args, _view, _lobbyService, new LobbyCreator(_lobbyService, _status, _currentLobby),
+                new LobbyStartRules(_status, _currentLobby), _status, _currentLobby);
             return flow.RunAsync(_cancellation.Token).Preserve();
         }
     }
