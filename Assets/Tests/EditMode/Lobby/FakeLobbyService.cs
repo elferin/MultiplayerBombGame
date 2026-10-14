@@ -33,6 +33,12 @@ namespace Code.Tests {
         public string MatchJoinCode { get; private set; } = string.Empty;
         public bool IsLocked { get; private set; }
         public int EndMatchCount { get; private set; }
+        // Null until SetInLobby is called.
+        public bool? LastInLobby { get; private set; }
+        public int ReturnCount { get; private set; }
+        // False makes ReturnToLobby report that the host removed this player.
+        public bool IsStillMember { get; set; } = true;
+        public List<string> RemovedPlayerIds { get; } = new List<string>();
 
         public async UniTask<LobbyState> CreateLobby(int maxPlayers, string playerName, CancellationToken cancellation) {
             CreateCount++;
@@ -100,6 +106,27 @@ namespace Code.Tests {
             EndMatchCount++;
             IsLocked = false;
             MatchJoinCode = string.Empty;
+            return UniTask.CompletedTask;
+        }
+
+        public UniTask SetInLobby(bool isInLobby) {
+            LastInLobby = isInLobby;
+            return UniTask.CompletedTask;
+        }
+
+        public UniTask<bool> ReturnToLobby() {
+            ReturnCount++;
+            if (IsStillMember) {
+                LastInLobby = true;
+            }
+            else {
+                CurrentLobby = LobbyState.None;
+            }
+            return UniTask.FromResult(IsStillMember);
+        }
+
+        public UniTask RemovePlayers(IReadOnlyList<string> playerIds) {
+            RemovedPlayerIds.AddRange(playerIds);
             return UniTask.CompletedTask;
         }
 

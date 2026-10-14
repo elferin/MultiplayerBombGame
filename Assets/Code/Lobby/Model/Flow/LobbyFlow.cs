@@ -10,6 +10,7 @@ namespace Code.Lobby {
         private readonly ILobbyService _lobbyService;
         private readonly LobbyCreator _lobbyCreator;
         private readonly LobbyStartRules _startRules;
+        private readonly MissingPlayerRemover _missingPlayerRemover;
         private readonly ILobbyStatus _status;
         private readonly ICurrentLobby _currentLobby;
 
@@ -17,12 +18,13 @@ namespace Code.Lobby {
         private UniTaskCompletionSource<LobbyFlowExit> _exitRequested;
 
         public LobbyFlow(LobbyFlowData data, ILobbyViewControllerFactory viewControllerFactory, ILobbyService lobbyService,
-            LobbyCreator lobbyCreator, LobbyStartRules startRules, ILobbyStatus status, ICurrentLobby currentLobby) {
+            LobbyCreator lobbyCreator, LobbyStartRules startRules, MissingPlayerRemover missingPlayerRemover, ILobbyStatus status, ICurrentLobby currentLobby) {
             _data = data;
             _viewControllerFactory = viewControllerFactory;
             _lobbyService = lobbyService;
             _lobbyCreator = lobbyCreator;
             _startRules = startRules;
+            _missingPlayerRemover = missingPlayerRemover;
             _status = status;
             _currentLobby = currentLobby;
         }
@@ -32,6 +34,7 @@ namespace Code.Lobby {
             _viewController = _viewControllerFactory.CreateViewController();
             _exitRequested = new UniTaskCompletionSource<LobbyFlowExit>();
             var isInLobby = false;
+            var removalCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
 
             AddListeners();
             try {
@@ -41,6 +44,10 @@ namespace Code.Lobby {
 
                 isInLobby = await lobbyRequest;
                 _viewController.Refresh();
+                if (isInLobby && _data.ReturnsFromMatch && _currentLobby.GetCurrentLobby().IsOwner) {
+                    // Stops when the flow ends, so nobody is removed once the host has left or started the next match.
+                    _missingPlayerRemover.RemoveMissingPlayersAfterTimeout(removalCancellation.Token).Forget();
+                }
                 // The host may have started the next match while this player was still finishing the last one.
                 CheckMatchStarted(_currentLobby.GetCurrentLobby());
 
@@ -55,6 +62,8 @@ namespace Code.Lobby {
                 }
                 else {
                     // The match is played with this lobby, so it stays joined.
+                    // The host waits for everyone to be back on this screen before the next match.
+                    await _lobbyService.SetInLobby(false);
                     SetMatchResult(flowResult, exit);
                 }
 
@@ -62,6 +71,8 @@ namespace Code.Lobby {
                 await viewRun;
             }
             finally {
+                removalCancellation.Cancel();
+                removalCancellation.Dispose();
                 RemoveListeners();
                 _viewController.Close();
 
@@ -87,11 +98,21 @@ namespace Code.Lobby {
             _currentLobby.SetCurrentLobby(lobby);
             _status.SetStatus(GetJoinedStatus(lobby));
 
+            if (!_data.ReturnsFromMatch || !lobby.IsValid) {
+                return lobby.IsValid;
+            }
+
+            // A player who took too long to come back may have been removed by the host.
+            if (!await _lobbyService.ReturnToLobby()) {
+                _currentLobby.SetCurrentLobby(LobbyState.None);
+                _status.SetStatus(LobbyStatus.Removed);
+                return false;
+            }
             // The host reopens the lobby so the next match can start.
-            if (_data.ReturnsFromMatch && lobby.IsOwner) {
+            if (lobby.IsOwner) {
                 await _lobbyService.EndMatch();
             }
-            return lobby.IsValid;
+            return true;
         }
 
         private LobbyStatus GetJoinedStatus(LobbyState lobby) {

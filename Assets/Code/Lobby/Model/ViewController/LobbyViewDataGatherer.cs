@@ -9,6 +9,8 @@ namespace Code.Lobby {
         private const string LEAVING_LOBBY = "Leaving lobby...";
         private const string FAILED_TO_START_MATCH = "Failed to start match";
         private const string WAITING_FOR_PLAYERS = "Waiting for players...";
+        private const string WAITING_FOR_RETURN = "Waiting for players to return...";
+        private const string REMOVED_FROM_LOBBY = "You were removed from the lobby";
         private const string LOBBY_CODE_FORMAT = "Code: {0}";
         private const string PLAYER_COUNT_FORMAT = "Players ({0}/{1})";
 
@@ -39,6 +41,7 @@ namespace Code.Lobby {
                 case LobbyStatus.Failed: return FAILED_TO_CREATE_LOBBY;
                 case LobbyStatus.Leaving: return LEAVING_LOBBY;
                 case LobbyStatus.StartFailed: return FAILED_TO_START_MATCH;
+                case LobbyStatus.Removed: return REMOVED_FROM_LOBBY;
                 case LobbyStatus.Ready: return GetReadyText();
                 default: return string.Empty;
             }
@@ -46,7 +49,13 @@ namespace Code.Lobby {
 
         // Tells the host why Start is greyed out.
         private string GetReadyText() {
-            return _startRules.IsStartOffered() && !_startRules.HasEnoughPlayers() ? WAITING_FOR_PLAYERS : string.Empty;
+            if (!_startRules.IsStartOffered()) {
+                return string.Empty;
+            }
+            if (!_startRules.HasEnoughPlayers()) {
+                return WAITING_FOR_PLAYERS;
+            }
+            return _startRules.AreAllPlayersBack() ? string.Empty : WAITING_FOR_RETURN;
         }
 
         private string GetPlayersText(LobbyState lobby) {

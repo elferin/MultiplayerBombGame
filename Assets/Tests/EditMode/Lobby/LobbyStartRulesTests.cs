@@ -46,6 +46,29 @@ namespace Code.Tests {
             Assert.IsFalse(_rules.CanStart());
         }
 
+        [Test]
+        public void CannotStartWhileSomeoneIsStillInTheMatch() {
+            _status.SetStatus(LobbyStatus.Ready);
+            _currentLobby.SetCurrentLobby(CreateLobbyWithPlayers(
+                new LobbyPlayer("host", "Luka", true, true), new LobbyPlayer("ana", "Ana", false, false)));
+
+            Assert.IsFalse(_rules.AreAllPlayersBack());
+            Assert.IsFalse(_rules.CanStart());
+        }
+
+        [Test]
+        public void IgnoresTheHostsOwnInLobbyFlag() {
+            _status.SetStatus(LobbyStatus.Ready);
+            _currentLobby.SetCurrentLobby(CreateLobbyWithPlayers(
+                new LobbyPlayer("host", "Luka", false, true), new LobbyPlayer("ana", "Ana", true, false)));
+
+            Assert.IsTrue(_rules.CanStart());
+        }
+
+        private LobbyState CreateLobbyWithPlayers(params LobbyPlayer[] players) {
+            return new LobbyState(true, "XYZ", 4, players, true, string.Empty);
+        }
+
         private LobbyState CreateLobby(bool isOwner, int playerCount) {
             var names = new string[playerCount];
             for (var i = 0; i < playerCount; i++) {

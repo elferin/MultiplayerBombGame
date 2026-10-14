@@ -97,6 +97,7 @@ namespace Code.Tests {
             Assert.AreEqual(6, result.MaxPlayers);
             Assert.AreEqual(2, result.PlayerCount);
             Assert.AreEqual(string.Empty, result.MatchJoinCode);
+            Assert.AreEqual(false, _lobbyService.LastInLobby);
             // The match locks the lobby once its network runs, not the lobby flow.
             Assert.IsFalse(_lobbyService.IsLocked);
             Assert.AreEqual(0, _lobbyService.LeaveCount);
@@ -125,6 +126,7 @@ namespace Code.Tests {
             Assert.IsTrue(result.ShouldStartMatch);
             Assert.IsFalse(result.IsHost);
             Assert.AreEqual("RELAY1", result.MatchJoinCode);
+            Assert.AreEqual(false, _lobbyService.LastInLobby);
             Assert.AreEqual(0, _lobbyService.LeaveCount);
         });
 
@@ -135,6 +137,8 @@ namespace Code.Tests {
             StartFlow(LobbyFlowData.ReturnFromMatch(string.Empty, false));
 
             Assert.AreEqual(1, _lobbyService.EndMatchCount);
+            Assert.AreEqual(1, _lobbyService.ReturnCount);
+            Assert.AreEqual(true, _lobbyService.LastInLobby);
             Assert.AreEqual(LobbyStatus.Ready, _status.GetStatus());
             Assert.IsFalse(_view.IsClosed);
         }
@@ -153,6 +157,37 @@ namespace Code.Tests {
 
             Assert.IsTrue(result.ShouldStartMatch);
             Assert.AreEqual("RELAY2", result.MatchJoinCode);
+        });
+
+        [UnityTest]
+        public IEnumerator RemovedPlayerSeesRemovedAndLeaveJustCloses() => UniTask.ToCoroutine(async () => {
+            _lobbyService.IsStillMember = false;
+            _lobbyService.CurrentLobby = CreateJoinedLobby("RELAY1");
+            var run = StartFlow(LobbyFlowData.ReturnFromMatch("RELAY1", false));
+
+            Assert.AreEqual(LobbyStatus.Removed, _status.GetStatus());
+            Assert.AreSame(LobbyState.None, _currentLobby.GetCurrentLobby());
+
+            _view.ClickLeave();
+            var result = await run;
+
+            Assert.IsFalse(result.ShouldStartMatch);
+            Assert.AreEqual(0, _lobbyService.LeaveCount);
+            Assert.IsTrue(_view.IsClosed);
+        });
+
+        [UnityTest]
+        public IEnumerator LeavingStopsRemovingMissingPlayers() => UniTask.ToCoroutine(async () => {
+            _lobbyService.CurrentLobby = new LobbyState(true, "ABC123", 4, new[] {
+                new LobbyPlayer("host", "Luka", true, true), new LobbyPlayer("ana", "Ana", false, false)
+            }, true, string.Empty);
+            var run = StartFlow(LobbyFlowData.ReturnFromMatch(string.Empty, false));
+
+            _view.ClickLeave();
+            _lobbyService.CompleteLeave();
+            await run;
+
+            Assert.IsEmpty(_lobbyService.RemovedPlayerIds);
         });
 
         [Test]
@@ -298,7 +333,7 @@ namespace Code.Tests {
         // LobbyFlow has no initial await, so the view is running as soon as this returns.
         private UniTask<LobbyFlowResult> StartFlow(LobbyFlowData data) {
             var flow = new LobbyFlow(data, _view, _lobbyService, new LobbyCreator(_lobbyService, _status, _currentLobby),
-                new LobbyStartRules(_status, _currentLobby), _status, _currentLobby);
+                new LobbyStartRules(_status, _currentLobby), new MissingPlayerRemover(_lobbyService, _currentLobby), _status, _currentLobby);
             return flow.RunAsync(_cancellation.Token).Preserve();
         }
     }

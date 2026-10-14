@@ -81,6 +81,26 @@ namespace Code.Tests {
         }
 
         [Test]
+        public void WaitsForPlayersToReturnFromMatch() {
+            _status.SetStatus(LobbyStatus.Ready);
+            _currentLobby.SetCurrentLobby(new LobbyState(true, "XYZ", 4, new[] {
+                new LobbyPlayer("host", "Luka", true, true), new LobbyPlayer("ana", "Ana", false, false)
+            }, true, string.Empty));
+
+            var data = _gatherer.Get();
+
+            Assert.IsFalse(data.CanStartMatch);
+            Assert.AreEqual("Waiting for players to return...", data.StatusText);
+        }
+
+        [Test]
+        public void ShowsRemovedFromLobby() {
+            _status.SetStatus(LobbyStatus.Removed);
+
+            Assert.AreEqual("You were removed from the lobby", _gatherer.Get().StatusText);
+        }
+
+        [Test]
         public void HidesStartButtonWithoutALobby() {
             _status.SetStatus(LobbyStatus.Ready);
 

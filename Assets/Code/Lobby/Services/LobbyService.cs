@@ -15,6 +15,8 @@ namespace Code.Lobby {
         private const string DATA_HOLDER_NAME = "LobbyDataHolder";
         // The lobby property UnityLobbyProvider creates for the relay join code.
         private const string MATCH_JOIN_CODE_KEY = "JoinCode";
+        // The player data key UnityLobbyProvider reads into LobbyUser.IsInLobby.
+        private const string IN_LOBBY_KEY = "InLobby";
 
         public event Action<LobbyState> LobbyUpdated = delegate { };
 
@@ -110,6 +112,35 @@ namespace Code.Lobby {
             await _provider.SetLobbyDataAsync(MATCH_JOIN_CODE_KEY, string.Empty);
         }
 
+        public async UniTask SetInLobby(bool isInLobby) {
+            await _provider.SetPlayerDataAsync(IN_LOBBY_KEY, isInLobby.ToString());
+        }
+
+        public async UniTask<bool> ReturnToLobby() {
+            if (!_currentLobby.IsValid) {
+                return false;
+            }
+
+            if (!await IsStillMember()) {
+                SetCurrentLobby(default);
+                return false;
+            }
+            await SetInLobby(true);
+            return true;
+        }
+
+        public async UniTask RemovePlayers(IReadOnlyList<string> playerIds) {
+            // PurrLobby's provider can only remove the local player, so this uses the SDK directly.
+            foreach (var playerId in playerIds) {
+                try {
+                    await UnityLobbies.LobbyService.Instance.RemovePlayerAsync(_currentLobby.LobbyId, playerId);
+                }
+                catch (UnityLobbies.LobbyServiceException exception) {
+                    Debug.LogException(exception);
+                }
+            }
+        }
+
         public void Dispose() {
             _isDisposed = true;
             _provider.OnLobbyUpdated -= OnProviderLobbyUpdated;
@@ -148,6 +179,19 @@ namespace Code.Lobby {
                 players.Add(new LobbyPlayer(member.Id, member.DisplayName, member.IsInLobby, member.Id == _provider.LocalPlayerId));
             }
             return new LobbyState(true, lobby.LobbyCode, lobby.MaxPlayers, players, lobby.IsOwner, GetMatchJoinCode(lobby));
+        }
+
+        // Asks Unity Lobby, because PurrLobby doesn't notice being removed and keeps the old lobby.
+        private async UniTask<bool> IsStillMember() {
+            try {
+                var lobby = await UnityLobbies.LobbyService.Instance.GetLobbyAsync(_currentLobby.LobbyId);
+                return lobby.Players.Exists(player => player.Id == _provider.LocalPlayerId);
+            }
+            catch (UnityLobbies.LobbyServiceException exception) {
+                // Removed players can't read the lobby any more; other errors don't mean the player was removed.
+                return exception.Reason != UnityLobbies.LobbyExceptionReason.Forbidden
+                       && exception.Reason != UnityLobbies.LobbyExceptionReason.LobbyNotFound;
+            }
         }
 
         private LobbyJoinFailure GetJoinFailure() {

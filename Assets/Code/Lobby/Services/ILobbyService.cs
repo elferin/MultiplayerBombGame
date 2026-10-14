@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 
@@ -19,5 +20,12 @@ namespace Code.Lobby {
         UniTask StartMatch(string joinCode);
         // Unlocks the lobby and clears the join code, so the next match can start.
         UniTask EndMatch();
+        // Marks the local player as on the lobby screen or in a match; the host only starts when everyone is back.
+        UniTask SetInLobby(bool isInLobby);
+        // Back from a match: marks the local player as in the lobby.
+        // False if the host removed them in the meantime; the lobby is then gone for this player.
+        UniTask<bool> ReturnToLobby();
+        // Host only.
+        UniTask RemovePlayers(IReadOnlyList<string> playerIds);
     }
 }

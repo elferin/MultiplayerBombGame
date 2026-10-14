@@ -24,11 +24,21 @@ namespace Code.Lobby {
         }
 
         public bool CanStart() {
-            return IsStartOffered() && HasEnoughPlayers();
+            return IsStartOffered() && HasEnoughPlayers() && AreAllPlayersBack();
         }
 
         public bool HasEnoughPlayers() {
             return _currentLobbyGetter.GetCurrentLobby().Players.Count >= MIN_PLAYERS_TO_START;
+        }
+
+        // Everyone has come back from the last match. The host's own flag is skipped, since the host is on this screen.
+        public bool AreAllPlayersBack() {
+            foreach (var player in _currentLobbyGetter.GetCurrentLobby().Players) {
+                if (!player.IsLocal && !player.IsInLobby) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

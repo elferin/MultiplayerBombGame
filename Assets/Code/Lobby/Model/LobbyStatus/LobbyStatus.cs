@@ -5,6 +5,8 @@ namespace Code.Lobby {
         Failed,
         Leaving,
         // The last match failed to start; the host can try again.
-        StartFailed
+        StartFailed,
+        // The host removed this player for not coming back from a match in time.
+        Removed
     }
 }
