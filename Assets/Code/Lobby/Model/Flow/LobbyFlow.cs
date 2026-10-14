@@ -52,20 +52,7 @@ namespace Code.Lobby {
                 CheckMatchStarted(_currentLobby.GetCurrentLobby());
 
                 var exit = await _exitRequested.Task.AttachExternalCancellation(cancellation);
-                if (exit == LobbyFlowExit.Leave) {
-                    if (isInLobby) {
-                        _status.SetStatus(LobbyStatus.Leaving);
-                        _viewController.Refresh();
-                        await _lobbyService.LeaveLobby();
-                        isInLobby = false;
-                    }
-                }
-                else {
-                    // The match is played with this lobby, so it stays joined.
-                    // The host waits for everyone to be back on this screen before the next match.
-                    await _lobbyService.SetInLobby(false);
-                    SetMatchResult(flowResult, exit);
-                }
+                isInLobby = await HandleExit(exit, isInLobby, flowResult);
 
                 _viewController.Close();
                 await viewRun;
@@ -120,6 +107,23 @@ namespace Code.Lobby {
                 return LobbyStatus.Failed;
             }
             return _data.MatchStartFailed ? LobbyStatus.StartFailed : LobbyStatus.Ready;
+        }
+
+        // Leaves the lobby, or gets ready for the match. Returns whether the player is still in the lobby.
+        private async UniTask<bool> HandleExit(LobbyFlowExit exit, bool isInLobby, LobbyFlowResult flowResult) {
+            if (exit != LobbyFlowExit.Leave) {
+                // The match is played with this lobby, so it stays joined.
+                // The host waits for everyone to be back on this screen before the next match.
+                await _lobbyService.SetInLobby(false);
+                SetMatchResult(flowResult, exit);
+                return isInLobby;
+            }
+            if (isInLobby) {
+                _status.SetStatus(LobbyStatus.Leaving);
+                _viewController.Refresh();
+                await _lobbyService.LeaveLobby();
+            }
+            return false;
         }
 
         private void SetMatchResult(LobbyFlowResult flowResult, LobbyFlowExit exit) {
