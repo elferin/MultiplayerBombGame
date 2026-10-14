@@ -100,7 +100,7 @@ namespace Code.Tests {
             _joinLobby.SetLobbyCode("ABC123");
             var join = _joiner.TryJoinLobby("Luka", _cancellation.Token);
 
-            _lobbyService.SucceedJoin(new LobbyState(true, "ABC123", 4, new[] { "Ana", "Luka" }, false, "RELAY1"));
+            _lobbyService.SucceedJoin(new LobbyState(true, "ABC123", 4, FakeLobbyService.CreatePlayers("Ana", "Luka"), false, "RELAY1"));
             Assert.IsTrue(_lobbyService.IsLeavePending);
             _lobbyService.CompleteLeave();
 

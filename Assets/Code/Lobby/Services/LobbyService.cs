@@ -143,11 +143,11 @@ namespace Code.Lobby {
                 return LobbyState.None;
             }
 
-            var playerNames = new List<string>();
+            var players = new List<LobbyPlayer>();
             foreach (var member in lobby.Members) {
-                playerNames.Add(member.DisplayName);
+                players.Add(new LobbyPlayer(member.Id, member.DisplayName, member.IsInLobby, member.Id == _provider.LocalPlayerId));
             }
-            return new LobbyState(true, lobby.LobbyCode, lobby.MaxPlayers, playerNames, lobby.IsOwner, GetMatchJoinCode(lobby));
+            return new LobbyState(true, lobby.LobbyCode, lobby.MaxPlayers, players, lobby.IsOwner, GetMatchJoinCode(lobby));
         }
 
         private LobbyJoinFailure GetJoinFailure() {

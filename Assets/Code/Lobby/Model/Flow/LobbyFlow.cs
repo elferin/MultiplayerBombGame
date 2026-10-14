@@ -106,7 +106,7 @@ namespace Code.Lobby {
             flowResult.ShouldStartMatch = true;
             flowResult.IsHost = exit == LobbyFlowExit.StartAsHost;
             flowResult.MaxPlayers = lobby.MaxPlayers;
-            flowResult.PlayerCount = lobby.PlayerNames.Count;
+            flowResult.PlayerCount = lobby.Players.Count;
             flowResult.MatchJoinCode = flowResult.IsHost ? string.Empty : lobby.MatchJoinCode;
         }
 

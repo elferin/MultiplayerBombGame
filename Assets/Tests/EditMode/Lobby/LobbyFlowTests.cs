@@ -288,11 +288,11 @@ namespace Code.Tests {
         });
 
         private static LobbyState CreateJoinedLobby(string matchJoinCode) {
-            return new LobbyState(true, "ABC123", 4, new[] { "Ana", "Luka" }, false, matchJoinCode);
+            return new LobbyState(true, "ABC123", 4, FakeLobbyService.CreatePlayers("Ana", "Luka"), false, matchJoinCode);
         }
 
         private static LobbyState CreateHostedLobby(string matchJoinCode) {
-            return new LobbyState(true, "ABC123", 4, new[] { "Luka", "Ana" }, true, matchJoinCode);
+            return new LobbyState(true, "ABC123", 4, FakeLobbyService.CreatePlayers("Luka", "Ana"), true, matchJoinCode);
         }
 
         // LobbyFlow has no initial await, so the view is running as soon as this returns.

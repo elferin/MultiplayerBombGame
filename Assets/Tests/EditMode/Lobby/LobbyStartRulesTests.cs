@@ -51,7 +51,7 @@ namespace Code.Tests {
             for (var i = 0; i < playerCount; i++) {
                 names[i] = "Player" + i;
             }
-            return new LobbyState(true, "XYZ", 4, names, isOwner, string.Empty);
+            return new LobbyState(true, "XYZ", 4, FakeLobbyService.CreatePlayers(names), isOwner, string.Empty);
         }
     }
 }

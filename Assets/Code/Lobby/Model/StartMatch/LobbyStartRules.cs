@@ -28,7 +28,7 @@ namespace Code.Lobby {
         }
 
         public bool HasEnoughPlayers() {
-            return _currentLobbyGetter.GetCurrentLobby().PlayerNames.Count >= MIN_PLAYERS_TO_START;
+            return _currentLobbyGetter.GetCurrentLobby().Players.Count >= MIN_PLAYERS_TO_START;
         }
     }
 }

@@ -109,7 +109,16 @@ namespace Code.Tests {
 
         // A lobby the local player created, so they are its host.
         public static LobbyState CreateLobbyState(string code, int maxPlayers, params string[] playerNames) {
-            return new LobbyState(true, code, maxPlayers, new List<string>(playerNames), true, string.Empty);
+            return new LobbyState(true, code, maxPlayers, CreatePlayers(playerNames), true, string.Empty);
+        }
+
+        // Players who are all on the lobby screen; the first one is the local player.
+        public static List<LobbyPlayer> CreatePlayers(params string[] names) {
+            var players = new List<LobbyPlayer>();
+            for (var i = 0; i < names.Length; i++) {
+                players.Add(new LobbyPlayer(names[i], names[i], true, i == 0));
+            }
+            return players;
         }
 
         private static void Answer<T>(ref UniTaskCompletionSource<T> pending, T result) {

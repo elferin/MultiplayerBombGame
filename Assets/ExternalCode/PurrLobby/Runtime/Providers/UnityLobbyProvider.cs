@@ -246,6 +246,8 @@ namespace PurrLobby.Providers {
                         Id = player.Id,
                         DisplayName = player.Data["Name"]?.Value,
                         IsReady = player.Data["IsReady"]?.Value == "True",
+                        // Manual edit: players who never set it have just joined, so they are in the lobby.
+                        IsInLobby = !player.Data.TryGetValue("InLobby", out var inLobby) || inLobby.Value == "True",
                         Avatar = null
                     });
                 } catch { } //player dataobject can throw

@@ -51,9 +51,9 @@ namespace Code.Lobby {
 
         private string GetPlayersText(LobbyState lobby) {
             var players = new StringBuilder();
-            players.Append(string.Format(PLAYER_COUNT_FORMAT, lobby.PlayerNames.Count, lobby.MaxPlayers));
-            foreach (var playerName in lobby.PlayerNames) {
-                players.Append('\n').Append(playerName);
+            players.Append(string.Format(PLAYER_COUNT_FORMAT, lobby.Players.Count, lobby.MaxPlayers));
+            foreach (var player in lobby.Players) {
+                players.Append('\n').Append(player.Name);
             }
             return players.ToString();
         }
