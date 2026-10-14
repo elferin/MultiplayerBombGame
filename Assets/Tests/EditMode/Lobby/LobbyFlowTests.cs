@@ -35,7 +35,7 @@ namespace Code.Tests {
 
         [Test]
         public void CreatingShowsCreatingWhileRequestIsPending() {
-            StartFlow(LobbyFlowArgs.CreateLobby(6, "Luka"));
+            StartFlow(LobbyFlowData.CreateLobby(6, "Luka"));
 
             Assert.IsTrue(_view.IsRunning);
             Assert.AreEqual(LobbyStatus.Creating, _status.GetStatus());
@@ -48,7 +48,7 @@ namespace Code.Tests {
             _status.SetStatus(LobbyStatus.Failed);
             _currentLobby.SetCurrentLobby(FakeLobbyService.CreateLobbyState("OLD123", 4, "Luka"));
 
-            StartFlow(LobbyFlowArgs.CreateLobby(4, "Luka"));
+            StartFlow(LobbyFlowData.CreateLobby(4, "Luka"));
 
             Assert.AreEqual(LobbyStatus.Creating, _status.GetStatus());
             Assert.AreSame(LobbyState.None, _currentLobby.GetCurrentLobby());
@@ -56,7 +56,7 @@ namespace Code.Tests {
 
         [Test]
         public void CreatedLobbyIsShownAsReady() {
-            StartFlow(LobbyFlowArgs.CreateLobby(6, "Luka"));
+            StartFlow(LobbyFlowData.CreateLobby(6, "Luka"));
 
             _lobbyService.SucceedCreate();
 
@@ -67,7 +67,7 @@ namespace Code.Tests {
 
         [UnityTest]
         public IEnumerator LeavingLeavesLobbyThenCloses() => UniTask.ToCoroutine(async () => {
-            var run = StartFlow(LobbyFlowArgs.CreateLobby(6, "Luka"));
+            var run = StartFlow(LobbyFlowData.CreateLobby(6, "Luka"));
             _lobbyService.SucceedCreate();
 
             _view.ClickLeave();
@@ -85,7 +85,7 @@ namespace Code.Tests {
 
         [UnityTest]
         public IEnumerator StartClickEndsFlowAsHost() => UniTask.ToCoroutine(async () => {
-            var run = StartFlow(LobbyFlowArgs.CreateLobby(6, "Luka"));
+            var run = StartFlow(LobbyFlowData.CreateLobby(6, "Luka"));
             _lobbyService.SucceedCreate();
             _lobbyService.RaiseLobbyUpdated(FakeLobbyService.CreateLobbyState("NEW123", 6, "Luka", "Ana"));
 
@@ -105,7 +105,7 @@ namespace Code.Tests {
 
         [Test]
         public void StartClickIsIgnoredWhileHostIsAlone() {
-            StartFlow(LobbyFlowArgs.CreateLobby(6, "Luka"));
+            StartFlow(LobbyFlowData.CreateLobby(6, "Luka"));
             _lobbyService.SucceedCreate();
 
             _view.ClickStart();
@@ -117,7 +117,7 @@ namespace Code.Tests {
         [UnityTest]
         public IEnumerator JoinedPlayerEndsFlowWhenHostSharesJoinCode() => UniTask.ToCoroutine(async () => {
             _lobbyService.CurrentLobby = CreateJoinedLobby(string.Empty);
-            var run = StartFlow(LobbyFlowArgs.JoinedLobby());
+            var run = StartFlow(LobbyFlowData.JoinedLobby());
 
             _lobbyService.RaiseLobbyUpdated(CreateJoinedLobby("RELAY1"));
             var result = await run;
@@ -132,7 +132,7 @@ namespace Code.Tests {
         public void HostReturningFromMatchReopensLobby() {
             _lobbyService.CurrentLobby = CreateHostedLobby("RELAY1");
 
-            StartFlow(LobbyFlowArgs.ReturnFromMatch(string.Empty, false));
+            StartFlow(LobbyFlowData.ReturnFromMatch(string.Empty, false));
 
             Assert.AreEqual(1, _lobbyService.EndMatchCount);
             Assert.AreEqual(LobbyStatus.Ready, _status.GetStatus());
@@ -142,7 +142,7 @@ namespace Code.Tests {
         [UnityTest]
         public IEnumerator ReturningClientIgnoresUsedJoinCode() => UniTask.ToCoroutine(async () => {
             _lobbyService.CurrentLobby = CreateJoinedLobby("RELAY1");
-            var run = StartFlow(LobbyFlowArgs.ReturnFromMatch("RELAY1", false));
+            var run = StartFlow(LobbyFlowData.ReturnFromMatch("RELAY1", false));
 
             _lobbyService.RaiseLobbyUpdated(CreateJoinedLobby("RELAY1"));
             Assert.IsFalse(_view.IsClosed);
@@ -159,14 +159,14 @@ namespace Code.Tests {
         public void FailedMatchStartShowsStartFailed() {
             _lobbyService.CurrentLobby = CreateHostedLobby(string.Empty);
 
-            StartFlow(LobbyFlowArgs.ReturnFromMatch(string.Empty, true));
+            StartFlow(LobbyFlowData.ReturnFromMatch(string.Empty, true));
 
             Assert.AreEqual(LobbyStatus.StartFailed, _status.GetStatus());
         }
 
         [UnityTest]
         public IEnumerator LeavingDoesNotStartMatch() => UniTask.ToCoroutine(async () => {
-            var run = StartFlow(LobbyFlowArgs.CreateLobby(6, "Luka"));
+            var run = StartFlow(LobbyFlowData.CreateLobby(6, "Luka"));
             _lobbyService.SucceedCreate();
 
             _view.ClickLeave();
@@ -178,7 +178,7 @@ namespace Code.Tests {
 
         [UnityTest]
         public IEnumerator FailedCreateShowsFailedAndLeaveJustCloses() => UniTask.ToCoroutine(async () => {
-            var run = StartFlow(LobbyFlowArgs.CreateLobby(6, "Luka"));
+            var run = StartFlow(LobbyFlowData.CreateLobby(6, "Luka"));
 
             _lobbyService.FailCreate();
             Assert.AreEqual(LobbyStatus.Failed, _status.GetStatus());
@@ -192,7 +192,7 @@ namespace Code.Tests {
 
         [UnityTest]
         public IEnumerator LeaveClickedWhileCreatingLeavesOnceCreated() => UniTask.ToCoroutine(async () => {
-            var run = StartFlow(LobbyFlowArgs.CreateLobby(6, "Luka"));
+            var run = StartFlow(LobbyFlowData.CreateLobby(6, "Luka"));
 
             _view.ClickLeave();
             _lobbyService.SucceedCreate();
@@ -206,7 +206,7 @@ namespace Code.Tests {
         public void JoinedLobbyShowsCurrentLobbyWithoutCreating() {
             _lobbyService.CurrentLobby = FakeLobbyService.CreateLobbyState("ABC123", 4, "Ana", "Luka");
 
-            StartFlow(LobbyFlowArgs.JoinedLobby());
+            StartFlow(LobbyFlowData.JoinedLobby());
 
             Assert.AreEqual(0, _lobbyService.CreateCount);
             Assert.AreEqual(LobbyStatus.Ready, _status.GetStatus());
@@ -215,7 +215,7 @@ namespace Code.Tests {
 
         [Test]
         public void LobbyUpdatesRefreshTheView() {
-            StartFlow(LobbyFlowArgs.CreateLobby(4, "Luka"));
+            StartFlow(LobbyFlowData.CreateLobby(4, "Luka"));
             _lobbyService.SucceedCreate();
             var update = FakeLobbyService.CreateLobbyState("NEW123", 4, "Luka", "Ana");
 
@@ -227,7 +227,7 @@ namespace Code.Tests {
 
         [Test]
         public void InvalidLobbyUpdateIsIgnored() {
-            StartFlow(LobbyFlowArgs.CreateLobby(4, "Luka"));
+            StartFlow(LobbyFlowData.CreateLobby(4, "Luka"));
             _lobbyService.SucceedCreate();
             var lobby = _currentLobby.GetCurrentLobby();
 
@@ -239,7 +239,7 @@ namespace Code.Tests {
 
         [UnityTest]
         public IEnumerator UpdatesAfterFlowEndsAreIgnored() => UniTask.ToCoroutine(async () => {
-            var run = StartFlow(LobbyFlowArgs.CreateLobby(4, "Luka"));
+            var run = StartFlow(LobbyFlowData.CreateLobby(4, "Luka"));
             _lobbyService.SucceedCreate();
             _view.ClickLeave();
             _lobbyService.CompleteLeave();
@@ -253,7 +253,7 @@ namespace Code.Tests {
 
         [UnityTest]
         public IEnumerator CancellingInLobbyLeavesLobby() => UniTask.ToCoroutine(async () => {
-            var run = StartFlow(LobbyFlowArgs.CreateLobby(4, "Luka"));
+            var run = StartFlow(LobbyFlowData.CreateLobby(4, "Luka"));
             _lobbyService.SucceedCreate();
 
             _cancellation.Cancel();
@@ -272,7 +272,7 @@ namespace Code.Tests {
 
         [UnityTest]
         public IEnumerator CancellingWhileCreatingDoesNotLeave() => UniTask.ToCoroutine(async () => {
-            var run = StartFlow(LobbyFlowArgs.CreateLobby(4, "Luka"));
+            var run = StartFlow(LobbyFlowData.CreateLobby(4, "Luka"));
 
             _cancellation.Cancel();
             try {
@@ -296,8 +296,8 @@ namespace Code.Tests {
         }
 
         // LobbyFlow has no initial await, so the view is running as soon as this returns.
-        private UniTask<LobbyFlowResult> StartFlow(LobbyFlowArgs args) {
-            var flow = new LobbyFlow(args, _view, _lobbyService, new LobbyCreator(_lobbyService, _status, _currentLobby),
+        private UniTask<LobbyFlowResult> StartFlow(LobbyFlowData data) {
+            var flow = new LobbyFlow(data, _view, _lobbyService, new LobbyCreator(_lobbyService, _status, _currentLobby),
                 new LobbyStartRules(_status, _currentLobby), _status, _currentLobby);
             return flow.RunAsync(_cancellation.Token).Preserve();
         }

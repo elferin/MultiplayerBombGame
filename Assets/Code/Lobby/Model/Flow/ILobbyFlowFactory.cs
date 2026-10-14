@@ -1,5 +1,5 @@
 namespace Code.Lobby {
     public interface ILobbyFlowFactory {
-        ILobbyFlow Create(LobbyFlowArgs args);
+        ILobbyFlow Create(LobbyFlowData data);
     }
 }

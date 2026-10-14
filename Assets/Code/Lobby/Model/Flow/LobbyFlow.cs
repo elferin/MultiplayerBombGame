@@ -5,7 +5,7 @@ namespace Code.Lobby {
 
     public class LobbyFlow : ILobbyFlow {
 
-        private readonly LobbyFlowArgs _args;
+        private readonly LobbyFlowData _data;
         private readonly ILobbyViewControllerFactory _viewControllerFactory;
         private readonly ILobbyService _lobbyService;
         private readonly LobbyCreator _lobbyCreator;
@@ -16,9 +16,9 @@ namespace Code.Lobby {
         private ILobbyViewController _viewController;
         private UniTaskCompletionSource<LobbyFlowExit> _exitRequested;
 
-        public LobbyFlow(LobbyFlowArgs args, ILobbyViewControllerFactory viewControllerFactory, ILobbyService lobbyService,
+        public LobbyFlow(LobbyFlowData data, ILobbyViewControllerFactory viewControllerFactory, ILobbyService lobbyService,
             LobbyCreator lobbyCreator, LobbyStartRules startRules, ILobbyStatus status, ICurrentLobby currentLobby) {
-            _args = args;
+            _data = data;
             _viewControllerFactory = viewControllerFactory;
             _lobbyService = lobbyService;
             _lobbyCreator = lobbyCreator;
@@ -75,8 +75,8 @@ namespace Code.Lobby {
         }
 
         private UniTask<bool> GetLobby(CancellationToken cancellation) {
-            if (_args.CreatesLobby) {
-                return _lobbyCreator.TryCreateLobby(_args.MaxPlayers, _args.PlayerName, cancellation);
+            if (_data.CreatesLobby) {
+                return _lobbyCreator.TryCreateLobby(_data.MaxPlayers, _data.PlayerName, cancellation);
             }
             return GetJoinedLobby();
         }
@@ -88,7 +88,7 @@ namespace Code.Lobby {
             _status.SetStatus(GetJoinedStatus(lobby));
 
             // The host reopens the lobby so the next match can start.
-            if (_args.ReturnsFromMatch && lobby.IsOwner) {
+            if (_data.ReturnsFromMatch && lobby.IsOwner) {
                 await _lobbyService.EndMatch();
             }
             return lobby.IsValid;
@@ -98,7 +98,7 @@ namespace Code.Lobby {
             if (!lobby.IsValid) {
                 return LobbyStatus.Failed;
             }
-            return _args.MatchStartFailed ? LobbyStatus.StartFailed : LobbyStatus.Ready;
+            return _data.MatchStartFailed ? LobbyStatus.StartFailed : LobbyStatus.Ready;
         }
 
         private void SetMatchResult(LobbyFlowResult flowResult, LobbyFlowExit exit) {
@@ -112,7 +112,7 @@ namespace Code.Lobby {
 
         private void CheckMatchStarted(LobbyState lobby) {
             // The code of the match just played may still be in the lobby until the host clears it.
-            if (!lobby.IsOwner && !string.IsNullOrEmpty(lobby.MatchJoinCode) && lobby.MatchJoinCode != _args.UsedJoinCode) {
+            if (!lobby.IsOwner && !string.IsNullOrEmpty(lobby.MatchJoinCode) && lobby.MatchJoinCode != _data.UsedJoinCode) {
                 _exitRequested.TrySetResult(LobbyFlowExit.JoinStartedMatch);
             }
         }

@@ -34,18 +34,18 @@ namespace Code.DependancyInjection {
                         return;
                     }
 
-                    LobbyFlowArgs lobbyArgs;
+                    LobbyFlowData lobbyData;
                     if (mainMenuResult.ShouldHost) {
-                        lobbyArgs = LobbyFlowArgs.CreateLobby(mainMenuResult.MaxPlayers, mainMenuResult.PlayerName);
+                        lobbyData = LobbyFlowData.CreateLobby(mainMenuResult.MaxPlayers, mainMenuResult.PlayerName);
                     }
                     else if (mainMenuResult.HasJoinedLobby) {
-                        lobbyArgs = LobbyFlowArgs.JoinedLobby();
+                        lobbyData = LobbyFlowData.JoinedLobby();
                     }
                     else {
                         return;
                     }
 
-                    await RunLobbyAndMatches(lobbyArgs, cancellation);
+                    await RunLobbyAndMatches(lobbyData, cancellation);
                     // Leaving the lobby returns to the main menu.
                 }
             }
@@ -55,24 +55,24 @@ namespace Code.DependancyInjection {
         }
 
         // Every match returns to the lobby; only leaving the lobby ends this.
-        private async UniTask RunLobbyAndMatches(LobbyFlowArgs lobbyArgs, CancellationToken cancellation) {
+        private async UniTask RunLobbyAndMatches(LobbyFlowData lobbyData, CancellationToken cancellation) {
             while (true) {
-                var lobbyResult = await _lobbyFlowInstantiator.StartFlow(lobbyArgs, cancellation);
+                var lobbyResult = await _lobbyFlowInstantiator.StartFlow(lobbyData, cancellation);
                 if (!lobbyResult.ShouldStartMatch) {
                     return;
                 }
 
-                var matchResult = await _matchFlowInstantiator.StartFlow(GetMatchArgs(lobbyResult), cancellation);
-                lobbyArgs = LobbyFlowArgs.ReturnFromMatch(matchResult.UsedJoinCode, matchResult.StartFailed);
+                var matchResult = await _matchFlowInstantiator.StartFlow(GetMatchData(lobbyResult), cancellation);
+                lobbyData = LobbyFlowData.ReturnFromMatch(matchResult.UsedJoinCode, matchResult.StartFailed);
             }
         }
 
-        private MatchFlowArgs GetMatchArgs(LobbyFlowResult lobbyResult) {
+        private MatchFlowData GetMatchData(LobbyFlowResult lobbyResult) {
             if (lobbyResult.IsHost) {
                 // The host's join code reaches the other players through the lobby.
-                return MatchFlowArgs.Host(lobbyResult.MaxPlayers, lobbyResult.PlayerCount, _joinCodeSharer.ShareJoinCode);
+                return MatchFlowData.Host(lobbyResult.MaxPlayers, lobbyResult.PlayerCount, _joinCodeSharer.ShareJoinCode);
             }
-            return MatchFlowArgs.Client(lobbyResult.MatchJoinCode);
+            return MatchFlowData.Client(lobbyResult.MatchJoinCode);
         }
 
         private void Quit() {

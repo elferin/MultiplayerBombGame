@@ -1,5 +1,5 @@
 namespace Code.Match {
     public interface IMatchFlowFactory {
-        IMatchFlow Create(MatchFlowArgs args);
+        IMatchFlow Create(MatchFlowData data);
     }
 }

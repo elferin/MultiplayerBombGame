@@ -22,8 +22,8 @@ namespace Code.Lobby {
             _currentLobby = currentLobby;
         }
 
-        public ILobbyFlow Create(LobbyFlowArgs args) {
-            return new LobbyFlow(args, _viewControllerFactory, _lobbyService, _lobbyCreator, _startRules, _status, _currentLobby);
+        public ILobbyFlow Create(LobbyFlowData data) {
+            return new LobbyFlow(data, _viewControllerFactory, _lobbyService, _lobbyCreator, _startRules, _status, _currentLobby);
         }
     }
 }

@@ -17,8 +17,8 @@ namespace Code.Match {
             _status = status;
         }
 
-        public IMatchFlow Create(MatchFlowArgs args) {
-            return new MatchFlow(args, _viewControllerFactory, _network, _playerSpawner, _spawning, _status);
+        public IMatchFlow Create(MatchFlowData data) {
+            return new MatchFlow(data, _viewControllerFactory, _network, _playerSpawner, _spawning, _status);
         }
     }
 }

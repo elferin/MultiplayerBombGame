@@ -13,8 +13,8 @@ namespace Code.Lobby {
             _flowFactory = flowFactory;
         }
 
-        public UniTask<LobbyFlowResult> StartFlow(LobbyFlowArgs args, CancellationToken cancellation) {
-            return _flowFactory.Create(args).RunAsync(cancellation);
+        public UniTask<LobbyFlowResult> StartFlow(LobbyFlowData data, CancellationToken cancellation) {
+            return _flowFactory.Create(data).RunAsync(cancellation);
         }
     }
 }

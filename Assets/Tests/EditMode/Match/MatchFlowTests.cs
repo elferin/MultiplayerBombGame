@@ -37,7 +37,7 @@ namespace Code.Tests {
         [UnityTest]
         public IEnumerator HostSharesJoinCodeSpawnsAndStopsOnEnd() => UniTask.ToCoroutine(async () => {
             _network.ConnectedPlayerCount = 2;
-            var run = StartFlow(HostArgs(4, 2));
+            var run = StartFlow(HostData(4, 2));
 
             await UniTask.WaitUntil(() => _status.GetStatus() == MatchStatus.InProgress, cancellationToken: _cancellation.Token);
             Assert.AreEqual(4, _network.LastHostMaxPlayers);
@@ -60,7 +60,7 @@ namespace Code.Tests {
         public IEnumerator FailedHostStartReturnsStartFailed() => UniTask.ToCoroutine(async () => {
             _network.HostJoinCode = string.Empty;
 
-            var result = await StartFlow(HostArgs(4, 2));
+            var result = await StartFlow(HostData(4, 2));
 
             Assert.IsTrue(result.StartFailed);
             Assert.AreEqual(string.Empty, _sharedJoinCode);
@@ -71,7 +71,7 @@ namespace Code.Tests {
 
         [UnityTest]
         public IEnumerator ClientConnectsAndEndsWhenDisconnected() => UniTask.ToCoroutine(async () => {
-            var run = StartFlow(MatchFlowArgs.Client("RELAY1"));
+            var run = StartFlow(MatchFlowData.Client("RELAY1"));
 
             Assert.AreEqual("RELAY1", _network.LastClientJoinCode);
             Assert.AreEqual(MatchStatus.InProgress, _status.GetStatus());
@@ -91,22 +91,22 @@ namespace Code.Tests {
         public IEnumerator FailedClientStartReturnsStartFailed() => UniTask.ToCoroutine(async () => {
             _network.ClientSucceeds = false;
 
-            var result = await StartFlow(MatchFlowArgs.Client("RELAY1"));
+            var result = await StartFlow(MatchFlowData.Client("RELAY1"));
 
             Assert.IsTrue(result.StartFailed);
             Assert.AreEqual("RELAY1", result.UsedJoinCode);
             Assert.AreEqual(0, _network.StopCount);
         });
 
-        private MatchFlowArgs HostArgs(int maxPlayers, int playerCount) {
-            return MatchFlowArgs.Host(maxPlayers, playerCount, joinCode => {
+        private MatchFlowData HostData(int maxPlayers, int playerCount) {
+            return MatchFlowData.Host(maxPlayers, playerCount, joinCode => {
                 _sharedJoinCode = joinCode;
                 return UniTask.CompletedTask;
             });
         }
 
-        private UniTask<MatchFlowResult> StartFlow(MatchFlowArgs args) {
-            var flow = new MatchFlow(args, _view, _network, new MatchPlayerSpawner(_network, _spawning), _spawning, _status);
+        private UniTask<MatchFlowResult> StartFlow(MatchFlowData data) {
+            var flow = new MatchFlow(data, _view, _network, new MatchPlayerSpawner(_network, _spawning), _spawning, _status);
             return flow.RunAsync(_cancellation.Token).Preserve();
         }
     }

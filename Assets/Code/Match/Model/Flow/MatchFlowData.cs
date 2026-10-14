@@ -4,7 +4,7 @@ using Cysharp.Threading.Tasks;
 namespace Code.Match {
 
     // Whether the local player hosts the match or joins the host's.
-    public class MatchFlowArgs {
+    public class MatchFlowData {
 
         public bool IsHost { get; }
         public int MaxPlayers { get; }
@@ -15,7 +15,7 @@ namespace Code.Match {
         // The host's join code a client connects with.
         public string JoinCode { get; }
 
-        private MatchFlowArgs(bool isHost, int maxPlayers, int playerCount, Func<string, UniTask> shareJoinCode, string joinCode) {
+        private MatchFlowData(bool isHost, int maxPlayers, int playerCount, Func<string, UniTask> shareJoinCode, string joinCode) {
             IsHost = isHost;
             MaxPlayers = maxPlayers;
             PlayerCount = playerCount;
@@ -23,12 +23,12 @@ namespace Code.Match {
             JoinCode = joinCode;
         }
 
-        public static MatchFlowArgs Host(int maxPlayers, int playerCount, Func<string, UniTask> shareJoinCode) {
-            return new MatchFlowArgs(true, maxPlayers, playerCount, shareJoinCode, string.Empty);
+        public static MatchFlowData Host(int maxPlayers, int playerCount, Func<string, UniTask> shareJoinCode) {
+            return new MatchFlowData(true, maxPlayers, playerCount, shareJoinCode, string.Empty);
         }
 
-        public static MatchFlowArgs Client(string joinCode) {
-            return new MatchFlowArgs(false, 0, 0, null, joinCode);
+        public static MatchFlowData Client(string joinCode) {
+            return new MatchFlowData(false, 0, 0, null, joinCode);
         }
     }
 }

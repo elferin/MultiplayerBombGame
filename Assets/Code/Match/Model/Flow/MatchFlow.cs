@@ -6,7 +6,7 @@ namespace Code.Match {
     // Starts the match network, spawns the players on the host, and stops the network when the match ends.
     public class MatchFlow : IMatchFlow {
 
-        private readonly MatchFlowArgs _args;
+        private readonly MatchFlowData _data;
         private readonly IMatchViewControllerFactory _viewControllerFactory;
         private readonly IMatchNetwork _network;
         private readonly MatchPlayerSpawner _playerSpawner;
@@ -16,9 +16,9 @@ namespace Code.Match {
         private IMatchViewController _viewController;
         private UniTaskCompletionSource _endRequested;
 
-        public MatchFlow(MatchFlowArgs args, IMatchViewControllerFactory viewControllerFactory, IMatchNetwork network,
+        public MatchFlow(MatchFlowData data, IMatchViewControllerFactory viewControllerFactory, IMatchNetwork network,
             MatchPlayerSpawner playerSpawner, IPlayerSpawning spawning, IMatchStatus status) {
-            _args = args;
+            _data = data;
             _viewControllerFactory = viewControllerFactory;
             _network = network;
             _playerSpawner = playerSpawner;
@@ -30,7 +30,7 @@ namespace Code.Match {
             var flowResult = new MatchFlowResult();
             _viewController = _viewControllerFactory.CreateViewController();
             _endRequested = new UniTaskCompletionSource();
-            _status.SetIsHost(_args.IsHost);
+            _status.SetIsHost(_data.IsHost);
             _status.SetStatus(MatchStatus.Starting);
             var isConnected = false;
 
@@ -38,14 +38,14 @@ namespace Code.Match {
             try {
                 var viewRun = _viewController.RunAsync(cancellation);
 
-                flowResult.UsedJoinCode = _args.IsHost ? await StartHost(cancellation) : _args.JoinCode;
-                isConnected = _args.IsHost
+                flowResult.UsedJoinCode = _data.IsHost ? await StartHost(cancellation) : _data.JoinCode;
+                isConnected = _data.IsHost
                     ? !string.IsNullOrEmpty(flowResult.UsedJoinCode)
-                    : await _network.StartClient(_args.JoinCode, cancellation);
+                    : await _network.StartClient(_data.JoinCode, cancellation);
 
                 if (isConnected) {
-                    if (_args.IsHost) {
-                        await _playerSpawner.SpawnWhenAllJoined(_args.PlayerCount, cancellation);
+                    if (_data.IsHost) {
+                        await _playerSpawner.SpawnWhenAllJoined(_data.PlayerCount, cancellation);
                     }
                     _status.SetStatus(MatchStatus.InProgress);
                     _viewController.Refresh();
@@ -66,7 +66,7 @@ namespace Code.Match {
 
                 if (isConnected) {
                     _network.Stop();
-                    if (_args.IsHost) {
+                    if (_data.IsHost) {
                         // The next match waits for everyone again before spawning.
                         _spawning.StopSpawning();
                     }
@@ -78,10 +78,10 @@ namespace Code.Match {
 
         // Returns the join code, or an empty string if the network didn't start.
         private async UniTask<string> StartHost(CancellationToken cancellation) {
-            var joinCode = await _network.StartHost(_args.MaxPlayers, cancellation);
+            var joinCode = await _network.StartHost(_data.MaxPlayers, cancellation);
             if (!string.IsNullOrEmpty(joinCode)) {
                 // The other players start their clients when the code reaches them.
-                await _args.ShareJoinCode(joinCode);
+                await _data.ShareJoinCode(joinCode);
             }
             return joinCode;
         }

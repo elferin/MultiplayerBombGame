@@ -13,8 +13,8 @@ namespace Code.Match {
             _flowFactory = flowFactory;
         }
 
-        public UniTask<MatchFlowResult> StartFlow(MatchFlowArgs args, CancellationToken cancellation) {
-            return _flowFactory.Create(args).RunAsync(cancellation);
+        public UniTask<MatchFlowResult> StartFlow(MatchFlowData data, CancellationToken cancellation) {
+            return _flowFactory.Create(data).RunAsync(cancellation);
         }
     }
 }
