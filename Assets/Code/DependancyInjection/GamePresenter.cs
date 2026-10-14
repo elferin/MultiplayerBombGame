@@ -14,13 +14,16 @@ namespace Code.DependancyInjection {
         private readonly LobbyFlowInstantiator _lobbyFlowInstantiator;
         private readonly MatchFlowInstantiator _matchFlowInstantiator;
         private readonly MatchJoinCodeSharer _joinCodeSharer;
+        private readonly MatchJoinCodeReceiver _joinCodeReceiver;
 
         public GamePresenter(MainMenuFlowInstantiator mainMenuFlowInstantiator, LobbyFlowInstantiator lobbyFlowInstantiator,
-            MatchFlowInstantiator matchFlowInstantiator, MatchJoinCodeSharer joinCodeSharer) {
+            MatchFlowInstantiator matchFlowInstantiator, MatchJoinCodeSharer joinCodeSharer,
+            MatchJoinCodeReceiver joinCodeReceiver) {
             _mainMenuFlowInstantiator = mainMenuFlowInstantiator;
             _lobbyFlowInstantiator = lobbyFlowInstantiator;
             _matchFlowInstantiator = matchFlowInstantiator;
             _joinCodeSharer = joinCodeSharer;
+            _joinCodeReceiver = joinCodeReceiver;
         }
 
         // The token is cancelled when the lifetime scope is destroyed, e.g. when Play mode ends.
@@ -56,23 +59,28 @@ namespace Code.DependancyInjection {
 
         // Every match returns to the lobby; only leaving the lobby ends this.
         private async UniTask RunLobbyAndMatches(LobbyFlowData lobbyData, CancellationToken cancellation) {
+            // The last match's code can stay in the lobby for a moment, so it isn't taken for the next match's.
+            var usedJoinCode = string.Empty;
             while (true) {
                 var lobbyResult = await _lobbyFlowInstantiator.StartFlow(lobbyData, cancellation);
                 if (!lobbyResult.ShouldStartMatch) {
                     return;
                 }
 
-                var matchResult = await _matchFlowInstantiator.StartFlow(GetMatchData(lobbyResult), cancellation);
-                lobbyData = LobbyFlowData.ReturnFromMatch(matchResult.UsedJoinCode, matchResult.StartFailed);
+                var matchResult = await _matchFlowInstantiator.StartFlow(GetMatchData(lobbyResult, usedJoinCode), cancellation);
+                if (!string.IsNullOrEmpty(matchResult.UsedJoinCode)) {
+                    usedJoinCode = matchResult.UsedJoinCode;
+                }
+                lobbyData = LobbyFlowData.ReturnFromMatch(usedJoinCode, matchResult.StartFailed);
             }
         }
 
-        private MatchFlowData GetMatchData(LobbyFlowResult lobbyResult) {
+        // The host's join code reaches the other players through the lobby.
+        private MatchFlowData GetMatchData(LobbyFlowResult lobbyResult, string usedJoinCode) {
             if (lobbyResult.IsHost) {
-                // The host's join code reaches the other players through the lobby.
                 return MatchFlowData.Host(lobbyResult.MaxPlayers, lobbyResult.PlayerCount, _joinCodeSharer.ShareJoinCode);
             }
-            return MatchFlowData.Client(lobbyResult.MatchJoinCode);
+            return MatchFlowData.Client(cancellation => _joinCodeReceiver.WaitForJoinCode(usedJoinCode, cancellation));
         }
 
         private void Quit() {

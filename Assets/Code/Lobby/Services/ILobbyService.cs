@@ -18,8 +18,10 @@ namespace Code.Lobby {
         UniTask LeaveLobby();
         // Locks the lobby so nobody new can join, then shares the match's join code with everyone in it.
         UniTask StartMatch(string joinCode);
-        // Unlocks the lobby and clears the join code, so the next match can start.
+        // Unlocks the lobby and clears the join code and the starting flag, so the next match can start.
         UniTask EndMatch();
+        // Tells everyone in the lobby that the host tapped Start, before the join code is ready.
+        UniTask AnnounceMatchStart();
         // Marks the local player as on the lobby screen or in a match; the host only starts when everyone is back.
         UniTask SetInLobby(bool isInLobby);
         // Back from a match: marks the local player as in the lobby.

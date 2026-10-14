@@ -14,8 +14,8 @@ namespace Code.Tests {
             _gatherer = new MatchViewDataGatherer(_status);
         }
 
-        [TestCase(true, MatchStatus.Starting, "Starting match...")]
-        [TestCase(false, MatchStatus.Starting, "Joining match...")]
+        [TestCase(true, MatchStatus.Starting, "Match is starting...")]
+        [TestCase(false, MatchStatus.Starting, "Match is starting...")]
         [TestCase(true, MatchStatus.InProgress, "")]
         [TestCase(false, MatchStatus.InProgress, "")]
         public void ShowsStatusText(bool isHost, MatchStatus status, string expected) {

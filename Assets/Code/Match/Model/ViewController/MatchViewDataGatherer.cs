@@ -2,8 +2,7 @@ namespace Code.Match {
 
     public class MatchViewDataGatherer : IViewDataGatherer<MatchViewData> {
 
-        private const string STARTING_MATCH = "Starting match...";
-        private const string JOINING_MATCH = "Joining match...";
+        private const string MATCH_STARTING = "Match is starting...";
 
         private readonly IMatchStatusGetter _statusGetter;
 
@@ -18,10 +17,7 @@ namespace Code.Match {
         }
 
         private string GetStatusText(bool isInProgress) {
-            if (isInProgress) {
-                return string.Empty;
-            }
-            return _statusGetter.IsHost() ? STARTING_MATCH : JOINING_MATCH;
+            return isInProgress ? string.Empty : MATCH_STARTING;
         }
     }
 }

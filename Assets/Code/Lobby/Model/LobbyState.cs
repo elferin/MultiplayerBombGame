@@ -5,7 +5,7 @@ namespace Code.Lobby {
     // The lobby as the rest of the game sees it, independent of the lobby provider.
     public class LobbyState {
 
-        public static readonly LobbyState None = new LobbyState(false, string.Empty, 0, new List<LobbyPlayer>(), false, string.Empty);
+        public static readonly LobbyState None = new LobbyState(false, string.Empty, 0, new List<LobbyPlayer>(), false, string.Empty, false);
 
         public bool IsValid { get; }
         public string Code { get; }
@@ -15,14 +15,18 @@ namespace Code.Lobby {
         public bool IsOwner { get; }
         // The relay join code the host shares when it starts the match; empty until then.
         public string MatchJoinCode { get; }
+        // The host tapped Start and is setting up the match network; the join code follows a few seconds later.
+        public bool IsMatchStarting { get; }
 
-        public LobbyState(bool isValid, string code, int maxPlayers, IReadOnlyList<LobbyPlayer> players, bool isOwner, string matchJoinCode) {
+        public LobbyState(bool isValid, string code, int maxPlayers, IReadOnlyList<LobbyPlayer> players, bool isOwner, string matchJoinCode,
+            bool isMatchStarting) {
             IsValid = isValid;
             Code = code;
             MaxPlayers = maxPlayers;
             Players = players;
             IsOwner = isOwner;
             MatchJoinCode = matchJoinCode;
+            IsMatchStarting = isMatchStarting;
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 
 namespace Code.Match {
@@ -12,23 +13,24 @@ namespace Code.Match {
         public int PlayerCount { get; }
         // Hands the host's join code to the other players once the network runs.
         public Func<string, UniTask> ShareJoinCode { get; }
-        // The host's join code a client connects with.
-        public string JoinCode { get; }
+        // Waits for the host's join code a client connects with; an empty string means the host's start failed.
+        public Func<CancellationToken, UniTask<string>> GetJoinCode { get; }
 
-        private MatchFlowData(bool isHost, int maxPlayers, int playerCount, Func<string, UniTask> shareJoinCode, string joinCode) {
+        private MatchFlowData(bool isHost, int maxPlayers, int playerCount, Func<string, UniTask> shareJoinCode,
+            Func<CancellationToken, UniTask<string>> getJoinCode) {
             IsHost = isHost;
             MaxPlayers = maxPlayers;
             PlayerCount = playerCount;
             ShareJoinCode = shareJoinCode;
-            JoinCode = joinCode;
+            GetJoinCode = getJoinCode;
         }
 
         public static MatchFlowData Host(int maxPlayers, int playerCount, Func<string, UniTask> shareJoinCode) {
-            return new MatchFlowData(true, maxPlayers, playerCount, shareJoinCode, string.Empty);
+            return new MatchFlowData(true, maxPlayers, playerCount, shareJoinCode, null);
         }
 
-        public static MatchFlowData Client(string joinCode) {
-            return new MatchFlowData(false, 0, 0, null, joinCode);
+        public static MatchFlowData Client(Func<CancellationToken, UniTask<string>> getJoinCode) {
+            return new MatchFlowData(false, 0, 0, null, getJoinCode);
         }
     }
 }

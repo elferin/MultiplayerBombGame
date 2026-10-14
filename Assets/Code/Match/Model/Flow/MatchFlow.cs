@@ -38,10 +38,12 @@ namespace Code.Match {
             try {
                 var viewRun = _viewController.RunAsync(cancellation);
 
-                flowResult.UsedJoinCode = _data.IsHost ? await StartHost(cancellation) : _data.JoinCode;
+                // Clients show "Match is starting..." while the host sets up the network and shares the code.
+                flowResult.UsedJoinCode = _data.IsHost ? await StartHost(cancellation) : await _data.GetJoinCode(cancellation);
+                var hasJoinCode = !string.IsNullOrEmpty(flowResult.UsedJoinCode);
                 isConnected = _data.IsHost
-                    ? !string.IsNullOrEmpty(flowResult.UsedJoinCode)
-                    : await _network.StartClient(_data.JoinCode, cancellation);
+                    ? hasJoinCode
+                    : hasJoinCode && await _network.StartClient(flowResult.UsedJoinCode, cancellation);
 
                 if (isConnected) {
                     if (_data.IsHost) {

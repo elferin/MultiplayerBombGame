@@ -66,7 +66,7 @@ namespace Code.Tests {
         }
 
         private LobbyState CreateLobbyWithPlayers(params LobbyPlayer[] players) {
-            return new LobbyState(true, "XYZ", 4, players, true, string.Empty);
+            return new LobbyState(true, "XYZ", 4, players, true, string.Empty, false);
         }
 
         private LobbyState CreateLobby(bool isOwner, int playerCount) {
@@ -74,7 +74,7 @@ namespace Code.Tests {
             for (var i = 0; i < playerCount; i++) {
                 names[i] = "Player" + i;
             }
-            return new LobbyState(true, "XYZ", 4, FakeLobbyService.CreatePlayers(names), isOwner, string.Empty);
+            return new LobbyState(true, "XYZ", 4, FakeLobbyService.CreatePlayers(names), isOwner, string.Empty, false);
         }
     }
 }

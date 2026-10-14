@@ -33,6 +33,7 @@ namespace Code.Tests {
         public string MatchJoinCode { get; private set; } = string.Empty;
         public bool IsLocked { get; private set; }
         public int EndMatchCount { get; private set; }
+        public bool IsMatchStartAnnounced { get; private set; }
         // Null until SetInLobby is called.
         public bool? LastInLobby { get; private set; }
         public int ReturnCount { get; private set; }
@@ -104,8 +105,14 @@ namespace Code.Tests {
 
         public UniTask EndMatch() {
             EndMatchCount++;
+            IsMatchStartAnnounced = false;
             IsLocked = false;
             MatchJoinCode = string.Empty;
+            return UniTask.CompletedTask;
+        }
+
+        public UniTask AnnounceMatchStart() {
+            IsMatchStartAnnounced = true;
             return UniTask.CompletedTask;
         }
 
@@ -136,7 +143,7 @@ namespace Code.Tests {
 
         // A lobby the local player created, so they are its host.
         public static LobbyState CreateLobbyState(string code, int maxPlayers, params string[] playerNames) {
-            return new LobbyState(true, code, maxPlayers, CreatePlayers(playerNames), true, string.Empty);
+            return new LobbyState(true, code, maxPlayers, CreatePlayers(playerNames), true, string.Empty, false);
         }
 
         // Players who are all on the lobby screen; the first one is the local player.

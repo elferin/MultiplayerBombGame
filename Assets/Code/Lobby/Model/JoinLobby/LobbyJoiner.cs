@@ -26,7 +26,7 @@ namespace Code.Lobby {
             }
 
             // Joined in the moment between the host starting the match and the lobby being locked.
-            if (!string.IsNullOrEmpty(lobby.MatchJoinCode)) {
+            if (lobby.IsMatchStarting || !string.IsNullOrEmpty(lobby.MatchJoinCode)) {
                 await _lobbyService.LeaveLobby();
                 _joinLobby.SetJoinStatus(JoinLobbyStatus.MatchInProgress);
                 return false;

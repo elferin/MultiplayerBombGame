@@ -100,8 +100,21 @@ namespace Code.Tests {
             _joinLobby.SetLobbyCode("ABC123");
             var join = _joiner.TryJoinLobby("Luka", _cancellation.Token);
 
-            _lobbyService.SucceedJoin(new LobbyState(true, "ABC123", 4, FakeLobbyService.CreatePlayers("Ana", "Luka"), false, "RELAY1"));
+            _lobbyService.SucceedJoin(new LobbyState(true, "ABC123", 4, FakeLobbyService.CreatePlayers("Ana", "Luka"), false, "RELAY1", false));
             Assert.IsTrue(_lobbyService.IsLeavePending);
+            _lobbyService.CompleteLeave();
+
+            Assert.IsFalse(await join);
+            Assert.AreEqual(1, _lobbyService.LeaveCount);
+            Assert.AreEqual(JoinLobbyStatus.MatchInProgress, _joinLobby.GetJoinStatus());
+        });
+
+        [UnityTest]
+        public IEnumerator JoiningStartingMatchLeavesAndShowsMatchInProgress() => UniTask.ToCoroutine(async () => {
+            _joinLobby.SetLobbyCode("ABC123");
+            var join = _joiner.TryJoinLobby("Luka", _cancellation.Token);
+
+            _lobbyService.SucceedJoin(new LobbyState(true, "ABC123", 4, FakeLobbyService.CreatePlayers("Ana", "Luka"), false, string.Empty, true));
             _lobbyService.CompleteLeave();
 
             Assert.IsFalse(await join);

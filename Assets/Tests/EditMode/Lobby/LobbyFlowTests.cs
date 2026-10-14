@@ -100,6 +100,7 @@ namespace Code.Tests {
             Assert.AreEqual(2, result.PlayerCount);
             Assert.AreEqual(string.Empty, result.MatchJoinCode);
             Assert.AreEqual(false, _lobbyService.LastInLobby);
+            Assert.IsTrue(_lobbyService.IsMatchStartAnnounced);
             // The match locks the lobby once its network runs, not the lobby flow.
             Assert.IsFalse(_lobbyService.IsLocked);
             Assert.AreEqual(0, _lobbyService.LeaveCount);
@@ -139,8 +140,32 @@ namespace Code.Tests {
             Assert.IsFalse(result.IsHost);
             Assert.AreEqual("RELAY1", result.MatchJoinCode);
             Assert.AreEqual(false, _lobbyService.LastInLobby);
+            Assert.IsFalse(_lobbyService.IsMatchStartAnnounced);
             Assert.AreEqual(0, _lobbyService.LeaveCount);
         });
+
+        [UnityTest]
+        public IEnumerator ClientLeavesLobbyScreenAsSoonAsHostStarts() => UniTask.ToCoroutine(async () => {
+            _lobbyService.CurrentLobby = CreateJoinedLobby(string.Empty);
+            var run = StartFlow(LobbyFlowData.JoinedLobby());
+
+            _lobbyService.RaiseLobbyUpdated(CreateStartingLobby(string.Empty));
+            var result = await run;
+
+            Assert.IsTrue(result.ShouldStartMatch);
+            Assert.IsFalse(result.IsHost);
+            // The join code reaches the client on the match screen.
+            Assert.AreEqual(string.Empty, result.MatchJoinCode);
+        });
+
+        [Test]
+        public void ReturningClientIgnoresLeftoverStartingFlag() {
+            _lobbyService.CurrentLobby = CreateStartingLobby("RELAY1");
+
+            StartFlow(LobbyFlowData.ReturnFromMatch("RELAY1", false));
+
+            Assert.IsFalse(_view.IsClosed);
+        }
 
         [Test]
         public void HostReturningFromMatchReopensLobby() {
@@ -192,7 +217,7 @@ namespace Code.Tests {
         public IEnumerator LeavingStopsRemovingMissingPlayers() => UniTask.ToCoroutine(async () => {
             _lobbyService.CurrentLobby = new LobbyState(true, "ABC123", 4, new[] {
                 new LobbyPlayer("host", "Luka", true, true), new LobbyPlayer("ana", "Ana", false, false)
-            }, true, string.Empty);
+            }, true, string.Empty, false);
             var run = StartFlow(LobbyFlowData.ReturnFromMatch(string.Empty, false));
 
             _view.ClickLeave();
@@ -335,11 +360,15 @@ namespace Code.Tests {
         });
 
         private static LobbyState CreateJoinedLobby(string matchJoinCode) {
-            return new LobbyState(true, "ABC123", 4, FakeLobbyService.CreatePlayers("Ana", "Luka"), false, matchJoinCode);
+            return new LobbyState(true, "ABC123", 4, FakeLobbyService.CreatePlayers("Ana", "Luka"), false, matchJoinCode, false);
+        }
+
+        private static LobbyState CreateStartingLobby(string matchJoinCode) {
+            return new LobbyState(true, "ABC123", 4, FakeLobbyService.CreatePlayers("Ana", "Luka"), false, matchJoinCode, true);
         }
 
         private static LobbyState CreateHostedLobby(string matchJoinCode) {
-            return new LobbyState(true, "ABC123", 4, FakeLobbyService.CreatePlayers("Luka", "Ana"), true, matchJoinCode);
+            return new LobbyState(true, "ABC123", 4, FakeLobbyService.CreatePlayers("Luka", "Ana"), true, matchJoinCode, false);
         }
 
         // LobbyFlow has no initial await, so the view is running as soon as this returns.

@@ -71,7 +71,7 @@ namespace Code.Tests {
 
         [UnityTest]
         public IEnumerator ClientConnectsAndEndsWhenDisconnected() => UniTask.ToCoroutine(async () => {
-            var run = StartFlow(MatchFlowData.Client("RELAY1"));
+            var run = StartFlow(ClientData("RELAY1"));
 
             Assert.AreEqual("RELAY1", _network.LastClientJoinCode);
             Assert.AreEqual(MatchStatus.InProgress, _status.GetStatus());
@@ -91,12 +91,40 @@ namespace Code.Tests {
         public IEnumerator FailedClientStartReturnsStartFailed() => UniTask.ToCoroutine(async () => {
             _network.ClientSucceeds = false;
 
-            var result = await StartFlow(MatchFlowData.Client("RELAY1"));
+            var result = await StartFlow(ClientData("RELAY1"));
 
             Assert.IsTrue(result.StartFailed);
             Assert.AreEqual("RELAY1", result.UsedJoinCode);
             Assert.AreEqual(0, _network.StopCount);
         });
+
+        [UnityTest]
+        public IEnumerator ClientWithoutJoinCodeReturnsStartFailed() => UniTask.ToCoroutine(async () => {
+            var result = await StartFlow(ClientData(string.Empty));
+
+            Assert.IsTrue(result.StartFailed);
+            Assert.AreEqual(0, _network.ClientStartCount);
+            Assert.AreEqual(0, _network.StopCount);
+            Assert.IsTrue(_view.IsClosed);
+        });
+
+        [UnityTest]
+        public IEnumerator ClientShowsStartingWhileWaitingForJoinCode() => UniTask.ToCoroutine(async () => {
+            var joinCode = new UniTaskCompletionSource<string>();
+            var run = StartFlow(MatchFlowData.Client(_ => joinCode.Task));
+
+            Assert.AreEqual(MatchStatus.Starting, _status.GetStatus());
+            Assert.AreEqual(0, _network.ClientStartCount);
+
+            joinCode.TrySetResult("RELAY1");
+            Assert.AreEqual("RELAY1", _network.LastClientJoinCode);
+            _network.RaiseDisconnected();
+            await run;
+        });
+
+        private MatchFlowData ClientData(string joinCode) {
+            return MatchFlowData.Client(_ => UniTask.FromResult(joinCode));
+        }
 
         private MatchFlowData HostData(int maxPlayers, int playerCount) {
             return MatchFlowData.Host(maxPlayers, playerCount, joinCode => {

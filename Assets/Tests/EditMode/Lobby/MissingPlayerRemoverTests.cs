@@ -76,7 +76,7 @@ namespace Code.Tests {
         });
 
         private LobbyState CreateLobby(params LobbyPlayer[] players) {
-            return new LobbyState(true, "ABC123", 4, players, true, string.Empty);
+            return new LobbyState(true, "ABC123", 4, players, true, string.Empty, false);
         }
     }
 }

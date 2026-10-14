@@ -38,7 +38,7 @@ namespace Code.Tests {
         [Test]
         public void ShowsLobbyCodeAndPlayers() {
             _status.SetStatus(LobbyStatus.Ready);
-            _currentLobby.SetCurrentLobby(new LobbyState(true, "XYZ", 4, FakeLobbyService.CreatePlayers("Luka", "Ana"), false, string.Empty));
+            _currentLobby.SetCurrentLobby(new LobbyState(true, "XYZ", 4, FakeLobbyService.CreatePlayers("Luka", "Ana"), false, string.Empty, false));
 
             var data = _gatherer.Get();
 
@@ -52,7 +52,7 @@ namespace Code.Tests {
         [TestCase(true, LobbyStatus.StartFailed, true)]
         public void ShowsStartButtonOnlyToReadyHost(bool isOwner, LobbyStatus status, bool expected) {
             _status.SetStatus(status);
-            _currentLobby.SetCurrentLobby(new LobbyState(true, "XYZ", 4, FakeLobbyService.CreatePlayers("Luka"), isOwner, string.Empty));
+            _currentLobby.SetCurrentLobby(new LobbyState(true, "XYZ", 4, FakeLobbyService.CreatePlayers("Luka"), isOwner, string.Empty, false));
 
             Assert.AreEqual(expected, _gatherer.Get().ShowsStartButton);
         }
@@ -60,7 +60,7 @@ namespace Code.Tests {
         [Test]
         public void GreysOutStartWhileHostIsAlone() {
             _status.SetStatus(LobbyStatus.Ready);
-            _currentLobby.SetCurrentLobby(new LobbyState(true, "XYZ", 4, FakeLobbyService.CreatePlayers("Luka"), true, string.Empty));
+            _currentLobby.SetCurrentLobby(new LobbyState(true, "XYZ", 4, FakeLobbyService.CreatePlayers("Luka"), true, string.Empty, false));
 
             var data = _gatherer.Get();
 
@@ -72,7 +72,7 @@ namespace Code.Tests {
         [Test]
         public void EnablesStartWithTwoPlayers() {
             _status.SetStatus(LobbyStatus.Ready);
-            _currentLobby.SetCurrentLobby(new LobbyState(true, "XYZ", 4, FakeLobbyService.CreatePlayers("Luka", "Ana"), true, string.Empty));
+            _currentLobby.SetCurrentLobby(new LobbyState(true, "XYZ", 4, FakeLobbyService.CreatePlayers("Luka", "Ana"), true, string.Empty, false));
 
             var data = _gatherer.Get();
 
@@ -85,7 +85,7 @@ namespace Code.Tests {
             _status.SetStatus(LobbyStatus.Ready);
             _currentLobby.SetCurrentLobby(new LobbyState(true, "XYZ", 4, new[] {
                 new LobbyPlayer("host", "Luka", true, true), new LobbyPlayer("ana", "Ana", false, false)
-            }, true, string.Empty));
+            }, true, string.Empty, false));
 
             var data = _gatherer.Get();
 
@@ -104,7 +104,7 @@ namespace Code.Tests {
         public void ShowsCopyButtonOnlyWithALobby() {
             Assert.IsFalse(_gatherer.Get().ShowsCopyButton);
 
-            _currentLobby.SetCurrentLobby(new LobbyState(true, "XYZ", 4, FakeLobbyService.CreatePlayers("Luka"), true, string.Empty));
+            _currentLobby.SetCurrentLobby(new LobbyState(true, "XYZ", 4, FakeLobbyService.CreatePlayers("Luka"), true, string.Empty, false));
 
             Assert.IsTrue(_gatherer.Get().ShowsCopyButton);
         }

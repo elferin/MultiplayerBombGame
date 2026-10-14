@@ -116,6 +116,10 @@ namespace Code.Lobby {
         // Leaves the lobby, or gets ready for the match. Returns whether the player is still in the lobby.
         private async UniTask<bool> HandleExit(LobbyFlowExit exit, bool isInLobby, LobbyFlowResult flowResult) {
             if (exit != LobbyFlowExit.Leave) {
+                if (exit == LobbyFlowExit.StartAsHost) {
+                    // The others switch to the match screen while the host sets up the network.
+                    await _lobbyService.AnnounceMatchStart();
+                }
                 // The match is played with this lobby, so it stays joined.
                 // The host waits for everyone to be back on this screen before the next match.
                 await _lobbyService.SetInLobby(false);
@@ -139,11 +143,19 @@ namespace Code.Lobby {
             flowResult.MatchJoinCode = flowResult.IsHost ? string.Empty : lobby.MatchJoinCode;
         }
 
+        // Clients go to the match screen as soon as the host taps Start; the join code follows there.
         private void CheckMatchStarted(LobbyState lobby) {
-            // The code of the match just played may still be in the lobby until the host clears it.
-            if (!lobby.IsOwner && !string.IsNullOrEmpty(lobby.MatchJoinCode) && lobby.MatchJoinCode != _data.UsedJoinCode) {
+            if (!lobby.IsOwner && IsNewMatch(lobby)) {
                 _exitRequested.TrySetResult(LobbyFlowExit.JoinStartedMatch);
             }
+        }
+
+        // The code of the match just played, and the starting flag next to it, may still be in the lobby
+        // until the host clears them.
+        private bool IsNewMatch(LobbyState lobby) {
+            var hasNoCode = string.IsNullOrEmpty(lobby.MatchJoinCode);
+            var hasNewCode = !hasNoCode && lobby.MatchJoinCode != _data.UsedJoinCode;
+            return hasNewCode || (lobby.IsMatchStarting && hasNoCode);
         }
 
         private void AddListeners() {

@@ -17,6 +17,8 @@ namespace Code.Lobby {
         private const string MATCH_JOIN_CODE_KEY = "JoinCode";
         // The player data key UnityLobbyProvider reads into LobbyUser.IsInLobby.
         private const string IN_LOBBY_KEY = "InLobby";
+        private const string MATCH_STARTING_KEY = "MatchStarting";
+        private const string TRUE_VALUE = "True";
 
         public event Action<LobbyState> LobbyUpdated = delegate { };
 
@@ -109,7 +111,13 @@ namespace Code.Lobby {
                 Debug.LogException(exception);
             }
 
+            // The flag first: a lobby with the flag but no code would look like a new match starting.
+            await _provider.SetLobbyDataAsync(MATCH_STARTING_KEY, string.Empty);
             await _provider.SetLobbyDataAsync(MATCH_JOIN_CODE_KEY, string.Empty);
+        }
+
+        public async UniTask AnnounceMatchStart() {
+            await _provider.SetLobbyDataAsync(MATCH_STARTING_KEY, TRUE_VALUE);
         }
 
         public async UniTask SetInLobby(bool isInLobby) {
@@ -178,7 +186,8 @@ namespace Code.Lobby {
             foreach (var member in lobby.Members) {
                 players.Add(new LobbyPlayer(member.Id, member.DisplayName, member.IsInLobby, member.Id == _provider.LocalPlayerId));
             }
-            return new LobbyState(true, lobby.LobbyCode, lobby.MaxPlayers, players, lobby.IsOwner, GetMatchJoinCode(lobby));
+            return new LobbyState(true, lobby.LobbyCode, lobby.MaxPlayers, players, lobby.IsOwner, GetMatchJoinCode(lobby),
+                IsMatchStarting(lobby));
         }
 
         // Asks Unity Lobby, because PurrLobby doesn't notice being removed and keeps the old lobby.
@@ -205,6 +214,12 @@ namespace Code.Lobby {
                 case UnityLobbies.LobbyExceptionReason.LobbyFull: return LobbyJoinFailure.LobbyFull;
                 default: return LobbyJoinFailure.Other;
             }
+        }
+
+        private bool IsMatchStarting(PurrLobby.Lobby lobby) {
+            return lobby.Properties != null
+                   && lobby.Properties.TryGetValue(MATCH_STARTING_KEY, out var value)
+                   && value == TRUE_VALUE;
         }
 
         private string GetMatchJoinCode(PurrLobby.Lobby lobby) {
