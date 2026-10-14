@@ -8,6 +8,7 @@ namespace Code.Lobby {
         private const string FAILED_TO_CREATE_LOBBY = "Failed to create lobby";
         private const string LEAVING_LOBBY = "Leaving lobby...";
         private const string FAILED_TO_START_MATCH = "Failed to start match";
+        private const string STARTING_MATCH = "Starting match...";
         private const string WAITING_FOR_PLAYERS = "Waiting for players...";
         private const string WAITING_FOR_RETURN = "Waiting for players to return...";
         private const string REMOVED_FROM_LOBBY = "You were removed from the lobby";
@@ -42,6 +43,7 @@ namespace Code.Lobby {
                 case LobbyStatus.Leaving: return LEAVING_LOBBY;
                 case LobbyStatus.StartFailed: return FAILED_TO_START_MATCH;
                 case LobbyStatus.Removed: return REMOVED_FROM_LOBBY;
+                case LobbyStatus.Starting: return STARTING_MATCH;
                 case LobbyStatus.Ready: return GetReadyText();
                 default: return string.Empty;
             }

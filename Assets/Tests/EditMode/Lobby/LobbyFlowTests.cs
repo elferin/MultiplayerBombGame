@@ -98,7 +98,7 @@ namespace Code.Tests {
             Assert.IsTrue(result.IsHost);
             Assert.AreEqual(6, result.MaxPlayers);
             Assert.AreEqual(2, result.PlayerCount);
-            Assert.AreEqual(string.Empty, result.MatchJoinCode);
+            Assert.AreEqual(LobbyStatus.Starting, _status.GetStatus());
             Assert.AreEqual(false, _lobbyService.LastInLobby);
             Assert.IsTrue(_lobbyService.IsMatchStartAnnounced);
             // The match locks the lobby once its network runs, not the lobby flow.
@@ -138,7 +138,6 @@ namespace Code.Tests {
 
             Assert.IsTrue(result.ShouldStartMatch);
             Assert.IsFalse(result.IsHost);
-            Assert.AreEqual("RELAY1", result.MatchJoinCode);
             Assert.AreEqual(false, _lobbyService.LastInLobby);
             Assert.IsFalse(_lobbyService.IsMatchStartAnnounced);
             Assert.AreEqual(0, _lobbyService.LeaveCount);
@@ -154,8 +153,6 @@ namespace Code.Tests {
 
             Assert.IsTrue(result.ShouldStartMatch);
             Assert.IsFalse(result.IsHost);
-            // The join code reaches the client on the match screen.
-            Assert.AreEqual(string.Empty, result.MatchJoinCode);
         });
 
         [Test]
@@ -193,7 +190,6 @@ namespace Code.Tests {
             var result = await run;
 
             Assert.IsTrue(result.ShouldStartMatch);
-            Assert.AreEqual("RELAY2", result.MatchJoinCode);
         });
 
         [UnityTest]
@@ -374,7 +370,7 @@ namespace Code.Tests {
         // LobbyFlow has no initial await, so the view is running as soon as this returns.
         private UniTask<LobbyFlowResult> StartFlow(LobbyFlowData data) {
             var flow = new LobbyFlow(data, _view, _lobbyService, new LobbyCreator(_lobbyService, _status, _currentLobby),
-                new LobbyStartRules(_status, _currentLobby), new MissingPlayerRemover(_lobbyService, _currentLobby), _clipboard, _status, _currentLobby);
+                new LobbyStartRules(_status, _currentLobby), new MissingPlayerRemover(_lobbyService), _clipboard, _status, _currentLobby);
             return flow.RunAsync(_cancellation.Token).Preserve();
         }
     }

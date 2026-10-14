@@ -31,10 +31,10 @@ namespace Code.Lobby {
             return _currentLobbyGetter.GetCurrentLobby().Players.Count >= MIN_PLAYERS_TO_START;
         }
 
-        // Everyone has come back from the last match. The host's own flag is skipped, since the host is on this screen.
+        // Everyone has come back from the last match.
         public bool AreAllPlayersBack() {
             foreach (var player in _currentLobbyGetter.GetCurrentLobby().Players) {
-                if (!player.IsLocal && !player.IsInLobby) {
+                if (player.HasNotReturned) {
                     return false;
                 }
             }

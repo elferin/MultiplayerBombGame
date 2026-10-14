@@ -40,6 +40,8 @@ namespace Code.Tests {
         // False makes ReturnToLobby report that the host removed this player.
         public bool IsStillMember { get; set; } = true;
         public List<string> RemovedPlayerIds { get; } = new List<string>();
+        // What FetchPlayers returns; empty, like a failed request, until a test adds players.
+        public List<LobbyPlayer> FetchedPlayers { get; } = new List<LobbyPlayer>();
 
         public async UniTask<LobbyState> CreateLobby(int maxPlayers, string playerName, CancellationToken cancellation) {
             CreateCount++;
@@ -130,6 +132,10 @@ namespace Code.Tests {
                 CurrentLobby = LobbyState.None;
             }
             return UniTask.FromResult(IsStillMember);
+        }
+
+        public UniTask<IReadOnlyList<LobbyPlayer>> FetchPlayers() {
+            return UniTask.FromResult<IReadOnlyList<LobbyPlayer>>(FetchedPlayers.ToArray());
         }
 
         public UniTask RemovePlayers(IReadOnlyList<string> playerIds) {

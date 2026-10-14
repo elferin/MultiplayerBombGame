@@ -12,19 +12,21 @@ namespace Code.Lobby {
 
     public class LobbyService : ILobbyService, IDisposable {
 
-        private const string DATA_HOLDER_NAME = "LobbyDataHolder";
         // The lobby property UnityLobbyProvider creates for the relay join code.
         private const string MATCH_JOIN_CODE_KEY = "JoinCode";
         // The player data key UnityLobbyProvider reads into LobbyUser.IsInLobby.
         private const string IN_LOBBY_KEY = "InLobby";
+        // The player data key UnityLobbyProvider stores the display name under.
+        private const string NAME_KEY = "Name";
         private const string MATCH_STARTING_KEY = "MatchStarting";
         private const string TRUE_VALUE = "True";
+        private const int IN_LOBBY_ATTEMPTS = 3;
+        private static readonly TimeSpan IN_LOBBY_RETRY_DELAY = TimeSpan.FromSeconds(1);
 
         public event Action<LobbyState> LobbyUpdated = delegate { };
 
         // The Unity provider specifically: joining by code isn't part of PurrLobby's ILobbyProvider.
         private readonly UnityLobbyProvider _provider;
-        private LobbyDataHolder _dataHolder;
         private PurrLobby.Lobby _currentLobby;
         private bool _isDisposed;
 
@@ -102,6 +104,11 @@ namespace Code.Lobby {
         }
 
         public async UniTask EndMatch() {
+            // The flag first: a lobby with the flag but no code would look like a new match starting.
+            await _provider.SetLobbyDataAsync(MATCH_STARTING_KEY, string.Empty);
+            await _provider.SetLobbyDataAsync(MATCH_JOIN_CODE_KEY, string.Empty);
+
+            // Unlocked last, so nobody joins while the last match's data is still there and gets told it's in progress.
             try {
                 await UnityLobbies.LobbyService.Instance.UpdateLobbyAsync(_currentLobby.LobbyId,
                     new UnityLobbies.UpdateLobbyOptions { IsLocked = false });
@@ -110,10 +117,6 @@ namespace Code.Lobby {
                 // New players then can't join until the next match ends.
                 Debug.LogException(exception);
             }
-
-            // The flag first: a lobby with the flag but no code would look like a new match starting.
-            await _provider.SetLobbyDataAsync(MATCH_STARTING_KEY, string.Empty);
-            await _provider.SetLobbyDataAsync(MATCH_JOIN_CODE_KEY, string.Empty);
         }
 
         public async UniTask AnnounceMatchStart() {
@@ -121,7 +124,31 @@ namespace Code.Lobby {
         }
 
         public async UniTask SetInLobby(bool isInLobby) {
-            await _provider.SetPlayerDataAsync(IN_LOBBY_KEY, isInLobby.ToString());
+            if (!_currentLobby.IsValid) {
+                return;
+            }
+
+            // Through the SDK, because the provider hides failed requests, and a lost "back" would get the player removed.
+            var options = new UnityLobbies.UpdatePlayerOptions {
+                Data = new Dictionary<string, UnityLobbies.Models.PlayerDataObject> {
+                    { IN_LOBBY_KEY, new UnityLobbies.Models.PlayerDataObject(
+                        UnityLobbies.Models.PlayerDataObject.VisibilityOptions.Public, isInLobby.ToString()) }
+                }
+            };
+            for (var attempt = 1; ; attempt++) {
+                try {
+                    await UnityLobbies.LobbyService.Instance.UpdatePlayerAsync(_currentLobby.LobbyId, _provider.LocalPlayerId, options);
+                    return;
+                }
+                catch (UnityLobbies.LobbyServiceException exception) {
+                    // Usually the request rate limit, which passes after a moment.
+                    if (attempt == IN_LOBBY_ATTEMPTS) {
+                        Debug.LogException(exception);
+                        return;
+                    }
+                }
+                await UniTask.Delay(IN_LOBBY_RETRY_DELAY, DelayType.Realtime);
+            }
         }
 
         public async UniTask<bool> ReturnToLobby() {
@@ -135,6 +162,28 @@ namespace Code.Lobby {
             }
             await SetInLobby(true);
             return true;
+        }
+
+        public async UniTask<IReadOnlyList<LobbyPlayer>> FetchPlayers() {
+            if (!_currentLobby.IsValid) {
+                return Array.Empty<LobbyPlayer>();
+            }
+
+            try {
+                var lobby = await UnityLobbies.LobbyService.Instance.GetLobbyAsync(_currentLobby.LobbyId);
+                var players = new List<LobbyPlayer>();
+                foreach (var player in lobby.Players) {
+                    // Like UnityLobbyProvider: players who never set InLobby have just joined, so they are in the lobby.
+                    var isInLobby = GetPlayerData(player, IN_LOBBY_KEY, TRUE_VALUE) == TRUE_VALUE;
+                    players.Add(new LobbyPlayer(player.Id, GetPlayerData(player, NAME_KEY, string.Empty), isInLobby,
+                        player.Id == _provider.LocalPlayerId));
+                }
+                return players;
+            }
+            catch (UnityLobbies.LobbyServiceException exception) {
+                Debug.LogException(exception);
+                return Array.Empty<LobbyPlayer>();
+            }
         }
 
         public async UniTask RemovePlayers(IReadOnlyList<string> playerIds) {
@@ -165,15 +214,13 @@ namespace Code.Lobby {
         }
 
         private void SetCurrentLobby(PurrLobby.Lobby lobby) {
-            // A request can finish after the scope is gone (e.g. Play mode ended); creating objects then would put them in the edit-mode scene.
+            // A request can finish after the scope is gone (e.g. Play mode ended); nobody should hear about it then.
             if (_isDisposed) {
                 return;
             }
 
             _currentLobby = lobby;
             CurrentLobby = ToLobbyState(lobby);
-            // PurrLobby's ConnectionStarter reads the lobby from here when the game scene starts the network.
-            GetDataHolder().SetCurrentLobby(lobby);
             LobbyUpdated.Invoke(CurrentLobby);
         }
 
@@ -229,14 +276,11 @@ namespace Code.Lobby {
             return string.Empty;
         }
 
-        private LobbyDataHolder GetDataHolder() {
-            if (_dataHolder == null) {
-                _dataHolder = UnityEngine.Object.FindAnyObjectByType<LobbyDataHolder>();
+        private string GetPlayerData(UnityLobbies.Models.Player player, string key, string fallback) {
+            if (player.Data != null && player.Data.TryGetValue(key, out var data) && data != null) {
+                return data.Value;
             }
-            if (_dataHolder == null) {
-                _dataHolder = new GameObject(DATA_HOLDER_NAME).AddComponent<LobbyDataHolder>();
-            }
-            return _dataHolder;
+            return fallback;
         }
     }
 }

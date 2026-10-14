@@ -14,11 +14,9 @@ namespace Code.Lobby {
         private static readonly TimeSpan RETURN_TIMEOUT = TimeSpan.FromSeconds(30);
 
         private readonly ILobbyService _lobbyService;
-        private readonly ICurrentLobbyGetter _currentLobbyGetter;
 
-        public MissingPlayerRemover(ILobbyService lobbyService, ICurrentLobbyGetter currentLobbyGetter) {
+        public MissingPlayerRemover(ILobbyService lobbyService) {
             _lobbyService = lobbyService;
-            _currentLobbyGetter = currentLobbyGetter;
         }
 
         public UniTask RemoveMissingPlayersAfterTimeout(CancellationToken cancellation) {
@@ -29,9 +27,13 @@ namespace Code.Lobby {
             // Real time, so pausing or slowing the game doesn't change the timeout.
             await UniTask.Delay(timeout, DelayType.Realtime, cancellationToken: cancellation);
 
+            // Fresh from the server: the host's copy only changes through lobby events, which can be missed.
+            var players = await _lobbyService.FetchPlayers();
+            cancellation.ThrowIfCancellationRequested();
+
             var missingPlayerIds = new List<string>();
-            foreach (var player in _currentLobbyGetter.GetCurrentLobby().Players) {
-                if (!player.IsLocal && !player.IsInLobby) {
+            foreach (var player in players) {
+                if (player.HasNotReturned) {
                     missingPlayerIds.Add(player.Id);
                 }
             }

@@ -18,7 +18,7 @@ namespace Code.Lobby {
         UniTask LeaveLobby();
         // Locks the lobby so nobody new can join, then shares the match's join code with everyone in it.
         UniTask StartMatch(string joinCode);
-        // Unlocks the lobby and clears the join code and the starting flag, so the next match can start.
+        // Clears the starting flag and the join code, then unlocks the lobby, so the next match can start.
         UniTask EndMatch();
         // Tells everyone in the lobby that the host tapped Start, before the join code is ready.
         UniTask AnnounceMatchStart();
@@ -27,6 +27,8 @@ namespace Code.Lobby {
         // Back from a match: marks the local player as in the lobby.
         // False if the host removed them in the meantime; the lobby is then gone for this player.
         UniTask<bool> ReturnToLobby();
+        // The players as Unity Lobby has them right now, not the copy kept from lobby events. Empty if the request fails.
+        UniTask<IReadOnlyList<LobbyPlayer>> FetchPlayers();
         // Host only.
         UniTask RemovePlayers(IReadOnlyList<string> playerIds);
     }

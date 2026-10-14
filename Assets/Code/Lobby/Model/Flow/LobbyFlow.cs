@@ -117,6 +117,9 @@ namespace Code.Lobby {
         private async UniTask<bool> HandleExit(LobbyFlowExit exit, bool isInLobby, LobbyFlowResult flowResult) {
             if (exit != LobbyFlowExit.Leave) {
                 if (exit == LobbyFlowExit.StartAsHost) {
+                    // Hides Start and shows the tap worked while the requests below finish.
+                    _status.SetStatus(LobbyStatus.Starting);
+                    _viewController.Refresh();
                     // The others switch to the match screen while the host sets up the network.
                     await _lobbyService.AnnounceMatchStart();
                 }
@@ -140,7 +143,6 @@ namespace Code.Lobby {
             flowResult.IsHost = exit == LobbyFlowExit.StartAsHost;
             flowResult.MaxPlayers = lobby.MaxPlayers;
             flowResult.PlayerCount = lobby.Players.Count;
-            flowResult.MatchJoinCode = flowResult.IsHost ? string.Empty : lobby.MatchJoinCode;
         }
 
         // Clients go to the match screen as soon as the host taps Start; the join code follows there.

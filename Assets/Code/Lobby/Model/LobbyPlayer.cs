@@ -9,6 +9,8 @@ namespace Code.Lobby {
         public bool IsInLobby { get; }
         // The player on this device.
         public bool IsLocal { get; }
+        // Another player still in the last match. The local player is on the lobby screen, so never counts.
+        public bool HasNotReturned => !IsLocal && !IsInLobby;
 
         public LobbyPlayer(string id, string name, bool isInLobby, bool isLocal) {
             Id = id;

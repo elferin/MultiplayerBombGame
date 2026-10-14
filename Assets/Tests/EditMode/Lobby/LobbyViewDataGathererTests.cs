@@ -20,6 +20,7 @@ namespace Code.Tests {
         [TestCase(LobbyStatus.Failed, "Failed to create lobby")]
         [TestCase(LobbyStatus.Leaving, "Leaving lobby...")]
         [TestCase(LobbyStatus.StartFailed, "Failed to start match")]
+        [TestCase(LobbyStatus.Starting, "Starting match...")]
         [TestCase(LobbyStatus.Ready, "")]
         public void ShowsStatusText(LobbyStatus status, string expected) {
             _status.SetStatus(status);
@@ -50,6 +51,7 @@ namespace Code.Tests {
         [TestCase(false, LobbyStatus.Ready, false)]
         [TestCase(true, LobbyStatus.Leaving, false)]
         [TestCase(true, LobbyStatus.StartFailed, true)]
+        [TestCase(true, LobbyStatus.Starting, false)]
         public void ShowsStartButtonOnlyToReadyHost(bool isOwner, LobbyStatus status, bool expected) {
             _status.SetStatus(status);
             _currentLobby.SetCurrentLobby(new LobbyState(true, "XYZ", 4, FakeLobbyService.CreatePlayers("Luka"), isOwner, string.Empty, false));

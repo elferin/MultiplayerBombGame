@@ -7,7 +7,5 @@ namespace Code.Lobby {
         public bool IsHost { get; set; }
         public int MaxPlayers { get; set; }
         public int PlayerCount { get; set; }
-        // The host's relay join code a client connects with; empty for the host.
-        public string MatchJoinCode { get; set; } = string.Empty;
     }
 }

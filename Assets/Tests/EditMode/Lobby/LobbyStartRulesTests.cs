@@ -22,6 +22,7 @@ namespace Code.Tests {
         [TestCase(false, LobbyStatus.Ready, 2, false)]
         [TestCase(true, LobbyStatus.Creating, 2, false)]
         [TestCase(true, LobbyStatus.Leaving, 2, false)]
+        [TestCase(true, LobbyStatus.Starting, 2, false)]
         public void CanStart(bool isOwner, LobbyStatus status, int playerCount, bool expected) {
             _status.SetStatus(status);
             _currentLobby.SetCurrentLobby(CreateLobby(isOwner, playerCount));
