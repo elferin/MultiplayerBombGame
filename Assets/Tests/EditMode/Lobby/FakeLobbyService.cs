@@ -4,7 +4,7 @@ using System.Threading;
 using Code.Lobby;
 using Cysharp.Threading.Tasks;
 
-namespace Code.Tests {
+namespace Code.Tests.Lobby {
 
     // Create, join and leave requests stay pending until the test answers them, so tests can check state mid-request.
     public class FakeLobbyService : ILobbyService {

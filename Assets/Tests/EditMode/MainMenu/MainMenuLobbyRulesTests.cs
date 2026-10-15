@@ -1,9 +1,10 @@
 using Code.Lobby;
 using Code.MainMenu;
 using Code.Profile;
+using Code.Tests.Profile;
 using NUnit.Framework;
 
-namespace Code.Tests {
+namespace Code.Tests.MainMenu {
 
     public class MainMenuLobbyRulesTests {
 

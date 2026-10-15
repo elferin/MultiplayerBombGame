@@ -6,7 +6,7 @@ using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine.TestTools;
 
-namespace Code.Tests {
+namespace Code.Tests.Lobby {
 
     public class MissingPlayerRemoverTests {
 

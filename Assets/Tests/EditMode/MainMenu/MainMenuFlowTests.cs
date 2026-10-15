@@ -4,11 +4,13 @@ using System.Threading;
 using Code.Lobby;
 using Code.MainMenu;
 using Code.Profile;
+using Code.Tests.Profile;
+using Code.Tests.Util;
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine.TestTools;
 
-namespace Code.Tests {
+namespace Code.Tests.MainMenu {
 
     public class MainMenuFlowTests {
 

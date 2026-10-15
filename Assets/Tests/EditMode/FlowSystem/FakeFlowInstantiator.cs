@@ -2,7 +2,7 @@ using System.Threading;
 using Code.FlowSystem;
 using Cysharp.Threading.Tasks;
 
-namespace Code.Tests {
+namespace Code.Tests.FlowSystem {
 
     // Records how it was started; the flow stays pending until the test completes it.
     public class FakeFlowInstantiator<TResult, TData> : IFlowInstantiator<TResult, TData>

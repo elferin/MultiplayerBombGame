@@ -3,7 +3,7 @@ using System.Threading;
 using Code.Match;
 using Cysharp.Threading.Tasks;
 
-namespace Code.Tests {
+namespace Code.Tests.Match {
 
     // Answers immediately with the configured results.
     public class FakeMatchNetwork : IMatchNetwork {

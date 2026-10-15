@@ -1,4 +1,5 @@
 using Code.FlowSystem;
+using Code.GameFlow;
 using Code.Lobby;
 using Code.MainMenu;
 using Code.Match;
@@ -19,6 +20,7 @@ namespace Code.DependancyInjection {
             new MainMenuSystemInstaller().Install(builder);
             new LobbySystemInstaller().Install(builder);
             new MatchSystemInstaller().Install(builder);
+            new GameFlowSystemInstaller().Install(builder);
             builder.RegisterEntryPoint<GamePresenter>();
         }
     }

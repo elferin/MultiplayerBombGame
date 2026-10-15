@@ -2,11 +2,12 @@ using System;
 using System.Collections;
 using System.Threading;
 using Code.Lobby;
+using Code.Tests.Util;
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine.TestTools;
 
-namespace Code.Tests {
+namespace Code.Tests.Lobby {
 
     public class LobbyFlowTests {
 

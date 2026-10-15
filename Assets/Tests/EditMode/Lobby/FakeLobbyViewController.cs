@@ -4,7 +4,7 @@ using System.Threading;
 using Code.Lobby;
 using Cysharp.Threading.Tasks;
 
-namespace Code.Tests {
+namespace Code.Tests.Lobby {
 
     // Stands in for the real lobby view and records the status shown at each refresh.
     public class FakeLobbyViewController : ILobbyViewController, ILobbyViewControllerFactory {

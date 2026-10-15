@@ -1,6 +1,6 @@
 using Code.Match;
 
-namespace Code.Tests {
+namespace Code.Tests.Match {
 
     public class FakePlayerSpawning : IPlayerSpawning {
 

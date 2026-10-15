@@ -1,6 +1,6 @@
 using Code.Profile;
 
-namespace Code.Tests {
+namespace Code.Tests.Profile {
 
     // Keeps the saved name in memory instead of PlayerPrefs.
     public class FakePlayerNameStorage : IPlayerNameStorage {

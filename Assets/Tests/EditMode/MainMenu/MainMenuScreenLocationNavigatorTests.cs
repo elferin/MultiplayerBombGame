@@ -1,7 +1,7 @@
 using Code.MainMenu;
 using NUnit.Framework;
 
-namespace Code.Tests {
+namespace Code.Tests.MainMenu {
 
     public class MainMenuScreenLocationNavigatorTests {
 

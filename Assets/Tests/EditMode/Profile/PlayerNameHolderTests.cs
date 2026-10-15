@@ -1,7 +1,7 @@
 using Code.Profile;
 using NUnit.Framework;
 
-namespace Code.Tests {
+namespace Code.Tests.Profile {
 
     public class PlayerNameHolderTests {
 

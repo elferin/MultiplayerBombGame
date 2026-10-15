@@ -4,7 +4,7 @@ using System.Threading;
 using Code.Match;
 using Cysharp.Threading.Tasks;
 
-namespace Code.Tests {
+namespace Code.Tests.Match {
 
     // Stands in for the real match view and records the status shown at each refresh.
     public class FakeMatchViewController : IMatchViewController, IMatchViewControllerFactory {

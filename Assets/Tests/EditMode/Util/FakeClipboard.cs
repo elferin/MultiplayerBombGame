@@ -1,6 +1,6 @@
 using Code.Util;
 
-namespace Code.Tests {
+namespace Code.Tests.Util {
 
     public class FakeClipboard : IClipboard {
 

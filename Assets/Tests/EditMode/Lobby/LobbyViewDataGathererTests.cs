@@ -1,7 +1,7 @@
 using Code.Lobby;
 using NUnit.Framework;
 
-namespace Code.Tests {
+namespace Code.Tests.Lobby {
 
     public class LobbyViewDataGathererTests {
 

@@ -1,7 +1,7 @@
 using Code.Match;
 using NUnit.Framework;
 
-namespace Code.Tests {
+namespace Code.Tests.Match {
 
     public class MatchViewDataGathererTests {
 

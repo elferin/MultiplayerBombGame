@@ -3,7 +3,7 @@ using System.Threading;
 using Code.MainMenu;
 using Cysharp.Threading.Tasks;
 
-namespace Code.Tests {
+namespace Code.Tests.MainMenu {
 
     // Stands in for the real view: tests raise its events as if buttons were clicked.
     public class FakeMainMenuViewController : IMainMenuViewController, IMainMenuViewControllerFactory {
