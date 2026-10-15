@@ -1,6 +1,7 @@
-﻿using Code.Lobby;
+using Code.Lobby;
 using Code.MainMenu;
 using Code.Match;
+using Code.Profile;
 using Code.Util;
 using VContainer;
 using VContainer.Unity;
@@ -11,6 +12,7 @@ namespace Code.DependancyInjection {
         protected override void Configure(IContainerBuilder builder) {
             
             new UtilSystemInstaller().Install(builder);
+            new ProfileSystemInstaller().Install(builder);
             new MainMenuSystemInstaller().Install(builder);
             new LobbySystemInstaller().Install(builder);
             new MatchSystemInstaller().Install(builder);

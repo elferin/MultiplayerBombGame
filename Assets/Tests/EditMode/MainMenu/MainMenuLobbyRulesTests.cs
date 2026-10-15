@@ -1,5 +1,6 @@
 using Code.Lobby;
 using Code.MainMenu;
+using Code.Profile;
 using NUnit.Framework;
 
 namespace Code.Tests {

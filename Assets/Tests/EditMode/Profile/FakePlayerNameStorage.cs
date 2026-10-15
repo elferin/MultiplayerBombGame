@@ -1,4 +1,4 @@
-using Code.Lobby;
+using Code.Profile;
 
 namespace Code.Tests {
 

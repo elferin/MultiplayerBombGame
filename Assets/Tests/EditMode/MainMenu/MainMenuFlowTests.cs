@@ -3,6 +3,7 @@ using System.Collections;
 using System.Threading;
 using Code.Lobby;
 using Code.MainMenu;
+using Code.Profile;
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine.TestTools;

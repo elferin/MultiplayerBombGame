@@ -1,4 +1,5 @@
 using Code.Lobby;
+using Code.Profile;
 using Code.Util;
 
 namespace Code.MainMenu {

@@ -1,4 +1,4 @@
-namespace Code.Lobby {
+namespace Code.Profile {
     public interface IPlayerNameGetter {
 
         // The name as typed, for the input fields.

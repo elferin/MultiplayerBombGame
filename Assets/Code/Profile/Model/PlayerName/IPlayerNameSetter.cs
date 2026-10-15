@@ -1,4 +1,4 @@
-namespace Code.Lobby {
+namespace Code.Profile {
     public interface IPlayerNameSetter {
 
         void SetPlayerName(string playerName);

@@ -4,7 +4,7 @@ using UnityEngine;
 using ParrelSync;
 #endif
 
-namespace Code.Lobby {
+namespace Code.Profile {
 
     [UsedImplicitly]
     public class PlayerNameStorage : IPlayerNameStorage {

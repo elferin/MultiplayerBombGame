@@ -19,10 +19,8 @@ namespace Code.Lobby {
             builder.Register<MatchJoinCodeReceiver>(Lifetime.Singleton);
             builder.Register<LobbyStartRules>(Lifetime.Singleton);
             builder.Register<MissingPlayerRemover>(Lifetime.Singleton);
-            builder.Register<IPlayerNameStorage, PlayerNameStorage>(Lifetime.Singleton);
 
             // Lobby state, each registered as its getter, setter and combined interface.
-            builder.Register<PlayerNameHolder>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<HostLobbySettings>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<LobbyStatusHolder>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<CurrentLobbyHolder>(Lifetime.Singleton).AsImplementedInterfaces();
@@ -40,9 +38,7 @@ namespace Code.Lobby {
             exports.Expose<MatchJoinCodeSharer>();
             exports.Expose<MatchJoinCodeReceiver>();
 
-            // The main menu edits the player name and host settings, so it needs the combined interfaces and the getters.
-            exports.Expose<IPlayerName>();
-            exports.Expose<IPlayerNameGetter>();
+            // The main menu edits the host settings, so it needs the combined interface and the getter.
             exports.Expose<IHostLobbySettings>();
             exports.Expose<IHostLobbySettingsGetter>();
         }

@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 
-namespace Code.Lobby {
+namespace Code.Profile {
     
     [UsedImplicitly]
     public class PlayerNameHolder : IPlayerName {

@@ -1,4 +1,4 @@
-namespace Code.Lobby {
+namespace Code.Profile {
 
     // Remembers the player's name between sessions.
     public interface IPlayerNameStorage {

@@ -1,4 +1,4 @@
-namespace Code.Lobby {
+namespace Code.Profile {
     public interface IPlayerName : IPlayerNameGetter, IPlayerNameSetter {
 
     }
