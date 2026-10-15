@@ -10,7 +10,7 @@ namespace Code.FlowSystem {
     public class FlowManager : IFlowRunner, IFlowRegistry {
 
         // Keyed by data type. Each typed instantiator is captured in its lambda; only the dictionary forgets the types,
-        // since IFlowInstantiator<LobbyFlowResult, LobbyFlowData> can't be stored as IFlowInstantiator<UniTaskResult, ...>.
+        // since for example IFlowInstantiator<LobbyFlowResult, LobbyFlowData> can't be stored as IFlowInstantiator<UniTaskResult, ...>.
         private readonly Dictionary<Type, Func<object, CancellationToken, UniTask<UniTaskResult>>> _starters = new();
 
         public void Register<TResult, TData>(IFlowInstantiator<TResult, TData> instantiator) where TResult : UniTaskResult where TData : IFlowData<TResult> {
