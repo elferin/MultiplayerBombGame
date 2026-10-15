@@ -118,12 +118,12 @@ namespace Code.Tests {
             return UniTask.CompletedTask;
         }
 
-        public UniTask SetInLobby(bool isInLobby) {
+        public UniTask SetInLobby(bool isInLobby, CancellationToken cancellation) {
             LastInLobby = isInLobby;
             return UniTask.CompletedTask;
         }
 
-        public UniTask<bool> ReturnToLobby() {
+        public UniTask<bool> ReturnToLobby(CancellationToken cancellation) {
             ReturnCount++;
             if (IsStillMember) {
                 LastInLobby = true;

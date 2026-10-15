@@ -23,10 +23,10 @@ namespace Code.Lobby {
         // Tells everyone in the lobby that the host tapped Start, before the join code is ready.
         UniTask AnnounceMatchStart();
         // Marks the local player as on the lobby screen or in a match; the host only starts when everyone is back.
-        UniTask SetInLobby(bool isInLobby);
+        UniTask SetInLobby(bool isInLobby, CancellationToken cancellation);
         // Back from a match: marks the local player as in the lobby.
         // False if the host removed them in the meantime; the lobby is then gone for this player.
-        UniTask<bool> ReturnToLobby();
+        UniTask<bool> ReturnToLobby(CancellationToken cancellation);
         // The players as Unity Lobby has them right now, not the copy kept from lobby events. Empty if the request fails.
         UniTask<IReadOnlyList<LobbyPlayer>> FetchPlayers();
         // Host only.

@@ -123,7 +123,7 @@ namespace Code.Lobby {
             await _provider.SetLobbyDataAsync(MATCH_STARTING_KEY, TRUE_VALUE);
         }
 
-        public async UniTask SetInLobby(bool isInLobby) {
+        public async UniTask SetInLobby(bool isInLobby, CancellationToken cancellation) {
             if (!_currentLobby.IsValid) {
                 return;
             }
@@ -147,11 +147,11 @@ namespace Code.Lobby {
                         return;
                     }
                 }
-                await UniTask.Delay(IN_LOBBY_RETRY_DELAY, DelayType.Realtime);
+                await UniTask.Delay(IN_LOBBY_RETRY_DELAY, DelayType.Realtime, cancellationToken: cancellation);
             }
         }
 
-        public async UniTask<bool> ReturnToLobby() {
+        public async UniTask<bool> ReturnToLobby(CancellationToken cancellation) {
             if (!_currentLobby.IsValid) {
                 return false;
             }
@@ -160,7 +160,7 @@ namespace Code.Lobby {
                 SetCurrentLobby(default);
                 return false;
             }
-            await SetInLobby(true);
+            await SetInLobby(true, cancellation);
             return true;
         }
 

@@ -56,7 +56,7 @@ namespace Code.Lobby {
                 CheckMatchStarted(_currentLobby.GetCurrentLobby());
 
                 var exit = await _exitRequested.Task.AttachExternalCancellation(cancellation);
-                isInLobby = await HandleExit(exit, isInLobby, flowResult);
+                isInLobby = await HandleExit(exit, isInLobby, flowResult, cancellation);
 
                 _viewController.Close();
                 await viewRun;
@@ -80,11 +80,11 @@ namespace Code.Lobby {
             if (_data.CreatesLobby) {
                 return _lobbyCreator.TryCreateLobby(_data.MaxPlayers, _data.PlayerName, cancellation);
             }
-            return GetJoinedLobby();
+            return GetJoinedLobby(cancellation);
         }
 
         // Joined from the main menu or back from a match, so the lobby already exists.
-        private async UniTask<bool> GetJoinedLobby() {
+        private async UniTask<bool> GetJoinedLobby(CancellationToken cancellation) {
             var lobby = _lobbyService.CurrentLobby;
             _currentLobby.SetCurrentLobby(lobby);
             _status.SetStatus(GetJoinedStatus(lobby));
@@ -94,7 +94,7 @@ namespace Code.Lobby {
             }
 
             // A player who took too long to come back may have been removed by the host.
-            if (!await _lobbyService.ReturnToLobby()) {
+            if (!await _lobbyService.ReturnToLobby(cancellation)) {
                 _currentLobby.SetCurrentLobby(LobbyState.None);
                 _status.SetStatus(LobbyStatus.Removed);
                 return false;
@@ -114,7 +114,8 @@ namespace Code.Lobby {
         }
 
         // Leaves the lobby, or gets ready for the match. Returns whether the player is still in the lobby.
-        private async UniTask<bool> HandleExit(LobbyFlowExit exit, bool isInLobby, LobbyFlowResult flowResult) {
+        private async UniTask<bool> HandleExit(LobbyFlowExit exit, bool isInLobby, LobbyFlowResult flowResult,
+            CancellationToken cancellation) {
             if (exit != LobbyFlowExit.Leave) {
                 if (exit == LobbyFlowExit.StartAsHost) {
                     // Hides Start and shows the tap worked while the requests below finish.
@@ -125,7 +126,7 @@ namespace Code.Lobby {
                 }
                 // The match is played with this lobby, so it stays joined.
                 // The host waits for everyone to be back on this screen before the next match.
-                await _lobbyService.SetInLobby(false);
+                await _lobbyService.SetInLobby(false, cancellation);
                 SetMatchResult(flowResult, exit);
                 return isInLobby;
             }
