@@ -23,22 +23,7 @@ namespace Code.MainMenu {
         }
 
         public bool CanJoinLobby() {
-            return !IsJoining()
-                   && _playerNameGetter.HasPlayerName()
-                   && !string.IsNullOrWhiteSpace(_joinLobbyGetter.GetLobbyCode());
-        }
-
-        public bool CanGoBack() {
-            return !IsJoining();
-        }
-
-        // The code can't change while it's being used to join.
-        public bool CanPasteLobbyCode() {
-            return !IsJoining();
-        }
-
-        private bool IsJoining() {
-            return _joinLobbyGetter.GetJoinStatus() == JoinLobbyStatus.Joining;
+            return _playerNameGetter.HasPlayerName() && !string.IsNullOrWhiteSpace(_joinLobbyGetter.GetLobbyCode());
         }
     }
 }

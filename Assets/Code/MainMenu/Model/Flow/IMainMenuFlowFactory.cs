@@ -1,5 +1,5 @@
-﻿namespace Code.MainMenu {
+namespace Code.MainMenu {
     public interface IMainMenuFlowFactory {
-        IMainMenuFlow Create();
+        IMainMenuFlow Create(MainMenuFlowData data);
     }
 }

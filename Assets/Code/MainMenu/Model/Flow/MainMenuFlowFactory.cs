@@ -6,7 +6,6 @@ namespace Code.MainMenu {
     public class MainMenuFlowFactory : IMainMenuFlowFactory {
 
         private readonly IMainMenuViewControllerFactory _viewControllerFactory;
-        private readonly LobbyJoiner _lobbyJoiner;
         private readonly IMainMenuScreenLocation _screenLocation;
         private readonly IPlayerName _playerName;
         private readonly IHostLobbySettings _hostLobbySettings;
@@ -14,11 +13,10 @@ namespace Code.MainMenu {
         private readonly IMainMenuLobbyRules _lobbyRules;
         private readonly IClipboard _clipboard;
 
-        public MainMenuFlowFactory(IMainMenuViewControllerFactory viewControllerFactory, LobbyJoiner lobbyJoiner,
+        public MainMenuFlowFactory(IMainMenuViewControllerFactory viewControllerFactory,
             IMainMenuScreenLocation screenLocation, IPlayerName playerName,
             IHostLobbySettings hostLobbySettings, IJoinLobby joinLobby, IMainMenuLobbyRules lobbyRules, IClipboard clipboard) {
             _viewControllerFactory = viewControllerFactory;
-            _lobbyJoiner = lobbyJoiner;
             _screenLocation = screenLocation;
             _playerName = playerName;
             _hostLobbySettings = hostLobbySettings;
@@ -27,8 +25,8 @@ namespace Code.MainMenu {
             _clipboard = clipboard;
         }
 
-        public IMainMenuFlow Create() {
-            return new MainMenuFlow(_viewControllerFactory, _lobbyJoiner,
+        public IMainMenuFlow Create(MainMenuFlowData data) {
+            return new MainMenuFlow(data, _viewControllerFactory,
                 _screenLocation, _playerName, _hostLobbySettings, _joinLobby, _lobbyRules, _clipboard);
         }
     }

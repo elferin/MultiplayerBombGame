@@ -9,8 +9,9 @@ namespace Code.MainMenu {
             builder.Register<MainMenuAssetLoader>(Lifetime.Singleton);
 
             // Menu state, registered as its getter, setter and combined interface.
-            // Player name, host settings and join state come from the lobby system.
+            // Player name and host settings come from the lobby system.
             builder.Register<MainMenuScreenLocationNavigator>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<JoinLobbyState>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<IMainMenuLobbyRules, MainMenuLobbyRules>(Lifetime.Singleton);
 
             builder.Register<IViewDataGatherer<MainMenuViewData>, MainMenuViewDataGatherer>(Lifetime.Singleton);

@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 
-namespace Code.Lobby {
+namespace Code.MainMenu {
     
     [UsedImplicitly]
     public class JoinLobbyState : IJoinLobby {

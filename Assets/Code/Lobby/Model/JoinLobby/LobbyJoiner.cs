@@ -1,47 +1,46 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using JetBrains.Annotations;
 
 namespace Code.Lobby {
 
+    [UsedImplicitly]
     public class LobbyJoiner {
 
         private readonly ILobbyService _lobbyService;
-        private readonly IJoinLobby _joinLobby;
+        private readonly ILobbyStatusSetter _status;
+        private readonly ICurrentLobbySetter _currentLobby;
 
-        public LobbyJoiner(ILobbyService lobbyService, IJoinLobby joinLobby) {
+        public LobbyJoiner(ILobbyService lobbyService, ILobbyStatusSetter status, ICurrentLobbySetter currentLobby) {
             _lobbyService = lobbyService;
-            _joinLobby = joinLobby;
+            _status = status;
+            _currentLobby = currentLobby;
         }
 
-        // Joins with the stored lobby code. The status is Joining as soon as this is called,
-        // before the first await, so the caller can refresh its view before awaiting the result.
-        public async UniTask<bool> TryJoinLobby(string playerName, CancellationToken cancellation) {
-            _joinLobby.SetJoinStatus(JoinLobbyStatus.Joining);
+        // The status is Joining and the previous lobby is cleared as soon as this is called,
+        // before the first await, so the caller can show the view before awaiting the result.
+        // Returns None once joined, otherwise why joining failed.
+        public async UniTask<LobbyJoinFailure> TryJoinLobby(string lobbyCode, string playerName, CancellationToken cancellation) {
+            _status.SetStatus(LobbyStatus.Joining);
+            _currentLobby.SetCurrentLobby(LobbyState.None);
 
-            var result = await _lobbyService.JoinLobby(_joinLobby.GetLobbyCode().Trim(), playerName, cancellation);
+            var result = await _lobbyService.JoinLobby(lobbyCode, playerName, cancellation);
             var lobby = result.Lobby;
             if (!lobby.IsValid) {
-                _joinLobby.SetJoinStatus(GetFailedStatus(result.Failure));
-                return false;
+                _status.SetStatus(LobbyStatus.Failed);
+                return result.Failure;
             }
 
             // Joined in the moment between the host starting the match and the lobby being locked.
             if (lobby.IsMatchStarting || !string.IsNullOrEmpty(lobby.MatchJoinCode)) {
                 await _lobbyService.LeaveLobby();
-                _joinLobby.SetJoinStatus(JoinLobbyStatus.MatchInProgress);
-                return false;
+                _status.SetStatus(LobbyStatus.Failed);
+                return LobbyJoinFailure.MatchInProgress;
             }
 
-            _joinLobby.SetJoinStatus(JoinLobbyStatus.Idle);
-            return true;
-        }
-
-        private JoinLobbyStatus GetFailedStatus(LobbyJoinFailure failure) {
-            switch (failure) {
-                case LobbyJoinFailure.MatchInProgress: return JoinLobbyStatus.MatchInProgress;
-                case LobbyJoinFailure.LobbyFull: return JoinLobbyStatus.LobbyFull;
-                default: return JoinLobbyStatus.Failed;
-            }
+            _currentLobby.SetCurrentLobby(lobby);
+            _status.SetStatus(LobbyStatus.Ready);
+            return LobbyJoinFailure.None;
         }
     }
 }

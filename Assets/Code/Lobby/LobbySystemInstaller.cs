@@ -23,7 +23,6 @@ namespace Code.Lobby {
             // Lobby state, each registered as its getter, setter and combined interface.
             builder.Register<PlayerNameHolder>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<HostLobbySettings>(Lifetime.Singleton).AsImplementedInterfaces();
-            builder.Register<JoinLobbyState>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<LobbyStatusHolder>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<CurrentLobbyHolder>(Lifetime.Singleton).AsImplementedInterfaces();
 
@@ -39,16 +38,12 @@ namespace Code.Lobby {
             // GamePresenter passes the host's join code between the match and the lobby.
             exports.Expose<MatchJoinCodeSharer>();
             exports.Expose<MatchJoinCodeReceiver>();
-            // The main menu joins lobbies by code before the lobby screen opens.
-            exports.Expose<LobbyJoiner>();
 
-            // The main menu edits the lobby state, so it needs the combined interfaces and the getters.
+            // The main menu edits the player name and host settings, so it needs the combined interfaces and the getters.
             exports.Expose<IPlayerName>();
             exports.Expose<IPlayerNameGetter>();
             exports.Expose<IHostLobbySettings>();
             exports.Expose<IHostLobbySettingsGetter>();
-            exports.Expose<IJoinLobby>();
-            exports.Expose<IJoinLobbyGetter>();
         }
 
         private UnityLobbyProvider CreateLobbyProvider() {

@@ -1,7 +1,7 @@
-namespace Code.Lobby {
+namespace Code.MainMenu {
+    // What the Join panel tells the player about their last join.
     public enum JoinLobbyStatus {
         Idle,
-        Joining,
         Failed,
         MatchInProgress,
         LobbyFull

@@ -10,6 +10,7 @@ namespace Code.Lobby {
         private readonly ILobbyViewControllerFactory _viewControllerFactory;
         private readonly ILobbyService _lobbyService;
         private readonly LobbyCreator _lobbyCreator;
+        private readonly LobbyJoiner _lobbyJoiner;
         private readonly LobbyStartRules _startRules;
         private readonly MissingPlayerRemover _missingPlayerRemover;
         private readonly IClipboard _clipboard;
@@ -18,14 +19,16 @@ namespace Code.Lobby {
 
         private ILobbyViewController _viewController;
         private UniTaskCompletionSource<LobbyFlowExit> _exitRequested;
+        private LobbyJoinFailure _joinFailure;
 
         public LobbyFlow(LobbyFlowData data, ILobbyViewControllerFactory viewControllerFactory, ILobbyService lobbyService,
-            LobbyCreator lobbyCreator, LobbyStartRules startRules, MissingPlayerRemover missingPlayerRemover,
+            LobbyCreator lobbyCreator, LobbyJoiner lobbyJoiner, LobbyStartRules startRules, MissingPlayerRemover missingPlayerRemover,
             IClipboard clipboard, ILobbyStatus status, ICurrentLobby currentLobby) {
             _data = data;
             _viewControllerFactory = viewControllerFactory;
             _lobbyService = lobbyService;
             _lobbyCreator = lobbyCreator;
+            _lobbyJoiner = lobbyJoiner;
             _startRules = startRules;
             _missingPlayerRemover = missingPlayerRemover;
             _clipboard = clipboard;
@@ -37,6 +40,7 @@ namespace Code.Lobby {
             var flowResult = new LobbyFlowResult();
             _viewController = _viewControllerFactory.CreateViewController();
             _exitRequested = new UniTaskCompletionSource<LobbyFlowExit>();
+            _joinFailure = LobbyJoinFailure.None;
             var isInLobby = false;
             var removalCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
 
@@ -47,8 +51,15 @@ namespace Code.Lobby {
                 var viewRun = _viewController.RunAsync(cancellation);
 
                 isInLobby = await lobbyRequest;
+                if (_joinFailure != LobbyJoinFailure.None) {
+                    // Back to the Join panel, where the player can fix the code.
+                    flowResult.JoinFailure = _joinFailure;
+                    _viewController.Close();
+                    await viewRun;
+                    return flowResult;
+                }
                 _viewController.Refresh();
-                if (isInLobby && _data.ReturnsFromMatch && _currentLobby.GetCurrentLobby().IsOwner) {
+                if (isInLobby && _data.Entry == LobbyEntry.ReturnFromMatch && _currentLobby.GetCurrentLobby().IsOwner) {
                     // Stops when the flow ends, so nobody is removed once the host has left or started the next match.
                     _missingPlayerRemover.RemoveMissingPlayersAfterTimeout(removalCancellation.Token).Forget();
                 }
@@ -77,20 +88,29 @@ namespace Code.Lobby {
         }
 
         private UniTask<bool> GetLobby(CancellationToken cancellation) {
-            if (_data.CreatesLobby) {
-                return _lobbyCreator.TryCreateLobby(_data.MaxPlayers, _data.PlayerName, cancellation);
+            switch (_data.Entry) {
+                case LobbyEntry.Create:
+                    return _lobbyCreator.TryCreateLobby(_data.MaxPlayers, _data.PlayerName, cancellation);
+                case LobbyEntry.Join:
+                    return JoinLobby(cancellation);
+                default:
+                    return GetReturnedLobby(cancellation);
             }
-            return GetJoinedLobby(cancellation);
         }
 
-        // Joined from the main menu or back from a match, so the lobby already exists.
-        private async UniTask<bool> GetJoinedLobby(CancellationToken cancellation) {
+        private async UniTask<bool> JoinLobby(CancellationToken cancellation) {
+            _joinFailure = await _lobbyJoiner.TryJoinLobby(_data.LobbyCode, _data.PlayerName, cancellation);
+            return _joinFailure == LobbyJoinFailure.None;
+        }
+
+        // Back from a match, so the lobby is still joined.
+        private async UniTask<bool> GetReturnedLobby(CancellationToken cancellation) {
             var lobby = _lobbyService.CurrentLobby;
             _currentLobby.SetCurrentLobby(lobby);
-            _status.SetStatus(GetJoinedStatus(lobby));
+            _status.SetStatus(GetReturnedStatus(lobby));
 
-            if (!_data.ReturnsFromMatch || !lobby.IsValid) {
-                return lobby.IsValid;
+            if (!lobby.IsValid) {
+                return false;
             }
 
             // A player who took too long to come back may have been removed by the host.
@@ -106,7 +126,7 @@ namespace Code.Lobby {
             return true;
         }
 
-        private LobbyStatus GetJoinedStatus(LobbyState lobby) {
+        private LobbyStatus GetReturnedStatus(LobbyState lobby) {
             if (!lobby.IsValid) {
                 return LobbyStatus.Failed;
             }

@@ -9,7 +9,6 @@ namespace Code.MainMenu {
         private const string ENTER_NAME = "Enter a name";
         private const string ENTER_PLAYER_COUNT_FORMAT = "Enter a number from {0} to {1}";
         private const string PLAYER_RANGE_FORMAT = "{0}-{1} players";
-        private const string JOINING_LOBBY = "Joining lobby...";
         private const string JOIN_FAILED = "Couldn't join. Check the code.";
         private const string MATCH_IN_PROGRESS = "Match already in progress";
         private const string LOBBY_FULL = "Lobby is full";
@@ -69,7 +68,6 @@ namespace Code.MainMenu {
         private JoinLobbyViewData GetJoinLobby() {
             string status;
             switch (_joinLobbyGetter.GetJoinStatus()) {
-                case JoinLobbyStatus.Joining: status = JOINING_LOBBY; break;
                 case JoinLobbyStatus.Failed: status = JOIN_FAILED; break;
                 case JoinLobbyStatus.MatchInProgress: status = MATCH_IN_PROGRESS; break;
                 case JoinLobbyStatus.LobbyFull: status = LOBBY_FULL; break;
@@ -80,9 +78,7 @@ namespace Code.MainMenu {
                 _playerNameGetter.GetPlayerName(),
                 _joinLobbyGetter.GetLobbyCode(),
                 status,
-                _lobbyRules.CanJoinLobby(),
-                _lobbyRules.CanGoBack(),
-                _lobbyRules.CanPasteLobbyCode());
+                _lobbyRules.CanJoinLobby());
         }
     }
 }

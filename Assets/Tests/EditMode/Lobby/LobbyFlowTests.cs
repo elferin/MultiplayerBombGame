@@ -130,8 +130,8 @@ namespace Code.Tests {
 
         [UnityTest]
         public IEnumerator JoinedPlayerEndsFlowWhenHostSharesJoinCode() => UniTask.ToCoroutine(async () => {
-            _lobbyService.CurrentLobby = CreateJoinedLobby(string.Empty);
-            var run = StartFlow(LobbyFlowData.JoinedLobby());
+            var run = StartFlow(LobbyFlowData.JoinLobby("ABC123", "Luka"));
+            _lobbyService.SucceedJoin(CreateJoinedLobby(string.Empty));
 
             _lobbyService.RaiseLobbyUpdated(CreateJoinedLobby("RELAY1"));
             var result = await run;
@@ -145,8 +145,8 @@ namespace Code.Tests {
 
         [UnityTest]
         public IEnumerator ClientLeavesLobbyScreenAsSoonAsHostStarts() => UniTask.ToCoroutine(async () => {
-            _lobbyService.CurrentLobby = CreateJoinedLobby(string.Empty);
-            var run = StartFlow(LobbyFlowData.JoinedLobby());
+            var run = StartFlow(LobbyFlowData.JoinLobby("ABC123", "Luka"));
+            _lobbyService.SucceedJoin(CreateJoinedLobby(string.Empty));
 
             _lobbyService.RaiseLobbyUpdated(CreateStartingLobby(string.Empty));
             var result = await run;
@@ -271,15 +271,67 @@ namespace Code.Tests {
         });
 
         [Test]
-        public void JoinedLobbyShowsCurrentLobbyWithoutCreating() {
-            _lobbyService.CurrentLobby = FakeLobbyService.CreateLobbyState("ABC123", 4, "Ana", "Luka");
+        public void JoiningShowsJoiningWhileRequestIsPending() {
+            StartFlow(LobbyFlowData.JoinLobby("ABC123", "Luka"));
 
-            StartFlow(LobbyFlowData.JoinedLobby());
-
+            Assert.IsTrue(_view.IsRunning);
+            Assert.AreEqual(LobbyStatus.Joining, _status.GetStatus());
+            Assert.AreEqual("ABC123", _lobbyService.LastJoinCode);
+            Assert.AreEqual("Luka", _lobbyService.LastJoinPlayerName);
             Assert.AreEqual(0, _lobbyService.CreateCount);
+        }
+
+        [Test]
+        public void JoinedLobbyIsShownAsReady() {
+            StartFlow(LobbyFlowData.JoinLobby("ABC123", "Luka"));
+
+            _lobbyService.SucceedJoin(CreateJoinedLobby(string.Empty));
+
             Assert.AreEqual(LobbyStatus.Ready, _status.GetStatus());
             Assert.AreEqual("ABC123", _currentLobby.GetCurrentLobby().Code);
+            CollectionAssert.AreEqual(new[] { LobbyStatus.Ready }, _view.RefreshedStatuses);
         }
+
+        [UnityTest]
+        public IEnumerator FailedJoinEndsFlowWithItsFailure() => UniTask.ToCoroutine(async () => {
+            var run = StartFlow(LobbyFlowData.JoinLobby("ABC123", "Luka"));
+
+            _lobbyService.FailJoin(LobbyJoinFailure.LobbyFull);
+            var result = await run;
+
+            Assert.AreEqual(LobbyJoinFailure.LobbyFull, result.JoinFailure);
+            Assert.IsFalse(result.ShouldStartMatch);
+            Assert.AreEqual(0, _lobbyService.LeaveCount);
+            Assert.IsTrue(_view.IsClosed);
+        });
+
+        [UnityTest]
+        public IEnumerator JoiningStartedMatchEndsFlowWithMatchInProgress() => UniTask.ToCoroutine(async () => {
+            var run = StartFlow(LobbyFlowData.JoinLobby("ABC123", "Luka"));
+
+            _lobbyService.SucceedJoin(CreateJoinedLobby("RELAY1"));
+            _lobbyService.CompleteLeave();
+            var result = await run;
+
+            Assert.AreEqual(LobbyJoinFailure.MatchInProgress, result.JoinFailure);
+            Assert.IsFalse(result.ShouldStartMatch);
+            Assert.AreEqual(1, _lobbyService.LeaveCount);
+        });
+
+        [UnityTest]
+        public IEnumerator LeaveClickedWhileJoiningLeavesOnceJoined() => UniTask.ToCoroutine(async () => {
+            var run = StartFlow(LobbyFlowData.JoinLobby("ABC123", "Luka"));
+
+            _view.ClickLeave();
+            _lobbyService.SucceedJoin(CreateJoinedLobby(string.Empty));
+
+            Assert.AreEqual(1, _lobbyService.LeaveCount);
+            _lobbyService.CompleteLeave();
+            var result = await run;
+
+            Assert.AreEqual(LobbyJoinFailure.None, result.JoinFailure);
+            Assert.IsFalse(result.ShouldStartMatch);
+        });
 
         [Test]
         public void LobbyUpdatesRefreshTheView() {
@@ -370,7 +422,8 @@ namespace Code.Tests {
         // LobbyFlow has no initial await, so the view is running as soon as this returns.
         private UniTask<LobbyFlowResult> StartFlow(LobbyFlowData data) {
             var flow = new LobbyFlow(data, _view, _lobbyService, new LobbyCreator(_lobbyService, _status, _currentLobby),
-                new LobbyStartRules(_status, _currentLobby), new MissingPlayerRemover(_lobbyService), _clipboard, _status, _currentLobby);
+                new LobbyJoiner(_lobbyService, _status, _currentLobby), new LobbyStartRules(_status, _currentLobby),
+                new MissingPlayerRemover(_lobbyService), _clipboard, _status, _currentLobby);
             return flow.RunAsync(_cancellation.Token).Preserve();
         }
     }

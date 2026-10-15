@@ -13,8 +13,8 @@ namespace Code.MainMenu {
             _flowFactory = flowFactory;
         }
 
-        public UniTask<MainMenuFlowResult> StartFlow(CancellationToken cancellation) {
-            return _flowFactory.Create().RunAsync(cancellation);
+        public UniTask<MainMenuFlowResult> StartFlow(MainMenuFlowData data, CancellationToken cancellation) {
+            return _flowFactory.Create(data).RunAsync(cancellation);
         }
     }
 }

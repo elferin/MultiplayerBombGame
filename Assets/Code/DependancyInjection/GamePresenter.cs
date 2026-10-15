@@ -30,8 +30,9 @@ namespace Code.DependancyInjection {
         // The running flow then ends with an OperationCanceledException, which also ends this loop.
         public async UniTask StartAsync(CancellationToken cancellation = default) {
             try {
+                var mainMenuData = MainMenuFlowData.Default();
                 while (true) {
-                    var mainMenuResult = await _mainMenuFlowInstantiator.StartFlow(cancellation);
+                    var mainMenuResult = await _mainMenuFlowInstantiator.StartFlow(mainMenuData, cancellation);
                     if (mainMenuResult.ShouldQuit) {
                         Quit();
                         return;
@@ -41,15 +42,18 @@ namespace Code.DependancyInjection {
                     if (mainMenuResult.ShouldHost) {
                         lobbyData = LobbyFlowData.CreateLobby(mainMenuResult.MaxPlayers, mainMenuResult.PlayerName);
                     }
-                    else if (mainMenuResult.HasJoinedLobby) {
-                        lobbyData = LobbyFlowData.JoinedLobby();
+                    else if (mainMenuResult.ShouldJoin) {
+                        lobbyData = LobbyFlowData.JoinLobby(mainMenuResult.LobbyCode, mainMenuResult.PlayerName);
                     }
                     else {
                         return;
                     }
 
-                    await RunLobbyAndMatches(lobbyData, cancellation);
-                    // Leaving the lobby returns to the main menu.
+                    // Leaving the lobby returns to the main menu; a failed join returns to its Join panel.
+                    var joinFailure = await RunLobbyAndMatches(lobbyData, cancellation);
+                    mainMenuData = joinFailure == LobbyJoinFailure.None
+                        ? MainMenuFlowData.Default()
+                        : MainMenuFlowData.JoinFailed(joinFailure);
                 }
             }
             catch (OperationCanceledException) when (cancellation.IsCancellationRequested) {
@@ -57,14 +61,14 @@ namespace Code.DependancyInjection {
             }
         }
 
-        // Every match returns to the lobby; only leaving the lobby ends this.
-        private async UniTask RunLobbyAndMatches(LobbyFlowData lobbyData, CancellationToken cancellation) {
+        // Every match returns to the lobby; only leaving the lobby, or failing to join it, ends this.
+        private async UniTask<LobbyJoinFailure> RunLobbyAndMatches(LobbyFlowData lobbyData, CancellationToken cancellation) {
             // The last match's code can stay in the lobby for a moment, so it isn't taken for the next match's.
             var usedJoinCode = string.Empty;
             while (true) {
                 var lobbyResult = await _lobbyFlowInstantiator.StartFlow(lobbyData, cancellation);
                 if (!lobbyResult.ShouldStartMatch) {
-                    return;
+                    return lobbyResult.JoinFailure;
                 }
 
                 var matchResult = await _matchFlowInstantiator.StartFlow(GetMatchData(lobbyResult, usedJoinCode), cancellation);

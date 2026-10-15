@@ -9,6 +9,7 @@ namespace Code.Lobby {
         // The host removed this player for not coming back from a match in time.
         Removed,
         // The host tapped Start; the lobby requests before the match screen are still finishing.
-        Starting
+        Starting,
+        Joining
     }
 }

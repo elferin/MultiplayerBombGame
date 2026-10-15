@@ -5,7 +5,8 @@ namespace Code.MainMenu {
         public bool ShouldHost { get; set; }
         public int MaxPlayers { get; set; }
         public string PlayerName { get; set; } = string.Empty;
-        // The player joined a lobby from the Join panel; it is LobbyService.CurrentLobby.
-        public bool HasJoinedLobby { get; set; }
+        // The player tapped Join on the Join panel; the lobby flow joins with LobbyCode.
+        public bool ShouldJoin { get; set; }
+        public string LobbyCode { get; set; } = string.Empty;
     }
 }

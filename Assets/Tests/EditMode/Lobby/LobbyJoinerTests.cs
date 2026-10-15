@@ -13,15 +13,17 @@ namespace Code.Tests {
         private const int TIMEOUT_MS = 5000;
 
         private FakeLobbyService _lobbyService;
-        private JoinLobbyState _joinLobby;
+        private LobbyStatusHolder _status;
+        private CurrentLobbyHolder _currentLobby;
         private LobbyJoiner _joiner;
         private CancellationTokenSource _cancellation;
 
         [SetUp]
         public void SetUp() {
             _lobbyService = new FakeLobbyService();
-            _joinLobby = new JoinLobbyState();
-            _joiner = new LobbyJoiner(_lobbyService, _joinLobby);
+            _status = new LobbyStatusHolder();
+            _currentLobby = new CurrentLobbyHolder();
+            _joiner = new LobbyJoiner(_lobbyService, _status, _currentLobby);
             _cancellation = new CancellationTokenSource(TIMEOUT_MS);
         }
 
@@ -32,100 +34,73 @@ namespace Code.Tests {
         }
 
         [Test]
-        public void IsJoiningAsSoonAsCalled() {
-            _joinLobby.SetLobbyCode("ABC123");
+        public void IsJoiningWithoutALobbyAsSoonAsCalled() {
+            _currentLobby.SetCurrentLobby(FakeLobbyService.CreateLobbyState("OLD123", 4, "Luka"));
 
-            _joiner.TryJoinLobby("Luka", _cancellation.Token).Forget();
+            _joiner.TryJoinLobby("ABC123", "Luka", _cancellation.Token).Forget();
 
-            Assert.AreEqual(JoinLobbyStatus.Joining, _joinLobby.GetJoinStatus());
+            Assert.AreEqual(LobbyStatus.Joining, _status.GetStatus());
+            Assert.AreSame(LobbyState.None, _currentLobby.GetCurrentLobby());
             Assert.IsTrue(_lobbyService.IsJoinPending);
         }
 
         [Test]
-        public void SendsTrimmedCodeAndPlayerName() {
-            _joinLobby.SetLobbyCode("  ABC123 ");
-
-            _joiner.TryJoinLobby("Luka", _cancellation.Token).Forget();
+        public void SendsCodeAndPlayerName() {
+            _joiner.TryJoinLobby("ABC123", "Luka", _cancellation.Token).Forget();
 
             Assert.AreEqual("ABC123", _lobbyService.LastJoinCode);
             Assert.AreEqual("Luka", _lobbyService.LastJoinPlayerName);
         }
 
         [UnityTest]
-        public IEnumerator SuccessfulJoinReturnsTrueAndGoesIdle() => UniTask.ToCoroutine(async () => {
-            _joinLobby.SetLobbyCode("ABC123");
-            var join = _joiner.TryJoinLobby("Luka", _cancellation.Token);
+        public IEnumerator SuccessfulJoinShowsLobbyAsReady() => UniTask.ToCoroutine(async () => {
+            var join = _joiner.TryJoinLobby("ABC123", "Luka", _cancellation.Token);
 
-            _lobbyService.SucceedJoin();
+            _lobbyService.SucceedJoin(CreateLobby(string.Empty, false));
 
-            Assert.IsTrue(await join);
-            Assert.AreEqual(JoinLobbyStatus.Idle, _joinLobby.GetJoinStatus());
+            Assert.AreEqual(LobbyJoinFailure.None, await join);
+            Assert.AreEqual(LobbyStatus.Ready, _status.GetStatus());
+            Assert.AreEqual("ABC123", _currentLobby.GetCurrentLobby().Code);
         });
 
         [UnityTest]
-        public IEnumerator FailedJoinReturnsFalseAndFails() => UniTask.ToCoroutine(async () => {
-            _joinLobby.SetLobbyCode("WRONG");
-            var join = _joiner.TryJoinLobby("Luka", _cancellation.Token);
-
-            _lobbyService.FailJoin();
-
-            Assert.IsFalse(await join);
-            Assert.AreEqual(JoinLobbyStatus.Failed, _joinLobby.GetJoinStatus());
-        });
-
-        [UnityTest]
-        public IEnumerator LockedLobbyShowsMatchInProgress() => UniTask.ToCoroutine(async () => {
-            _joinLobby.SetLobbyCode("ABC123");
-            var join = _joiner.TryJoinLobby("Luka", _cancellation.Token);
-
-            _lobbyService.FailJoin(LobbyJoinFailure.MatchInProgress);
-
-            Assert.IsFalse(await join);
-            Assert.AreEqual(JoinLobbyStatus.MatchInProgress, _joinLobby.GetJoinStatus());
-        });
-
-        [UnityTest]
-        public IEnumerator FullLobbyShowsLobbyFull() => UniTask.ToCoroutine(async () => {
-            _joinLobby.SetLobbyCode("ABC123");
-            var join = _joiner.TryJoinLobby("Luka", _cancellation.Token);
+        public IEnumerator FailedJoinReturnsItsFailure() => UniTask.ToCoroutine(async () => {
+            var join = _joiner.TryJoinLobby("WRONG", "Luka", _cancellation.Token);
 
             _lobbyService.FailJoin(LobbyJoinFailure.LobbyFull);
 
-            Assert.IsFalse(await join);
-            Assert.AreEqual(JoinLobbyStatus.LobbyFull, _joinLobby.GetJoinStatus());
+            Assert.AreEqual(LobbyJoinFailure.LobbyFull, await join);
+            Assert.AreEqual(LobbyStatus.Failed, _status.GetStatus());
+            Assert.AreSame(LobbyState.None, _currentLobby.GetCurrentLobby());
         });
 
         [UnityTest]
-        public IEnumerator JoiningStartedMatchLeavesAndShowsMatchInProgress() => UniTask.ToCoroutine(async () => {
-            _joinLobby.SetLobbyCode("ABC123");
-            var join = _joiner.TryJoinLobby("Luka", _cancellation.Token);
+        public IEnumerator JoiningStartedMatchLeavesAndReturnsMatchInProgress() => UniTask.ToCoroutine(async () => {
+            var join = _joiner.TryJoinLobby("ABC123", "Luka", _cancellation.Token);
 
-            _lobbyService.SucceedJoin(new LobbyState(true, "ABC123", 4, FakeLobbyService.CreatePlayers("Ana", "Luka"), false, "RELAY1", false));
+            _lobbyService.SucceedJoin(CreateLobby("RELAY1", false));
             Assert.IsTrue(_lobbyService.IsLeavePending);
             _lobbyService.CompleteLeave();
 
-            Assert.IsFalse(await join);
+            Assert.AreEqual(LobbyJoinFailure.MatchInProgress, await join);
             Assert.AreEqual(1, _lobbyService.LeaveCount);
-            Assert.AreEqual(JoinLobbyStatus.MatchInProgress, _joinLobby.GetJoinStatus());
+            Assert.AreSame(LobbyState.None, _currentLobby.GetCurrentLobby());
         });
 
         [UnityTest]
-        public IEnumerator JoiningStartingMatchLeavesAndShowsMatchInProgress() => UniTask.ToCoroutine(async () => {
-            _joinLobby.SetLobbyCode("ABC123");
-            var join = _joiner.TryJoinLobby("Luka", _cancellation.Token);
+        public IEnumerator JoiningStartingMatchLeavesAndReturnsMatchInProgress() => UniTask.ToCoroutine(async () => {
+            var join = _joiner.TryJoinLobby("ABC123", "Luka", _cancellation.Token);
 
-            _lobbyService.SucceedJoin(new LobbyState(true, "ABC123", 4, FakeLobbyService.CreatePlayers("Ana", "Luka"), false, string.Empty, true));
+            _lobbyService.SucceedJoin(CreateLobby(string.Empty, true));
             _lobbyService.CompleteLeave();
 
-            Assert.IsFalse(await join);
+            Assert.AreEqual(LobbyJoinFailure.MatchInProgress, await join);
             Assert.AreEqual(1, _lobbyService.LeaveCount);
-            Assert.AreEqual(JoinLobbyStatus.MatchInProgress, _joinLobby.GetJoinStatus());
         });
 
         [UnityTest]
         public IEnumerator CancellingThrows() => UniTask.ToCoroutine(async () => {
-            _joinLobby.SetLobbyCode("ABC123");
-            var join = _joiner.TryJoinLobby("Luka", _cancellation.Token);
+            var join = _joiner.TryJoinLobby("ABC123", "Luka", _cancellation.Token);
 
             _cancellation.Cancel();
             var wasCancelled = false;
@@ -138,5 +113,9 @@ namespace Code.Tests {
 
             Assert.IsTrue(wasCancelled);
         });
+
+        private LobbyState CreateLobby(string matchJoinCode, bool isMatchStarting) {
+            return new LobbyState(true, "ABC123", 4, FakeLobbyService.CreatePlayers("Ana", "Luka"), false, matchJoinCode, isMatchStarting);
+        }
     }
 }

@@ -1,4 +1,4 @@
-namespace Code.Lobby {
+namespace Code.MainMenu {
     public interface IJoinLobbyGetter {
 
         string GetLobbyCode();

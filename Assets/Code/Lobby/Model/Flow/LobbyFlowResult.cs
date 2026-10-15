@@ -7,5 +7,7 @@ namespace Code.Lobby {
         public bool IsHost { get; set; }
         public int MaxPlayers { get; set; }
         public int PlayerCount { get; set; }
+        // Set when joining by code failed; the player goes back to the main menu's Join panel.
+        public LobbyJoinFailure JoinFailure { get; set; }
     }
 }

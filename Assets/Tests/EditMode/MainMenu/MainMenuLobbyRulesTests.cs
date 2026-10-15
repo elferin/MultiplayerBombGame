@@ -61,19 +61,10 @@ namespace Code.Tests {
         }
 
         [Test]
-        public void CannotJoinOrGoBackWhileJoining() {
-            _joinLobby.SetJoinStatus(JoinLobbyStatus.Joining);
-
-            Assert.IsFalse(_rules.CanJoinLobby());
-            Assert.IsFalse(_rules.CanGoBack());
-        }
-
-        [Test]
-        public void CanRetryAndGoBackAfterFailedJoin() {
+        public void CanRetryAfterFailedJoin() {
             _joinLobby.SetJoinStatus(JoinLobbyStatus.Failed);
 
             Assert.IsTrue(_rules.CanJoinLobby());
-            Assert.IsTrue(_rules.CanGoBack());
         }
     }
 }

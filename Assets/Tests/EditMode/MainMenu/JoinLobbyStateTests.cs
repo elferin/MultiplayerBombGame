@@ -1,4 +1,4 @@
-using Code.Lobby;
+using Code.MainMenu;
 using NUnit.Framework;
 
 namespace Code.Tests {

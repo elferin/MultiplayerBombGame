@@ -39,8 +39,6 @@ namespace Code.MainMenu {
             }
             statusText.text = data.StatusText;
             joinButton.interactable = data.CanJoin;
-            backButton.interactable = data.CanGoBack;
-            pasteButton.interactable = data.CanPaste;
         }
 
         private void OnPlayerNameChanged(string text) {

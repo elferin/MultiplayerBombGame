@@ -5,6 +5,7 @@ namespace Code.Lobby {
     public class LobbyViewDataGatherer : IViewDataGatherer<LobbyViewData> {
 
         private const string CREATING_LOBBY = "Creating lobby...";
+        private const string JOINING_LOBBY = "Joining lobby...";
         private const string FAILED_TO_CREATE_LOBBY = "Failed to create lobby";
         private const string LEAVING_LOBBY = "Leaving lobby...";
         private const string FAILED_TO_START_MATCH = "Failed to start match";
@@ -39,6 +40,7 @@ namespace Code.Lobby {
         private string GetStatusText() {
             switch (_statusGetter.GetStatus()) {
                 case LobbyStatus.Creating: return CREATING_LOBBY;
+                case LobbyStatus.Joining: return JOINING_LOBBY;
                 case LobbyStatus.Failed: return FAILED_TO_CREATE_LOBBY;
                 case LobbyStatus.Leaving: return LEAVING_LOBBY;
                 case LobbyStatus.StartFailed: return FAILED_TO_START_MATCH;

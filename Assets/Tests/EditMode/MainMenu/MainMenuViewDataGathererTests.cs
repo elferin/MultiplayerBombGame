@@ -69,7 +69,6 @@ namespace Code.Tests {
         }
 
         [TestCase(JoinLobbyStatus.Idle, "")]
-        [TestCase(JoinLobbyStatus.Joining, "Joining lobby...")]
         [TestCase(JoinLobbyStatus.Failed, "Couldn't join. Check the code.")]
         [TestCase(JoinLobbyStatus.MatchInProgress, "Match already in progress")]
         [TestCase(JoinLobbyStatus.LobbyFull, "Lobby is full")]
@@ -95,16 +94,6 @@ namespace Code.Tests {
             Assert.AreEqual("Luka", joinLobby.PlayerNameText);
             Assert.AreEqual("ABC123", joinLobby.CodeText);
             Assert.IsTrue(joinLobby.CanJoin);
-            Assert.IsTrue(joinLobby.CanGoBack);
-        }
-
-        [TestCase(JoinLobbyStatus.Idle, true)]
-        [TestCase(JoinLobbyStatus.Joining, false)]
-        [TestCase(JoinLobbyStatus.Failed, true)]
-        public void PasteIsDisabledWhileJoining(JoinLobbyStatus status, bool expected) {
-            _joinLobby.SetJoinStatus(status);
-
-            Assert.AreEqual(expected, _gatherer.Get().JoinLobby.CanPaste);
         }
     }
 }

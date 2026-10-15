@@ -16,8 +16,8 @@ namespace Code.MainMenu {
             JoinLobby
         }
 
+        private readonly MainMenuFlowData _data;
         private readonly IMainMenuViewControllerFactory _viewControllerFactory;
-        private readonly LobbyJoiner _lobbyJoiner;
         private readonly IMainMenuScreenLocation _screenLocation;
         private readonly IPlayerName _playerName;
         private readonly IHostLobbySettings _hostLobbySettings;
@@ -28,11 +28,11 @@ namespace Code.MainMenu {
         private IMainMenuViewController _viewController;
         private UniTaskCompletionSource<MainMenuAction> _action;
 
-        public MainMenuFlow(IMainMenuViewControllerFactory viewControllerFactory, LobbyJoiner lobbyJoiner,
+        public MainMenuFlow(MainMenuFlowData data, IMainMenuViewControllerFactory viewControllerFactory,
             IMainMenuScreenLocation screenLocation, IPlayerName playerName,
             IHostLobbySettings hostLobbySettings, IJoinLobby joinLobby, IMainMenuLobbyRules lobbyRules, IClipboard clipboard) {
+            _data = data;
             _viewControllerFactory = viewControllerFactory;
-            _lobbyJoiner = lobbyJoiner;
             _screenLocation = screenLocation;
             _playerName = playerName;
             _hostLobbySettings = hostLobbySettings;
@@ -68,13 +68,12 @@ namespace Code.MainMenu {
                         break;
                     }
                     if (action == MainMenuAction.JoinLobby) {
-                        if (await TryJoinLobby(cancellation)) {
-                            _playerName.SavePlayerName();
-                            flowResult.HasJoinedLobby = true;
-                            flowResult.PlayerName = _playerName.GetTrimmedPlayerName();
-                            break;
-                        }
-                        continue;
+                        // The lobby flow joins; a failed join reopens the menu on the Join panel.
+                        _playerName.SavePlayerName();
+                        flowResult.ShouldJoin = true;
+                        flowResult.LobbyCode = _joinLobby.GetLobbyCode().Trim();
+                        flowResult.PlayerName = _playerName.GetTrimmedPlayerName();
+                        break;
                     }
 
                     ShowScreen(action);
@@ -91,10 +90,16 @@ namespace Code.MainMenu {
             return flowResult;
         }
 
-        // The menu always opens on its main buttons. Host settings and the join code keep their last values.
+        // The menu opens on its main buttons, or on the Join panel with the reason the last join failed.
+        // Host settings and the join code keep their last values.
         private void ResetState() {
-            _screenLocation.ResetLocation();
             _playerName.LoadPlayerName();
+            if (_data.JoinFailure == LobbyJoinFailure.None) {
+                _screenLocation.ResetLocation();
+                return;
+            }
+            _screenLocation.SetLocation(MainMenuScreen.JoinLobby);
+            _joinLobby.SetJoinStatus(GetFailedStatus(_data.JoinFailure));
         }
 
         private void ShowScreen(MainMenuAction action) {
@@ -114,17 +119,12 @@ namespace Code.MainMenu {
             _viewController.Refresh();
         }
 
-        private async UniTask<bool> TryJoinLobby(CancellationToken cancellation) {
-            // The joiner sets the Joining status before its first await, so this refresh shows it.
-            var join = _lobbyJoiner.TryJoinLobby(_playerName.GetTrimmedPlayerName(), cancellation);
-            _viewController.Refresh();
-
-            var hasJoined = await join;
-            if (!hasJoined) {
-                // Stay on the Join panel so the player can fix the code.
-                _viewController.Refresh();
+        private JoinLobbyStatus GetFailedStatus(LobbyJoinFailure failure) {
+            switch (failure) {
+                case LobbyJoinFailure.MatchInProgress: return JoinLobbyStatus.MatchInProgress;
+                case LobbyJoinFailure.LobbyFull: return JoinLobbyStatus.LobbyFull;
+                default: return JoinLobbyStatus.Failed;
             }
-            return hasJoined;
         }
 
         private void AddListeners() {
@@ -166,9 +166,6 @@ namespace Code.MainMenu {
         }
 
         private void OnBackClicked() {
-            if (!_lobbyRules.CanGoBack()) {
-                return;
-            }
             _action.TrySetResult(MainMenuAction.Back);
         }
 
@@ -197,9 +194,6 @@ namespace Code.MainMenu {
         }
 
         private void OnPasteCodeClicked() {
-            if (!_lobbyRules.CanPasteLobbyCode()) {
-                return;
-            }
             // The same as typing it: lobby codes are upper case, and copied text often has stray spaces.
             OnLobbyCodeChanged(_clipboard.GetText().Trim().ToUpperInvariant());
         }
@@ -207,16 +201,8 @@ namespace Code.MainMenu {
         private void OnLobbyCodeChanged(string text) {
             _joinLobby.SetLobbyCode(text);
             // A new code makes the last failure's message out of date.
-            if (IsJoinFailure(_joinLobby.GetJoinStatus())) {
-                _joinLobby.SetJoinStatus(JoinLobbyStatus.Idle);
-            }
+            _joinLobby.SetJoinStatus(JoinLobbyStatus.Idle);
             _viewController.Refresh();
-        }
-
-        private bool IsJoinFailure(JoinLobbyStatus status) {
-            return status == JoinLobbyStatus.Failed
-                   || status == JoinLobbyStatus.MatchInProgress
-                   || status == JoinLobbyStatus.LobbyFull;
         }
     }
 }
