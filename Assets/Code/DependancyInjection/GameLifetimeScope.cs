@@ -1,3 +1,4 @@
+using Code.FlowSystem;
 using Code.Lobby;
 using Code.MainMenu;
 using Code.Match;
@@ -10,6 +11,8 @@ namespace Code.DependancyInjection {
     public class GameLifetimeScope : LifetimeScope {
         
         protected override void Configure(IContainerBuilder builder) {
+            
+            new FlowSystemInstaller().Install(builder);
             
             new UtilSystemInstaller().Install(builder);
             new ProfileSystemInstaller().Install(builder);

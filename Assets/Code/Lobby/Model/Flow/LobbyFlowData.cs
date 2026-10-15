@@ -1,7 +1,9 @@
+using Code.FlowSystem;
+
 namespace Code.Lobby {
 
     // How LobbyFlow gets its lobby: create a new one, join one by code, or show it again after a match.
-    public class LobbyFlowData {
+    public class LobbyFlowData : IFlowData<LobbyFlowResult> {
 
         public LobbyEntry Entry { get; }
         public int MaxPlayers { get; }

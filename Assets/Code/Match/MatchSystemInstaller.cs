@@ -1,4 +1,5 @@
 using Code.DependancyInjection;
+using Code.FlowSystem;
 using VContainer;
 
 namespace Code.Match {
@@ -17,11 +18,11 @@ namespace Code.Match {
             builder.Register<MatchAssetLoader>(Lifetime.Singleton);
             builder.Register<IMatchViewControllerFactory, MatchViewControllerFactory>(Lifetime.Singleton);
             builder.Register<IMatchFlowFactory, MatchFlowFactory>(Lifetime.Singleton);
-            builder.Register<MatchFlowInstantiator>(Lifetime.Singleton);
+            builder.Register<MatchFlowInstantiator>(Lifetime.Singleton).AsImplementedInterfaces();
         }
 
         protected override void InstallPublic(SystemExports exports) {
-            exports.Expose<MatchFlowInstantiator>();
+            exports.RegisterFlow<MatchFlowResult, MatchFlowData>();
         }
 
     }

@@ -1,9 +1,10 @@
+using Code.FlowSystem;
 using Code.Lobby;
 
 namespace Code.MainMenu {
 
     // How the main menu opens: on its main buttons, or back on the Join panel after a failed join.
-    public class MainMenuFlowData {
+    public class MainMenuFlowData : IFlowData<MainMenuFlowResult> {
 
         // None unless the last join failed.
         public LobbyJoinFailure JoinFailure { get; }

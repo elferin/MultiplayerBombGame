@@ -1,11 +1,12 @@
 using System;
 using System.Threading;
+using Code.FlowSystem;
 using Cysharp.Threading.Tasks;
 
 namespace Code.Match {
 
     // Whether the local player hosts the match or joins the host's.
-    public class MatchFlowData {
+    public class MatchFlowData : IFlowData<MatchFlowResult> {
 
         public bool IsHost { get; }
         public int MaxPlayers { get; }

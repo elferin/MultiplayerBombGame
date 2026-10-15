@@ -1,11 +1,12 @@
 using System.Threading;
+using Code.FlowSystem;
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
 
 namespace Code.Match {
 
     [UsedImplicitly]
-    public class MatchFlowInstantiator {
+    public class MatchFlowInstantiator : IFlowInstantiator<MatchFlowResult, MatchFlowData> {
 
         private readonly IMatchFlowFactory _flowFactory;
 

@@ -17,5 +17,10 @@ namespace Code.DependancyInjection {
         public void Expose<T>() {
             _builder.Register(resolver => _getSystemScope(resolver).Resolve<T>(), Lifetime.Singleton);
         }
+
+        // Runs once the container is built, with this system's internal scope and the outer container.
+        public void OnContainerBuilt(Action<IObjectResolver, IObjectResolver> callback) {
+            _builder.RegisterBuildCallback(container => callback(_getSystemScope(container), container));
+        }
     }
 }

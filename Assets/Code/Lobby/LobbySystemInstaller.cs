@@ -1,4 +1,5 @@
 using Code.DependancyInjection;
+using Code.FlowSystem;
 using PurrLobby.Providers;
 using UnityEngine;
 using VContainer;
@@ -29,11 +30,11 @@ namespace Code.Lobby {
             builder.Register<LobbyAssetLoader>(Lifetime.Singleton);
             builder.Register<ILobbyViewControllerFactory, LobbyViewControllerFactory>(Lifetime.Singleton);
             builder.Register<ILobbyFlowFactory, LobbyFlowFactory>(Lifetime.Singleton);
-            builder.Register<LobbyFlowInstantiator>(Lifetime.Singleton);
+            builder.Register<LobbyFlowInstantiator>(Lifetime.Singleton).AsImplementedInterfaces();
         }
 
         protected override void InstallPublic(SystemExports exports) {
-            exports.Expose<LobbyFlowInstantiator>();
+            exports.RegisterFlow<LobbyFlowResult, LobbyFlowData>();
             // GamePresenter passes the host's join code between the match and the lobby.
             exports.Expose<MatchJoinCodeSharer>();
             exports.Expose<MatchJoinCodeReceiver>();

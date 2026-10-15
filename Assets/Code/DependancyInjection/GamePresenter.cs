@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using Code.FlowSystem;
 using Code.Lobby;
 using Code.MainMenu;
 using Code.Match;
@@ -10,18 +11,12 @@ namespace Code.DependancyInjection {
 
     public class GamePresenter : IAsyncStartable {
         
-        private readonly MainMenuFlowInstantiator _mainMenuFlowInstantiator;
-        private readonly LobbyFlowInstantiator _lobbyFlowInstantiator;
-        private readonly MatchFlowInstantiator _matchFlowInstantiator;
+        private readonly IFlowRunner _flowRunner;
         private readonly MatchJoinCodeSharer _joinCodeSharer;
         private readonly MatchJoinCodeReceiver _joinCodeReceiver;
 
-        public GamePresenter(MainMenuFlowInstantiator mainMenuFlowInstantiator, LobbyFlowInstantiator lobbyFlowInstantiator,
-            MatchFlowInstantiator matchFlowInstantiator, MatchJoinCodeSharer joinCodeSharer,
-            MatchJoinCodeReceiver joinCodeReceiver) {
-            _mainMenuFlowInstantiator = mainMenuFlowInstantiator;
-            _lobbyFlowInstantiator = lobbyFlowInstantiator;
-            _matchFlowInstantiator = matchFlowInstantiator;
+        public GamePresenter(IFlowRunner flowRunner, MatchJoinCodeSharer joinCodeSharer, MatchJoinCodeReceiver joinCodeReceiver) {
+            _flowRunner = flowRunner;
             _joinCodeSharer = joinCodeSharer;
             _joinCodeReceiver = joinCodeReceiver;
         }
@@ -32,7 +27,7 @@ namespace Code.DependancyInjection {
             try {
                 var mainMenuData = MainMenuFlowData.Default();
                 while (true) {
-                    var mainMenuResult = await _mainMenuFlowInstantiator.StartFlow(mainMenuData, cancellation);
+                    var mainMenuResult = await _flowRunner.Run(mainMenuData, cancellation);
                     if (mainMenuResult.ShouldQuit) {
                         Quit();
                         return;
@@ -66,12 +61,12 @@ namespace Code.DependancyInjection {
             // The last match's code can stay in the lobby for a moment, so it isn't taken for the next match's.
             var usedJoinCode = string.Empty;
             while (true) {
-                var lobbyResult = await _lobbyFlowInstantiator.StartFlow(lobbyData, cancellation);
+                var lobbyResult = await _flowRunner.Run(lobbyData, cancellation);
                 if (!lobbyResult.ShouldStartMatch) {
                     return lobbyResult.JoinFailure;
                 }
 
-                var matchResult = await _matchFlowInstantiator.StartFlow(GetMatchData(lobbyResult, usedJoinCode), cancellation);
+                var matchResult = await _flowRunner.Run(GetMatchData(lobbyResult, usedJoinCode), cancellation);
                 if (!string.IsNullOrEmpty(matchResult.UsedJoinCode)) {
                     usedJoinCode = matchResult.UsedJoinCode;
                 }

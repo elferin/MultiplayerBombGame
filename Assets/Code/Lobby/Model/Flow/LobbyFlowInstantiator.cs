@@ -1,11 +1,12 @@
 using System.Threading;
+using Code.FlowSystem;
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
 
 namespace Code.Lobby {
 
     [UsedImplicitly]
-    public class LobbyFlowInstantiator {
+    public class LobbyFlowInstantiator : IFlowInstantiator<LobbyFlowResult, LobbyFlowData> {
 
         private readonly ILobbyFlowFactory _flowFactory;
 

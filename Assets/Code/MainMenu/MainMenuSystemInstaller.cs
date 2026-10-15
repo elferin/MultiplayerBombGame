@@ -1,4 +1,5 @@
 using Code.DependancyInjection;
+using Code.FlowSystem;
 using VContainer;
 
 namespace Code.MainMenu {
@@ -17,11 +18,11 @@ namespace Code.MainMenu {
             builder.Register<IViewDataGatherer<MainMenuViewData>, MainMenuViewDataGatherer>(Lifetime.Singleton);
             builder.Register<IMainMenuViewControllerFactory, MainMenuViewControllerFactory>(Lifetime.Singleton);
             builder.Register<IMainMenuFlowFactory, MainMenuFlowFactory>(Lifetime.Singleton);
-            builder.Register<MainMenuFlowInstantiator>(Lifetime.Singleton);
+            builder.Register<MainMenuFlowInstantiator>(Lifetime.Singleton).AsImplementedInterfaces();
         }
 
         protected override void InstallPublic(SystemExports exports) {
-            exports.Expose<MainMenuFlowInstantiator>();
+            exports.RegisterFlow<MainMenuFlowResult, MainMenuFlowData>();
         }
 
     }
