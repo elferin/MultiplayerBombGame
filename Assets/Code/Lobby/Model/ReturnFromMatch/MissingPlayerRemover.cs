@@ -13,10 +13,10 @@ namespace Code.Lobby {
 
         private static readonly TimeSpan RETURN_TIMEOUT = TimeSpan.FromSeconds(30);
 
-        private readonly ILobbyService _lobbyService;
+        private readonly ILobbyPresence _lobbyPresence;
 
-        public MissingPlayerRemover(ILobbyService lobbyService) {
-            _lobbyService = lobbyService;
+        public MissingPlayerRemover(ILobbyPresence lobbyPresence) {
+            _lobbyPresence = lobbyPresence;
         }
 
         public UniTask RemoveMissingPlayersAfterTimeout(CancellationToken cancellation) {
@@ -28,7 +28,7 @@ namespace Code.Lobby {
             await UniTask.Delay(timeout, DelayType.Realtime, cancellationToken: cancellation);
 
             // Fresh from the server: the host's copy only changes through lobby events, which can be missed.
-            var players = await _lobbyService.FetchPlayers();
+            var players = await _lobbyPresence.FetchPlayers();
             cancellation.ThrowIfCancellationRequested();
 
             var missingPlayerIds = new List<string>();
@@ -38,7 +38,7 @@ namespace Code.Lobby {
                 }
             }
             if (missingPlayerIds.Count > 0) {
-                await _lobbyService.RemovePlayers(missingPlayerIds);
+                await _lobbyPresence.RemovePlayers(missingPlayerIds);
             }
         }
     }

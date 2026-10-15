@@ -7,15 +7,15 @@ namespace Code.Lobby {
     [UsedImplicitly]
     public class MatchJoinCodeSharer {
 
-        private readonly ILobbyService _lobbyService;
+        private readonly ILobbyMatchSignals _matchSignals;
 
-        public MatchJoinCodeSharer(ILobbyService lobbyService) {
-            _lobbyService = lobbyService;
+        public MatchJoinCodeSharer(ILobbyMatchSignals matchSignals) {
+            _matchSignals = matchSignals;
         }
 
         // Locks the lobby first, so nobody new joins the started match.
         public UniTask ShareJoinCode(string joinCode) {
-            return _lobbyService.StartMatch(joinCode);
+            return _matchSignals.StartMatch(joinCode);
         }
     }
 }

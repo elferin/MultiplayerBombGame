@@ -11,7 +11,8 @@ namespace Code.Lobby {
 
         protected override void InstallInternal(IContainerBuilder builder) {
             builder.Register(_ => CreateLobbyProvider(), Lifetime.Singleton);
-            builder.Register<ILobbyService, LobbyService>(Lifetime.Singleton);
+            // One instance for ILobbyService and each of its parts.
+            builder.Register<LobbyService>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<LobbyJoiner>(Lifetime.Singleton);
             builder.Register<LobbyCreator>(Lifetime.Singleton);
             builder.Register<MatchJoinCodeSharer>(Lifetime.Singleton);

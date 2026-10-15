@@ -12,10 +12,10 @@ namespace Code.Lobby {
         // The host normally shares the code within a few seconds of tapping Start.
         private static readonly TimeSpan JOIN_CODE_TIMEOUT = TimeSpan.FromSeconds(30);
 
-        private readonly ILobbyService _lobbyService;
+        private readonly ILobbyMembership _lobbyMembership;
 
-        public MatchJoinCodeReceiver(ILobbyService lobbyService) {
-            _lobbyService = lobbyService;
+        public MatchJoinCodeReceiver(ILobbyMembership lobbyMembership) {
+            _lobbyMembership = lobbyMembership;
         }
 
         // Returns the new join code, or an empty string if the host's start failed, the lobby is gone, or it took too long.
@@ -32,10 +32,10 @@ namespace Code.Lobby {
                 }
             }
 
-            _lobbyService.LobbyUpdated += OnLobbyUpdated;
+            _lobbyMembership.LobbyUpdated += OnLobbyUpdated;
             try {
                 // The code may already be there.
-                OnLobbyUpdated(_lobbyService.CurrentLobby);
+                OnLobbyUpdated(_lobbyMembership.CurrentLobby);
 
                 using (var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellation)) {
                     timeoutSource.CancelAfter(timeout);
@@ -46,7 +46,7 @@ namespace Code.Lobby {
                 }
             }
             finally {
-                _lobbyService.LobbyUpdated -= OnLobbyUpdated;
+                _lobbyMembership.LobbyUpdated -= OnLobbyUpdated;
             }
         }
 

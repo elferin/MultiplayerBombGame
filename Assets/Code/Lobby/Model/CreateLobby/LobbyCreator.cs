@@ -7,12 +7,12 @@ namespace Code.Lobby {
     [UsedImplicitly]
     public class LobbyCreator {
 
-        private readonly ILobbyService _lobbyService;
+        private readonly ILobbyMembership _lobbyMembership;
         private readonly ILobbyStatusSetter _status;
         private readonly ICurrentLobbySetter _currentLobby;
 
-        public LobbyCreator(ILobbyService lobbyService, ILobbyStatusSetter status, ICurrentLobbySetter currentLobby) {
-            _lobbyService = lobbyService;
+        public LobbyCreator(ILobbyMembership lobbyMembership, ILobbyStatusSetter status, ICurrentLobbySetter currentLobby) {
+            _lobbyMembership = lobbyMembership;
             _status = status;
             _currentLobby = currentLobby;
         }
@@ -23,7 +23,7 @@ namespace Code.Lobby {
             _status.SetStatus(LobbyStatus.Creating);
             _currentLobby.SetCurrentLobby(LobbyState.None);
 
-            var lobby = await _lobbyService.CreateLobby(maxPlayers, playerName, cancellation);
+            var lobby = await _lobbyMembership.CreateLobby(maxPlayers, playerName, cancellation);
             _currentLobby.SetCurrentLobby(lobby);
             _status.SetStatus(lobby.IsValid ? LobbyStatus.Ready : LobbyStatus.Failed);
             return lobby.IsValid;

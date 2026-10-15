@@ -7,12 +7,12 @@ namespace Code.Lobby {
     [UsedImplicitly]
     public class LobbyJoiner {
 
-        private readonly ILobbyService _lobbyService;
+        private readonly ILobbyMembership _lobbyMembership;
         private readonly ILobbyStatusSetter _status;
         private readonly ICurrentLobbySetter _currentLobby;
 
-        public LobbyJoiner(ILobbyService lobbyService, ILobbyStatusSetter status, ICurrentLobbySetter currentLobby) {
-            _lobbyService = lobbyService;
+        public LobbyJoiner(ILobbyMembership lobbyMembership, ILobbyStatusSetter status, ICurrentLobbySetter currentLobby) {
+            _lobbyMembership = lobbyMembership;
             _status = status;
             _currentLobby = currentLobby;
         }
@@ -24,7 +24,7 @@ namespace Code.Lobby {
             _status.SetStatus(LobbyStatus.Joining);
             _currentLobby.SetCurrentLobby(LobbyState.None);
 
-            var result = await _lobbyService.JoinLobby(lobbyCode, playerName, cancellation);
+            var result = await _lobbyMembership.JoinLobby(lobbyCode, playerName, cancellation);
             var lobby = result.Lobby;
             if (!lobby.IsValid) {
                 _status.SetStatus(LobbyStatus.Failed);
@@ -33,7 +33,7 @@ namespace Code.Lobby {
 
             // Joined in the moment between the host starting the match and the lobby being locked.
             if (lobby.IsMatchStarting || !string.IsNullOrEmpty(lobby.MatchJoinCode)) {
-                await _lobbyService.LeaveLobby();
+                await _lobbyMembership.LeaveLobby();
                 _status.SetStatus(LobbyStatus.Failed);
                 return LobbyJoinFailure.MatchInProgress;
             }
