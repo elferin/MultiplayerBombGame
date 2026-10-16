@@ -22,6 +22,7 @@ namespace Code.Match {
         public void StartSpawning() {
             var spawner = FindSpawner();
             if (spawner == null) {
+                Debug.LogError(MISSING_SPAWNER);
                 return;
             }
 
@@ -32,6 +33,7 @@ namespace Code.Match {
             spawner.gameObject.SetActive(true);
         }
 
+        // No spawner means nothing to stop, e.g. when Play mode ends mid-match and the scene is already gone.
         public void StopSpawning() {
             var spawner = FindSpawner();
             if (spawner != null) {
@@ -47,11 +49,7 @@ namespace Code.Match {
         }
 
         private PlayerSpawner FindSpawner() {
-            var spawner = Object.FindAnyObjectByType<PlayerSpawner>(FindObjectsInactive.Include);
-            if (spawner == null) {
-                Debug.LogError(MISSING_SPAWNER);
-            }
-            return spawner;
+            return Object.FindAnyObjectByType<PlayerSpawner>(FindObjectsInactive.Include);
         }
     }
 }
