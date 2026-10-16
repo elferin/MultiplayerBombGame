@@ -6,7 +6,7 @@ namespace Code.BombTag {
     // so a client that misses one message is fixed by the next.
     public readonly struct BombTagState : IPackedAuto {
 
-        public static readonly BombTagState Waiting = new BombTagState(BombTagPhase.Waiting, 0, string.Empty);
+        public static readonly BombTagState Waiting = new (BombTagPhase.Waiting, 0, string.Empty);
 
         private readonly BombTagPhase _phase;
         private readonly int _countdownSeconds;

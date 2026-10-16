@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Code.BombTag {
 
-    // One round of bomb tag. The host runs the rules and broadcasts the state; everyone shows it.
+    // One round of bomb tag. The host runs the round and broadcasts the state; everyone shows it.
     public class BombTagFlow : IBombTagFlow {
 
         // A player object that never spawns mustn't hold up the others.
@@ -17,19 +17,19 @@ namespace Code.BombTag {
         private readonly IBombTagSync _sync;
         private readonly IBombTagPlayers _players;
         private readonly IBombTagStatus _status;
-        private readonly BombTagRules _rules;
+        private readonly BombTagRound _round;
 
         private IBombTagViewController _viewController;
         private UniTaskCompletionSource _finished;
 
         public BombTagFlow(BombTagFlowData data, IBombTagViewControllerFactory viewControllerFactory, IBombTagSync sync,
-            IBombTagPlayers players, IBombTagStatus status, BombTagRules rules) {
+            IBombTagPlayers players, IBombTagStatus status, BombTagRound round) {
             _data = data;
             _viewControllerFactory = viewControllerFactory;
             _sync = sync;
             _players = players;
             _status = status;
-            _rules = rules;
+            _round = round;
         }
 
         public async UniTask<BombTagFlowResult> RunAsync(CancellationToken cancellation) {
@@ -43,7 +43,7 @@ namespace Code.BombTag {
                 var viewRun = _viewController.RunAsync(cancellation);
 
                 if (_data.IsHost) {
-                    await RunRules(cancellation);
+                    await RunRound(cancellation);
                 }
                 else {
                     await _finished.Task.AttachExternalCancellation(cancellation);
@@ -62,15 +62,15 @@ namespace Code.BombTag {
             return flowResult;
         }
 
-        private async UniTask RunRules(CancellationToken cancellation) {
+        private async UniTask RunRound(CancellationToken cancellation) {
             await WaitForPlayers(cancellation);
 
-            _rules.Begin();
-            Publish(_rules.GetState());
-            while (!_rules.IsFinished()) {
+            _round.Begin();
+            Publish(_round.GetState());
+            while (!_round.IsFinished()) {
                 await UniTask.Yield(PlayerLoopTiming.Update, cancellation);
-                if (_rules.Tick(Time.deltaTime)) {
-                    Publish(_rules.GetState());
+                if (_round.Tick(Time.deltaTime)) {
+                    Publish(_round.GetState());
                 }
             }
         }

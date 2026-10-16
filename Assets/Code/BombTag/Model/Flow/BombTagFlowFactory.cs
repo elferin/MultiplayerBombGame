@@ -20,8 +20,8 @@ namespace Code.BombTag {
         }
 
         public IBombTagFlow Create(BombTagFlowData data) {
-            // New rules for every match, so nothing carries over from the last one.
-            return new BombTagFlow(data, _viewControllerFactory, _sync, _players, _status, new BombTagRules(_players, _random));
+            // A new round for every match, so nothing carries over from the last one.
+            return new BombTagFlow(data, _viewControllerFactory, _sync, _players, _status, new BombTagRound(_players, _random));
         }
     }
 }
