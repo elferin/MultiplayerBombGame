@@ -1,9 +1,11 @@
+using System.Collections.Generic;
 using Code.Util;
 using UnityEngine;
 
 namespace Code.BombTag {
 
-    // What the game is: the bomb passes on touch, an explosion eliminates only its holder, the last player left wins.
+    // What the game is: the bomb passes on touch (not to shielded players), an explosion eliminates only its holder,
+    // a new bomb goes to a random unshielded player, the last player left wins.
     // Applies these to the round's players and bomb; the round moves time on and keeps the phase.
     public class BombTagRules {
 
@@ -15,6 +17,8 @@ namespace Code.BombTag {
         private readonly AlivePlayers _alivePlayers;
         private readonly Bomb _bomb;
         private readonly IRandom _random;
+        // Reused, because a new bomb can be given out several times a round.
+        private readonly List<BombTagPlayer> _candidates = new();
 
         public BombTagRules(AlivePlayers alivePlayers, Bomb bomb, IRandom random) {
             _alivePlayers = alivePlayers;
@@ -57,10 +61,19 @@ namespace Code.BombTag {
             _alivePlayers.Eliminate(holderId);
         }
 
-        // A random alive player, with a random fuse.
+        // A random unshielded player, with a random fuse. A shielded holder's fuse is paused, so giving them a new bomb
+        // would stall the round; only when everyone left is shielded does anyone get it.
         private void GiveNewBomb() {
-            var alive = _alivePlayers.GetAll();
-            var playerId = alive[_random.Range(0, alive.Count)].Id;
+            _candidates.Clear();
+            foreach (var player in _alivePlayers.GetAll()) {
+                if (!player.IsShielded) {
+                    _candidates.Add(player);
+                }
+            }
+            if (_candidates.Count == 0) {
+                _candidates.AddRange(_alivePlayers.GetAll());
+            }
+            var playerId = _candidates[_random.Range(0, _candidates.Count)].Id;
             _bomb.GiveTo(playerId, _random.Range(MIN_FUSE_SECONDS, MAX_FUSE_SECONDS));
         }
 
@@ -69,7 +82,8 @@ namespace Code.BombTag {
                 return;
             }
             foreach (var player in _alivePlayers.GetAll()) {
-                if (player.Id != holder.Id && Vector3.Distance(player.Position, holder.Position) <= TOUCH_DISTANCE) {
+                if (player.Id != holder.Id && !player.IsShielded
+                    && Vector3.Distance(player.Position, holder.Position) <= TOUCH_DISTANCE) {
                     _bomb.PassTo(player.Id);
                     return;
                 }

@@ -37,9 +37,9 @@ namespace Code.Tests.BombTag {
             Assert.IsFalse(_rules.Apply());
 
             Assert.AreEqual(3, _players.GetHolder());
-            _bomb.Tick(9.9f);
+            _bomb.Tick(9.9f, false);
             Assert.IsFalse(_bomb.HasExploded());
-            _bomb.Tick(0.2f);
+            _bomb.Tick(0.2f, false);
             Assert.IsTrue(_bomb.HasExploded());
         }
 
@@ -64,6 +64,50 @@ namespace Code.Tests.BombTag {
         }
 
         [Test]
+        public void DoesNotPassToAShieldedPlayer() {
+            _bomb.GiveTo(1, 5f);
+            _players.SetShielded(2, true);
+            Move(2, new Vector3(1f, 0f, 0f));
+
+            _rules.Apply();
+
+            Assert.AreEqual(1, _players.GetHolder());
+        }
+
+        [Test]
+        public void ShieldedHolderCanStillPassTheBomb() {
+            _bomb.GiveTo(1, 5f);
+            _players.SetShielded(1, true);
+            Move(2, new Vector3(1f, 0f, 0f));
+
+            _rules.Apply();
+
+            Assert.AreEqual(2, _players.GetHolder());
+        }
+
+        [Test]
+        public void NewBombSkipsShieldedPlayers() {
+            _players.SetShielded(1, true);
+            _alivePlayers.Refresh();
+
+            _rules.Apply();
+
+            Assert.AreEqual(2, _players.GetHolder());
+        }
+
+        [Test]
+        public void NewBombGoesToAShieldedPlayerWhenEveryoneIsShielded() {
+            _players.SetShielded(1, true);
+            _players.SetShielded(2, true);
+            _players.SetShielded(3, true);
+            _alivePlayers.Refresh();
+
+            _rules.Apply();
+
+            Assert.AreEqual(1, _players.GetHolder());
+        }
+
+        [Test]
         public void DoesNotPassBackUntilTheCooldownEnds() {
             _bomb.GiveTo(1, 5f);
             Move(2, new Vector3(1f, 0f, 0f));
@@ -72,7 +116,7 @@ namespace Code.Tests.BombTag {
             _rules.Apply();
             Assert.AreEqual(2, _players.GetHolder());
 
-            _bomb.Tick(0.6f);
+            _bomb.Tick(0.6f, false);
             _rules.Apply();
             Assert.AreEqual(1, _players.GetHolder());
         }
@@ -80,7 +124,7 @@ namespace Code.Tests.BombTag {
         [Test]
         public void ExplosionEliminatesOnlyTheHolderAndGivesANewBomb() {
             _bomb.GiveTo(1, 5f);
-            _bomb.Tick(5.1f);
+            _bomb.Tick(5.1f, false);
 
             Assert.IsFalse(_rules.Apply());
 
@@ -92,7 +136,7 @@ namespace Code.Tests.BombTag {
         public void ExplosionWithTwoLeftEndsTheMatch() {
             _alivePlayers.Eliminate(3);
             _bomb.GiveTo(1, 5f);
-            _bomb.Tick(5.1f);
+            _bomb.Tick(5.1f, false);
 
             Assert.IsTrue(_rules.Apply());
 

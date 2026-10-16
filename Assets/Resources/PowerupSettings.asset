@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50e6afe142900ea429234c65b71847e5, type: 3}
+  m_Name: PowerupSettings
+  m_EditorClassIdentifier: Code::Code.Powerup.PowerupSettings
+  pickupPrefab: {fileID: 6386349542129520344, guid: e4fff60684ea74741adcdb56127fd1d9, type: 3}
+  spawnDelaySeconds: 5
+  arenaHalfSize: 7
+  minDistanceFromPlayers: 2
+  pickupRadius: 1
+  dashSpeed: 16
+  shieldSeconds: 4
+  speedBoostMultiplier: 1.6
+  speedBoostSeconds: 3
+  dashMaterial: {fileID: 2100000, guid: 597fa004de99d1b40a0d63e0810ef350, type: 2}
+  shieldMaterial: {fileID: 2100000, guid: d83a60032ecede04c94a28dd22721a16, type: 2}
+  speedBoostMaterial: {fileID: 2100000, guid: 428db21334244fb4f8e54d7e6147ce4d, type: 2}

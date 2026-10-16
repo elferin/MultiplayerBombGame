@@ -27,22 +27,36 @@ namespace Code.Tests.BombTag {
         public void ExplodesWhenTheFuseRunsOut() {
             _bomb.GiveTo(1, 5f);
 
-            _bomb.Tick(4.9f);
+            _bomb.Tick(4.9f, false);
             Assert.IsFalse(_bomb.HasExploded());
 
-            _bomb.Tick(0.2f);
+            _bomb.Tick(0.2f, false);
             Assert.IsTrue(_bomb.HasExploded());
         }
 
         [Test]
         public void PassingKeepsTheFuseRunning() {
             _bomb.GiveTo(1, 5f);
-            _bomb.Tick(4f);
+            _bomb.Tick(4f, false);
 
             _bomb.PassTo(2);
             Assert.AreEqual(2, _players.GetHolder());
 
-            _bomb.Tick(1.1f);
+            _bomb.Tick(1.1f, false);
+            Assert.IsTrue(_bomb.HasExploded());
+        }
+
+        [Test]
+        public void PausedFuseDoesNotBurnButTheCooldownRuns() {
+            _bomb.GiveTo(1, 5f);
+            _bomb.PassTo(2);
+
+            _bomb.Tick(10f, true);
+
+            Assert.IsFalse(_bomb.HasExploded());
+            Assert.IsTrue(_bomb.CanPass());
+
+            _bomb.Tick(5.1f, false);
             Assert.IsTrue(_bomb.HasExploded());
         }
 
@@ -54,10 +68,10 @@ namespace Code.Tests.BombTag {
             _bomb.PassTo(2);
             Assert.IsFalse(_bomb.CanPass());
 
-            _bomb.Tick(0.4f);
+            _bomb.Tick(0.4f, false);
             Assert.IsFalse(_bomb.CanPass());
 
-            _bomb.Tick(0.2f);
+            _bomb.Tick(0.2f, false);
             Assert.IsTrue(_bomb.CanPass());
         }
 
@@ -73,7 +87,7 @@ namespace Code.Tests.BombTag {
 
         [Test]
         public void NobodyHoldingItMeansNoExplosion() {
-            _bomb.Tick(100f);
+            _bomb.Tick(100f, false);
 
             Assert.IsFalse(_bomb.HasExploded());
             Assert.IsFalse(_bomb.CanPass());

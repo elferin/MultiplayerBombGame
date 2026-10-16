@@ -42,9 +42,12 @@ namespace Code.Match {
         }
 
         // Called after the network stopped, so this only destroys the local copies and sends nothing.
-        public void RemovePlayers() {
-            foreach (var player in Object.FindObjectsByType<MatchPlayer>()) {
-                Object.Destroy(player.gameObject);
+        public void RemoveSpawnedObjects() {
+            foreach (var identity in Object.FindObjectsByType<NetworkIdentity>()) {
+                // Scene objects stay for the next match; children go with their root.
+                if (!identity.isSceneObject && identity.parent == null) {
+                    Object.Destroy(identity.gameObject);
+                }
             }
         }
 

@@ -20,7 +20,13 @@ namespace Code.Tests.BombTag {
 
         public void Move(int id, Vector3 position) {
             var index = _players.FindIndex(player => player.Id == id);
-            _players[index] = new BombTagPlayer(id, _players[index].Name, position);
+            _players[index] = new BombTagPlayer(id, _players[index].Name, position, _players[index].IsShielded);
+        }
+
+        public void SetShielded(int id, bool isShielded) {
+            var index = _players.FindIndex(player => player.Id == id);
+            var player = _players[index];
+            _players[index] = new BombTagPlayer(id, player.Name, player.Position, isShielded);
         }
 
         // Like a player disconnecting.

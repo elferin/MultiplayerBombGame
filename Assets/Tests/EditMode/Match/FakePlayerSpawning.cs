@@ -16,7 +16,7 @@ namespace Code.Tests.Match {
             StopCount++;
         }
 
-        public void RemovePlayers() {
+        public void RemoveSpawnedObjects() {
             RemoveCount++;
         }
     }

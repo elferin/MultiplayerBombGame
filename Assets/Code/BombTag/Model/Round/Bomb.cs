@@ -50,11 +50,14 @@ namespace Code.BombTag {
             _passCooldownLeft = PASS_COOLDOWN_SECONDS;
         }
 
-        public void Tick(float deltaTime) {
+        // The pass cooldown always runs; the fuse doesn't while it's paused, e.g. while the holder is shielded.
+        public void Tick(float deltaTime, bool isFusePaused) {
             if (!HasHolder()) {
                 return;
             }
-            _fuseLeft -= deltaTime;
+            if (!isFusePaused) {
+                _fuseLeft -= deltaTime;
+            }
             _passCooldownLeft -= deltaTime;
         }
 

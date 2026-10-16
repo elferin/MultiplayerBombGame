@@ -1,3 +1,4 @@
+using Code.Powerup;
 using Code.Util;
 
 namespace Code.BombTag {
@@ -10,14 +11,16 @@ namespace Code.BombTag {
         private readonly AlivePlayers _alivePlayers;
         private readonly Bomb _bomb;
         private readonly BombTagRules _rules;
+        private readonly IPowerups _powerups;
 
         private BombTagState _state = BombTagState.Waiting;
 
-        public BombTagRound(IBombTagPlayers players, IRandom random) {
+        public BombTagRound(IBombTagPlayers players, IRandom random, IPowerups powerups) {
             _countdown = new();
             _alivePlayers = new(players);
             _bomb = new(players);
             _rules = new(_alivePlayers, _bomb, random);
+            _powerups = powerups;
         }
 
         public BombTagState GetState() {
@@ -56,16 +59,26 @@ namespace Code.BombTag {
                 return;
             }
 
-            // The rules give the first bomb.
+            // The rules give the first bomb; the first power-up appears with it.
             _state = new BombTagState(BombTagPhase.Playing, 0, string.Empty);
             RefreshPlayers();
             ApplyRules();
+            if (!IsFinished()) {
+                _powerups.Start();
+            }
         }
 
         private void TickPlaying(float deltaTime) {
+            // First, so the players read next already see a shield used this frame.
+            _powerups.Tick(deltaTime);
             RefreshPlayers();
-            _bomb.Tick(deltaTime);
+            _bomb.Tick(deltaTime, IsHolderShielded());
             ApplyRules();
+        }
+
+        // A shielded holder's fuse doesn't burn.
+        private bool IsHolderShielded() {
+            return _alivePlayers.TryGet(_bomb.GetHolderId(), out var holder) && holder.IsShielded;
         }
 
         // Drops players who left, e.g. by disconnecting, so the rules only see players still in the round.

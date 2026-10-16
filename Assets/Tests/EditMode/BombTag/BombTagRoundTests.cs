@@ -1,4 +1,5 @@
 using Code.BombTag;
+using Code.Tests.Powerup;
 using Code.Tests.Util;
 using NUnit.Framework;
 using UnityEngine;
@@ -14,13 +15,15 @@ namespace Code.Tests.BombTag {
 
         private FakeBombTagPlayers _players;
         private FakeRandom _random;
+        private FakePowerups _powerups;
         private BombTagRound _round;
 
         [SetUp]
         public void SetUp() {
             _players = new FakeBombTagPlayers();
             _random = new FakeRandom();
-            _round = new BombTagRound(_players, _random);
+            _powerups = new FakePowerups();
+            _round = new BombTagRound(_players, _random, _powerups);
 
             // Far enough apart that nobody touches.
             _players.Add(1, "Ana", new Vector3(0f, 0f, 0f));
@@ -54,6 +57,49 @@ namespace Code.Tests.BombTag {
 
             Assert.AreEqual(BombTagPhase.Playing, _round.GetState().Phase);
             Assert.AreEqual(2, _players.GetHolder());
+        }
+
+        [Test]
+        public void PowerupsStartWithThePlayAndTickWhilePlaying() {
+            _round.Begin();
+            _round.Tick(1f);
+            Assert.AreEqual(0, _powerups.StartCount);
+            Assert.AreEqual(0, _powerups.TickCount);
+
+            StartPlaying();
+            Assert.AreEqual(1, _powerups.StartCount);
+
+            _round.Tick(0.1f);
+            _round.Tick(0.1f);
+            Assert.AreEqual(2, _powerups.TickCount);
+        }
+
+        [Test]
+        public void ShieldedPlayerIsNotPassedTheBomb() {
+            StartPlaying();
+            _players.SetShielded(2, true);
+            _players.Move(2, new Vector3(1f, 0f, 0f));
+
+            _round.Tick(0.1f);
+
+            Assert.AreEqual(1, _players.GetHolder());
+        }
+
+        [Test]
+        public void ShieldedHolderFuseIsPausedUntilTheShieldEnds() {
+            StartPlaying();
+            _round.Tick(SHORTEST_FUSE - 1f);
+
+            _players.SetShielded(1, true);
+            _round.Tick(10f);
+            Assert.AreEqual(0, _players.Eliminated.Count);
+
+            // The fuse carries on with the second it had left.
+            _players.SetShielded(1, false);
+            _round.Tick(0.9f);
+            Assert.AreEqual(0, _players.Eliminated.Count);
+            _round.Tick(0.2f);
+            CollectionAssert.AreEqual(new[] { 1 }, _players.Eliminated);
         }
 
         [Test]
@@ -123,6 +169,7 @@ namespace Code.Tests.BombTag {
 
             Assert.IsTrue(_round.IsFinished());
             Assert.AreEqual("Ana", _round.GetState().WinnerName);
+            Assert.AreEqual(0, _powerups.StartCount);
         }
 
         private bool StartPlaying() {

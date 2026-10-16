@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Code.Match;
+using Code.Powerup;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -17,7 +18,9 @@ namespace Code.BombTag {
             foreach (var holder in BombHolder.Active) {
                 var matchPlayer = holder.GetComponent<MatchPlayer>();
                 var name = matchPlayer != null ? matchPlayer.PlayerName : string.Empty;
-                _players.Add(new BombTagPlayer(holder.PlayerId, name, holder.transform.position));
+                var powerupHolder = holder.GetComponent<PowerupHolder>();
+                var isShielded = powerupHolder != null && powerupHolder.IsShielded;
+                _players.Add(new BombTagPlayer(holder.PlayerId, name, holder.transform.position, isShielded));
             }
             return _players;
         }

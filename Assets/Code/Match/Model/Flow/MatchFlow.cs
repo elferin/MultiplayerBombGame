@@ -73,7 +73,7 @@ namespace Code.Match {
 
                 if (isConnected) {
                     _network.Stop();
-                    _spawning.RemovePlayers();
+                    _spawning.RemoveSpawnedObjects();
                     if (_data.IsHost) {
                         // The next match waits for everyone again before spawning.
                         _spawning.StopSpawning();

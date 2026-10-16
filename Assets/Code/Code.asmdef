@@ -11,7 +11,8 @@
         "PurrNet.UTP.Runtime",
         "Unity.Services.Multiplayer",
         "Unity.Services.Core",
-        "ParrelSync"
+        "ParrelSync",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

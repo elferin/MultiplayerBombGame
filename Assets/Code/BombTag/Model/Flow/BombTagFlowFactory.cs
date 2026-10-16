@@ -1,3 +1,4 @@
+using Code.Powerup;
 using Code.Util;
 
 namespace Code.BombTag {
@@ -9,19 +10,21 @@ namespace Code.BombTag {
         private readonly IBombTagPlayers _players;
         private readonly IBombTagStatus _status;
         private readonly IRandom _random;
+        private readonly IPowerupsFactory _powerupsFactory;
 
         public BombTagFlowFactory(IBombTagViewControllerFactory viewControllerFactory, IBombTagSync sync,
-            IBombTagPlayers players, IBombTagStatus status, IRandom random) {
+            IBombTagPlayers players, IBombTagStatus status, IRandom random, IPowerupsFactory powerupsFactory) {
             _viewControllerFactory = viewControllerFactory;
             _sync = sync;
             _players = players;
             _status = status;
             _random = random;
+            _powerupsFactory = powerupsFactory;
         }
 
         public IBombTagFlow Create(BombTagFlowData data) {
             // A new round for every match, so nothing carries over from the last one.
-            return new BombTagFlow(data, _viewControllerFactory, _sync, _players, _status, new BombTagRound(_players, _random));
+            return new BombTagFlow(data, _viewControllerFactory, _sync, _players, _status, new BombTagRound(_players, _random, _powerupsFactory.Create()));
         }
     }
 }
