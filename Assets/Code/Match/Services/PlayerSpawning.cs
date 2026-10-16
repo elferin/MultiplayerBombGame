@@ -19,6 +19,13 @@ namespace Code.Match {
             SetSpawning(false);
         }
 
+        // Called after the network stopped, so this only destroys the local copies and sends nothing.
+        public void RemovePlayers() {
+            foreach (var player in Object.FindObjectsByType<MatchPlayer>()) {
+                Object.Destroy(player.gameObject);
+            }
+        }
+
         private void SetSpawning(bool isSpawning) {
             var spawner = Object.FindAnyObjectByType<PlayerSpawner>(FindObjectsInactive.Include);
             if (spawner == null) {

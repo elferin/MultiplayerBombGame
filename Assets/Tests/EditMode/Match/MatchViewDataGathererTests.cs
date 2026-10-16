@@ -14,25 +14,12 @@ namespace Code.Tests.Match {
             _gatherer = new MatchViewDataGatherer(_status);
         }
 
-        [TestCase(true, MatchStatus.Starting, "Match is starting...")]
-        [TestCase(false, MatchStatus.Starting, "Match is starting...")]
-        [TestCase(true, MatchStatus.InProgress, "")]
-        [TestCase(false, MatchStatus.InProgress, "")]
-        public void ShowsStatusText(bool isHost, MatchStatus status, string expected) {
-            _status.SetIsHost(isHost);
+        [TestCase(MatchStatus.Starting, "Match is starting...")]
+        [TestCase(MatchStatus.InProgress, "")]
+        public void ShowsStatusText(MatchStatus status, string expected) {
             _status.SetStatus(status);
 
             Assert.AreEqual(expected, _gatherer.Get().StatusText);
-        }
-
-        [TestCase(true, MatchStatus.InProgress, true)]
-        [TestCase(false, MatchStatus.InProgress, false)]
-        [TestCase(true, MatchStatus.Starting, false)]
-        public void ShowsEndButtonOnlyToHostDuringMatch(bool isHost, MatchStatus status, bool expected) {
-            _status.SetIsHost(isHost);
-            _status.SetStatus(status);
-
-            Assert.AreEqual(expected, _gatherer.Get().ShowsEndButton);
         }
     }
 }

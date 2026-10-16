@@ -1,3 +1,4 @@
+using Code.BombTag;
 using Code.FlowSystem;
 using Code.GameFlow;
 using Code.Lobby;
@@ -20,6 +21,7 @@ namespace Code.DependancyInjection {
             new MainMenuSystemInstaller().Install(builder);
             new LobbySystemInstaller().Install(builder);
             new MatchSystemInstaller().Install(builder);
+            new BombTagSystemInstaller().Install(builder);
             new GameFlowSystemInstaller().Install(builder);
             builder.RegisterEntryPoint<GamePresenter>();
         }

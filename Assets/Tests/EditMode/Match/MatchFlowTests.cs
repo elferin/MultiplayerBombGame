@@ -15,6 +15,9 @@ namespace Code.Tests.Match {
         private FakeMatchViewController _view;
         private FakeMatchNetwork _network;
         private FakePlayerSpawning _spawning;
+        private FakeLocalPlayer _localPlayer;
+        private UniTaskCompletionSource _game;
+        private int _gamePlayerCount;
         private CancellationTokenSource _cancellation;
         private string _sharedJoinCode;
 
@@ -24,6 +27,9 @@ namespace Code.Tests.Match {
             _view = new FakeMatchViewController(_status);
             _network = new FakeMatchNetwork();
             _spawning = new FakePlayerSpawning();
+            _localPlayer = new FakeLocalPlayer();
+            _game = new UniTaskCompletionSource();
+            _gamePlayerCount = -1;
             _cancellation = new CancellationTokenSource(TIMEOUT_MS);
             _sharedJoinCode = string.Empty;
         }
@@ -35,7 +41,7 @@ namespace Code.Tests.Match {
         }
 
         [UnityTest]
-        public IEnumerator HostSharesJoinCodeSpawnsAndStopsOnEnd() => UniTask.ToCoroutine(async () => {
+        public IEnumerator HostSharesJoinCodeSpawnsPlaysAndStopsWhenGameEnds() => UniTask.ToCoroutine(async () => {
             _network.ConnectedPlayerCount = 2;
             var run = StartFlow(HostData(4, 2));
 
@@ -43,16 +49,18 @@ namespace Code.Tests.Match {
             Assert.AreEqual(4, _network.LastHostMaxPlayers);
             Assert.AreEqual("RELAY1", _sharedJoinCode);
             Assert.AreEqual(1, _spawning.StartCount);
-            Assert.IsTrue(_status.IsHost());
+            Assert.AreEqual(2, _gamePlayerCount);
+            Assert.AreEqual("Ana", _localPlayer.LastName);
             Assert.AreEqual(0, _network.StopCount);
 
-            _view.ClickEnd();
+            _game.TrySetResult();
             var result = await run;
 
             Assert.IsFalse(result.StartFailed);
             Assert.AreEqual("RELAY1", result.UsedJoinCode);
             Assert.AreEqual(1, _network.StopCount);
             Assert.AreEqual(1, _spawning.StopCount);
+            Assert.AreEqual(1, _spawning.RemoveCount);
             Assert.IsTrue(_view.IsClosed);
         });
 
@@ -75,7 +83,8 @@ namespace Code.Tests.Match {
 
             Assert.AreEqual("RELAY1", _network.LastClientJoinCode);
             Assert.AreEqual(MatchStatus.InProgress, _status.GetStatus());
-            Assert.IsFalse(_status.IsHost());
+            Assert.AreEqual("Ana", _localPlayer.LastName);
+            Assert.AreEqual(0, _network.StopCount);
 
             _network.RaiseDisconnected();
             var result = await run;
@@ -84,7 +93,21 @@ namespace Code.Tests.Match {
             Assert.AreEqual("RELAY1", result.UsedJoinCode);
             Assert.AreEqual(1, _network.StopCount);
             Assert.AreEqual(0, _spawning.StopCount);
+            Assert.AreEqual(1, _spawning.RemoveCount);
             Assert.AreEqual(0, _network.HostStartCount);
+        });
+
+        [UnityTest]
+        public IEnumerator ClientEndsWhenItsGameEnds() => UniTask.ToCoroutine(async () => {
+            var run = StartFlow(ClientData("RELAY1"));
+
+            _game.TrySetResult();
+            var result = await run;
+
+            Assert.IsFalse(result.StartFailed);
+            Assert.AreEqual(1, _network.StopCount);
+            Assert.AreEqual(1, _spawning.RemoveCount);
+            Assert.IsTrue(_view.IsClosed);
         });
 
         [UnityTest]
@@ -111,7 +134,7 @@ namespace Code.Tests.Match {
         [UnityTest]
         public IEnumerator ClientShowsStartingWhileWaitingForJoinCode() => UniTask.ToCoroutine(async () => {
             var joinCode = new UniTaskCompletionSource<string>();
-            var run = StartFlow(MatchFlowData.Client(_ => joinCode.Task));
+            var run = StartFlow(MatchFlowData.Client("Ana", _ => joinCode.Task, PlayGame));
 
             Assert.AreEqual(MatchStatus.Starting, _status.GetStatus());
             Assert.AreEqual(0, _network.ClientStartCount);
@@ -123,18 +146,23 @@ namespace Code.Tests.Match {
         });
 
         private MatchFlowData ClientData(string joinCode) {
-            return MatchFlowData.Client(_ => UniTask.FromResult(joinCode));
+            return MatchFlowData.Client("Ana", _ => UniTask.FromResult(joinCode), PlayGame);
         }
 
         private MatchFlowData HostData(int maxPlayers, int playerCount) {
-            return MatchFlowData.Host(maxPlayers, playerCount, joinCode => {
+            return MatchFlowData.Host(maxPlayers, playerCount, "Ana", joinCode => {
                 _sharedJoinCode = joinCode;
                 return UniTask.CompletedTask;
-            });
+            }, PlayGame);
+        }
+
+        private UniTask PlayGame(int playerCount, CancellationToken cancellation) {
+            _gamePlayerCount = playerCount;
+            return _game.Task.AttachExternalCancellation(cancellation);
         }
 
         private UniTask<MatchFlowResult> StartFlow(MatchFlowData data) {
-            var flow = new MatchFlow(data, _view, _network, new MatchPlayerSpawner(_network, _spawning), _spawning, _status);
+            var flow = new MatchFlow(data, _view, _network, new MatchPlayerSpawner(_network, _spawning), _spawning, _localPlayer, _status);
             return flow.RunAsync(_cancellation.Token).Preserve();
         }
     }

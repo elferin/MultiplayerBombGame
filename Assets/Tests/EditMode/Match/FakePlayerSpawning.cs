@@ -6,6 +6,7 @@ namespace Code.Tests.Match {
 
         public int StartCount { get; private set; }
         public int StopCount { get; private set; }
+        public int RemoveCount { get; private set; }
 
         public void StartSpawning() {
             StartCount++;
@@ -13,6 +14,10 @@ namespace Code.Tests.Match {
 
         public void StopSpawning() {
             StopCount++;
+        }
+
+        public void RemovePlayers() {
+            RemoveCount++;
         }
     }
 }

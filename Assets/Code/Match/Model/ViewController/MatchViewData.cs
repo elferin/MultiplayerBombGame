@@ -4,11 +4,9 @@ namespace Code.Match {
     public class MatchViewData {
 
         public string StatusText { get; }
-        public bool ShowsEndButton { get; }
 
-        public MatchViewData(string statusText, bool showsEndButton) {
+        public MatchViewData(string statusText) {
             StatusText = statusText;
-            ShowsEndButton = showsEndButton;
         }
     }
 }

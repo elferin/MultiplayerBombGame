@@ -1,3 +1,4 @@
+using Code.Match;
 using PurrNet;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -10,12 +11,14 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] float acceleration = 40f;
 
     Rigidbody body;
+    MatchPlayer matchPlayer;
     Vector2 moveInput;
     bool hasEnabledInput;
 
     void Awake()
     {
         body = GetComponent<Rigidbody>();
+        matchPlayer = GetComponent<MatchPlayer>();
     }
 
     // Ownership is given right after spawning, so it's checked every frame rather than once.
@@ -30,7 +33,9 @@ public class PlayerController : NetworkBehaviour
             moveAction.action.Enable();
             hasEnabledInput = true;
         }
-        moveInput = moveAction.action.ReadValue<Vector2>();
+        // When stopped, the usual acceleration brakes the character instead of freezing it mid-slide.
+        bool canMove = matchPlayer == null || matchPlayer.CanMove;
+        moveInput = canMove ? moveAction.action.ReadValue<Vector2>() : Vector2.zero;
     }
 
     void FixedUpdate()

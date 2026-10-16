@@ -15,6 +15,9 @@ namespace Code.Match {
     public class MatchNetwork : IMatchNetwork {
 
         private const string MISSING_NETWORK = "MatchNetwork needs a NetworkManager in the scene that uses a UTPTransport.";
+        private const string CLIENT_STATE_PROPERTY = "clientState";
+        private const string MISSING_CLIENT_STATE_SETTER =
+            "UTPTransport.clientState has no setter any more; check whether PurrNet fixed Disconnect() and remove ResetClientState.";
 
         public event Action Disconnected = delegate { };
 
@@ -81,8 +84,26 @@ namespace Code.Match {
             }
             if (_startedNetwork.isClient) {
                 _startedNetwork.StopClient();
+                ResetClientState(_startedNetwork.transport as UTPTransport);
             }
             _startedNetwork = null;
+        }
+
+        // Workaround for a PurrNet bug (v1.23.0, still in v1.24.2-beta.14): UTPTransport.Disconnect() stops listening to its
+        // client before stopping it, so clientState stays Connected and the next StartClient refuses to run.
+        // Reported upstream; once PurrNet sets the state itself, the check below finds Disconnected and this can be deleted.
+        private void ResetClientState(UTPTransport transport) {
+            if (transport == null || transport.clientState == ConnectionState.Disconnected) {
+                return;
+            }
+
+            // The setter is private. It also raises onConnectionState, so NetworkManager cleans up as after a real disconnect.
+            var setter = typeof(UTPTransport).GetProperty(CLIENT_STATE_PROPERTY)?.GetSetMethod(true);
+            if (setter == null) {
+                Debug.LogError(MISSING_CLIENT_STATE_SETTER);
+                return;
+            }
+            setter.Invoke(transport, new object[] { ConnectionState.Disconnected });
         }
 
         private void Listen(NetworkManager network) {

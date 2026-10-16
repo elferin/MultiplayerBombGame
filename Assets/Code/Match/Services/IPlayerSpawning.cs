@@ -6,5 +6,7 @@ namespace Code.Match {
         void StartSpawning();
         // Spawns nobody until StartSpawning is called again.
         void StopSpawning();
+        // Destroys the player objects left in the scene; PurrNet keeps them when the network stops.
+        void RemovePlayers();
     }
 }

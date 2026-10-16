@@ -12,8 +12,7 @@ namespace Code.Match {
 
         public MatchViewData Get() {
             var isInProgress = _statusGetter.GetStatus() == MatchStatus.InProgress;
-            // Only the host ends the match. Placeholder until the game has rules that end it.
-            return new MatchViewData(GetStatusText(isInProgress), isInProgress && _statusGetter.IsHost());
+            return new MatchViewData(GetStatusText(isInProgress));
         }
 
         private string GetStatusText(bool isInProgress) {

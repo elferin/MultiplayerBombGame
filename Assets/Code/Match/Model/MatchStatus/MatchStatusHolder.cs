@@ -6,7 +6,6 @@ namespace Code.Match {
     public class MatchStatusHolder : IMatchStatus {
 
         private MatchStatus _status;
-        private bool _isHost;
 
         public MatchStatusHolder() {
             _status = MatchStatus.Starting;
@@ -16,16 +15,8 @@ namespace Code.Match {
             _status = status;
         }
 
-        public void SetIsHost(bool isHost) {
-            _isHost = isHost;
-        }
-
         public MatchStatus GetStatus() {
             return _status;
-        }
-
-        public bool IsHost() {
-            return _isHost;
         }
     }
 }

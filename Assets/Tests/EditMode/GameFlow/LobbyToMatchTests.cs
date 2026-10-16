@@ -1,8 +1,13 @@
 using System.Collections;
 using System.Threading;
+using Code.BombTag;
+using Code.FlowSystem;
 using Code.GameFlow;
 using Code.Lobby;
+using Code.Profile;
+using Code.Tests.FlowSystem;
 using Code.Tests.Lobby;
+using Code.Tests.Profile;
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine.TestTools;
@@ -15,6 +20,7 @@ namespace Code.Tests.GameFlow {
 
         private FakeLobbyService _lobbyService;
         private UsedJoinCodeHolder _usedJoinCode;
+        private FakeFlowInstantiator<BombTagFlowResult, BombTagFlowData> _bombTag;
         private LobbyToMatch _transition;
         private CancellationTokenSource _cancellation;
 
@@ -22,8 +28,13 @@ namespace Code.Tests.GameFlow {
         public void SetUp() {
             _lobbyService = new FakeLobbyService();
             _usedJoinCode = new UsedJoinCodeHolder();
+            _bombTag = new FakeFlowInstantiator<BombTagFlowResult, BombTagFlowData>();
+            var flowManager = new FlowManager();
+            flowManager.Register(_bombTag);
+            var playerName = new PlayerNameHolder(new FakePlayerNameStorage());
+            playerName.SetPlayerName("  Ana ");
             _transition = new LobbyToMatch(new MatchJoinCodeSharer(_lobbyService), new MatchJoinCodeReceiver(_lobbyService),
-                _usedJoinCode);
+                _usedJoinCode, playerName, flowManager);
             _cancellation = new CancellationTokenSource(TIMEOUT_MS);
         }
 
@@ -40,6 +51,7 @@ namespace Code.Tests.GameFlow {
             Assert.IsTrue(data.IsHost);
             Assert.AreEqual(6, data.MaxPlayers);
             Assert.AreEqual(3, data.PlayerCount);
+            Assert.AreEqual("Ana", data.PlayerName);
 
             await data.ShareJoinCode("RELAY1");
 
@@ -61,6 +73,34 @@ namespace Code.Tests.GameFlow {
             _lobbyService.RaiseLobbyUpdated(CreateStartingLobby("NEW"));
 
             Assert.AreEqual("NEW", await wait);
+        });
+
+        [UnityTest]
+        public IEnumerator HostPlaysBombTagWithTheConnectedPlayers() => UniTask.ToCoroutine(async () => {
+            var data = _transition.GetMatchData(new LobbyFlowResult { ShouldStartMatch = true, IsHost = true, MaxPlayers = 6, PlayerCount = 3 });
+
+            var game = data.PlayGame(3, _cancellation.Token).Preserve();
+
+            Assert.AreEqual(1, _bombTag.StartCount);
+            Assert.IsTrue(_bombTag.LastData.IsHost);
+            Assert.AreEqual(3, _bombTag.LastData.PlayerCount);
+            Assert.AreEqual(UniTaskStatus.Pending, game.Status);
+
+            _bombTag.Complete(new BombTagFlowResult());
+            await game;
+        });
+
+        [UnityTest]
+        public IEnumerator ClientPlaysBombTagAsClient() => UniTask.ToCoroutine(async () => {
+            var data = _transition.GetMatchData(new LobbyFlowResult { ShouldStartMatch = true, IsHost = false });
+
+            var game = data.PlayGame(0, _cancellation.Token).Preserve();
+
+            Assert.AreEqual("Ana", data.PlayerName);
+            Assert.IsFalse(_bombTag.LastData.IsHost);
+
+            _bombTag.Complete(new BombTagFlowResult());
+            await game;
         });
 
         private LobbyState CreateStartingLobby(string matchJoinCode) {

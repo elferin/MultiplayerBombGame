@@ -9,6 +9,7 @@ namespace Code.Match {
         protected override void InstallInternal(IContainerBuilder builder) {
             builder.Register<IMatchNetwork, MatchNetwork>(Lifetime.Singleton);
             builder.Register<IPlayerSpawning, PlayerSpawning>(Lifetime.Singleton);
+            builder.Register<ILocalPlayer, LocalPlayer>(Lifetime.Singleton);
             builder.Register<MatchPlayerSpawner>(Lifetime.Singleton);
 
             // Match state, registered as its getter, setter and combined interface.
