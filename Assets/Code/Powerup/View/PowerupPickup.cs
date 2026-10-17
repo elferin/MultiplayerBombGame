@@ -5,15 +5,13 @@ using UnityEngine;
 namespace Code.Powerup {
 
     // A power-up lying in the arena. The server sets its type; everyone sees it in that type's colour.
-    public class PowerupPickup : NetworkBehaviour {
+    public class PowerupPickup : NetworkBehaviour, IHasId {
 
         private const float SPIN_DEGREES_PER_SECOND = 90f;
 
         // Every pickup in the scene, so the host doesn't search for them each frame.
-        public static IReadOnlyList<PowerupPickup> Active => ActivePickups;
-        private static readonly List<PowerupPickup> ActivePickups = new();
-        // Starts at 1, so 0 can mean nothing.
-        private static int _lastPickupId;
+        public static IReadOnlyList<PowerupPickup> Active => Registry.Items;
+        private static readonly ActiveRegistry<PowerupPickup> Registry = new();
 
         [SerializeField] private PowerupSettings settings;
         [SerializeField] private Renderer look;
@@ -21,20 +19,21 @@ namespace Code.Powerup {
 
         // Only known on this machine, so it's not sent over the network.
         public int PickupId { get; private set; }
+        int IHasId.Id => PickupId;
         public PowerupType Type => type.value;
 
         private void Awake() {
-            PickupId = ++_lastPickupId;
+            PickupId = Registry.NextId();
             type.onChanged += ShowType;
             ShowType(type.value);
         }
 
         private void OnEnable() {
-            ActivePickups.Add(this);
+            Registry.Add(this);
         }
 
         private void OnDisable() {
-            ActivePickups.Remove(this);
+            Registry.Remove(this);
         }
 
         protected override void OnDestroy() {

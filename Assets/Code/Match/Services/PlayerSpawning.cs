@@ -44,8 +44,9 @@ namespace Code.Match {
         // Called after the network stopped, so this only destroys the local copies and sends nothing.
         public void RemoveSpawnedObjects() {
             foreach (var identity in Object.FindObjectsByType<NetworkIdentity>()) {
-                // Scene objects stay for the next match; children go with their root.
-                if (!identity.isSceneObject && identity.parent == null) {
+                // Only objects PurrNet spawned from a prefab: isSetup is set when an object is spawned, so scene objects
+                // that were never spawned stay too. Children go with their root.
+                if (identity.isSetup && !identity.isSceneObject && identity.parent == null) {
                     Object.Destroy(identity.gameObject);
                 }
             }

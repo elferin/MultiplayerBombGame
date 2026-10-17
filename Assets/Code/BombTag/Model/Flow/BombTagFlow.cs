@@ -10,7 +10,6 @@ namespace Code.BombTag {
 
         // A player object that never spawns mustn't hold up the others.
         private static readonly TimeSpan SPAWN_TIMEOUT = TimeSpan.FromSeconds(5);
-        private static readonly TimeSpan WINNER_SCREEN_TIME = TimeSpan.FromSeconds(3);
 
         private readonly BombTagFlowData _data;
         private readonly IBombTagViewControllerFactory _viewControllerFactory;
@@ -18,18 +17,21 @@ namespace Code.BombTag {
         private readonly IBombTagPlayers _players;
         private readonly IBombTagStatus _status;
         private readonly BombTagRound _round;
+        // How long "X wins!" stays up before the flow ends.
+        private readonly TimeSpan _winnerScreenTime;
 
         private IBombTagViewController _viewController;
         private UniTaskCompletionSource _finished;
 
         public BombTagFlow(BombTagFlowData data, IBombTagViewControllerFactory viewControllerFactory, IBombTagSync sync,
-            IBombTagPlayers players, IBombTagStatus status, BombTagRound round) {
+            IBombTagPlayers players, IBombTagStatus status, BombTagRound round, TimeSpan winnerScreenTime) {
             _data = data;
             _viewControllerFactory = viewControllerFactory;
             _sync = sync;
             _players = players;
             _status = status;
             _round = round;
+            _winnerScreenTime = winnerScreenTime;
         }
 
         public async UniTask<BombTagFlowResult> RunAsync(CancellationToken cancellation) {
@@ -50,7 +52,7 @@ namespace Code.BombTag {
                 }
                 flowResult.WinnerName = _status.GetState().WinnerName;
 
-                await UniTask.Delay(WINNER_SCREEN_TIME, cancellationToken: cancellation);
+                await UniTask.Delay(_winnerScreenTime, cancellationToken: cancellation);
                 _viewController.Close();
                 await viewRun;
             }

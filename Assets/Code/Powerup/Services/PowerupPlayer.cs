@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Code.Powerup {
 
     // A spawned player as the host's power-up logic sees it.
-    public readonly struct PowerupPlayer {
+    public readonly struct PowerupPlayer : IHasId {
 
         // Only valid on the host.
         public int Id { get; }

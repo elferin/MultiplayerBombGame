@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Code.BombTag {
 
     // A spawned player as the host's rules see it.
-    public readonly struct BombTagPlayer {
+    public readonly struct BombTagPlayer : IHasId {
 
         // Only valid on the host.
         public int Id { get; }

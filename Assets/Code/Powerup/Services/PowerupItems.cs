@@ -43,12 +43,9 @@ namespace Code.Powerup {
         }
 
         public void Remove(int itemId) {
-            foreach (var pickup in PowerupPickup.Active) {
-                if (pickup.PickupId == itemId) {
-                    // Destroying a spawned object on the server despawns it on every client.
-                    Object.Destroy(pickup.gameObject);
-                    return;
-                }
+            if (PowerupPickup.Active.TryFindById(itemId, out var pickup)) {
+                // Destroying a spawned object on the server despawns it on every client.
+                Object.Destroy(pickup.gameObject);
             }
         }
     }

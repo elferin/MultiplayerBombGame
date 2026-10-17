@@ -45,12 +45,7 @@ namespace Code.Powerup {
         }
 
         private PowerupHolder Find(int playerId) {
-            foreach (var holder in PowerupHolder.Active) {
-                if (holder.PlayerId == playerId) {
-                    return holder;
-                }
-            }
-            return null;
+            return PowerupHolder.Active.TryFindById(playerId, out var holder) ? holder : null;
         }
     }
 }

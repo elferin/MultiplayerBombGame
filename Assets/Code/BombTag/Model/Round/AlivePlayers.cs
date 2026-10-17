@@ -23,7 +23,7 @@ namespace Code.BombTag {
         public void Refresh() {
             var spawned = _players.GetPlayers();
             for (var i = _alivePlayers.Count - 1; i >= 0; i--) {
-                if (TryFind(spawned, _alivePlayers[i].Id, out var player)) {
+                if (spawned.TryFindById(_alivePlayers[i].Id, out var player)) {
                     _alivePlayers[i] = player;
                 }
                 else {
@@ -41,7 +41,7 @@ namespace Code.BombTag {
         }
 
         public bool TryGet(int playerId, out BombTagPlayer player) {
-            return TryFind(_alivePlayers, playerId, out player);
+            return _alivePlayers.TryFindById(playerId, out player);
         }
 
         // Despawns the player for everyone.
@@ -58,17 +58,6 @@ namespace Code.BombTag {
         // The last player left, or empty when nobody is.
         public string GetWinnerName() {
             return _alivePlayers.Count == 1 ? _alivePlayers[0].Name : string.Empty;
-        }
-
-        private bool TryFind(IReadOnlyList<BombTagPlayer> players, int playerId, out BombTagPlayer found) {
-            foreach (var player in players) {
-                if (player.Id == playerId) {
-                    found = player;
-                    return true;
-                }
-            }
-            found = default;
-            return false;
         }
     }
 }

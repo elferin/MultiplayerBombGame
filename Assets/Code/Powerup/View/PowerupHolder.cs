@@ -8,13 +8,11 @@ namespace Code.Powerup {
 
     // On the player prefab: the power-up this player holds and whether they're shielded, both set by the server.
     // The owner uses it with Space: movement effects happen on their client straight away, then the server is told.
-    public class PowerupHolder : NetworkBehaviour {
+    public class PowerupHolder : NetworkBehaviour, IHasId {
 
         // Every player object in the scene, so the host doesn't search for them each frame.
-        public static IReadOnlyList<PowerupHolder> Active => ActiveHolders;
-        private static readonly List<PowerupHolder> ActiveHolders = new();
-        // Starts at 1, so 0 can mean nobody.
-        private static int _lastPlayerId;
+        public static IReadOnlyList<PowerupHolder> Active => Registry.Items;
+        private static readonly ActiveRegistry<PowerupHolder> Registry = new();
 
         [SerializeField] private PowerupSettings settings;
         [SerializeField] private InputActionReference useAction;
@@ -25,18 +23,18 @@ namespace Code.Powerup {
 
         private PlayerController _controller;
         private bool _hasEnabledInput;
-        // Stops a second press from using it again before the server has cleared it.
-        private bool _isUseSent;
+        private readonly PowerupUseGuard _useGuard = new();
         // Set on the server by the owner's request; the host's PowerupField takes it.
         private PowerupType _usedOnServer = PowerupType.None;
 
         // Only known on this machine, so it's not sent over the network.
         public int PlayerId { get; private set; }
+        int IHasId.Id => PlayerId;
         public PowerupType Held => held.value;
         public bool IsShielded => shielded.value;
 
         private void Awake() {
-            PlayerId = ++_lastPlayerId;
+            PlayerId = Registry.NextId();
             _controller = GetComponent<PlayerController>();
             held.onChanged += ShowHeld;
             shielded.onChanged += ShowShield;
@@ -45,11 +43,11 @@ namespace Code.Powerup {
         }
 
         private void OnEnable() {
-            ActiveHolders.Add(this);
+            Registry.Add(this);
         }
 
         private void OnDisable() {
-            ActiveHolders.Remove(this);
+            Registry.Remove(this);
         }
 
         protected override void OnDestroy() {
@@ -100,18 +98,21 @@ namespace Code.Powerup {
         }
 
         private bool CanUse() {
-            return held.value != PowerupType.None && !_isUseSent && (_controller == null || _controller.CanMove());
+            return _useGuard.CanUse(held.value, Time.time) && (_controller == null || _controller.CanMove());
         }
 
         private void Use(PowerupType type) {
-            _isUseSent = true;
-            switch (type) {
-                case PowerupType.Dash:
-                    _controller.Dash(settings.DashSpeed);
-                    break;
-                case PowerupType.SpeedBoost:
-                    _controller.Boost(settings.SpeedBoostMultiplier, settings.SpeedBoostSeconds);
-                    break;
+            _useGuard.MarkSent(Time.time);
+            // Without a PlayerController there is nothing to move; the power-up is still used up.
+            if (_controller != null) {
+                switch (type) {
+                    case PowerupType.Dash:
+                        _controller.Dash(settings.DashSpeed);
+                        break;
+                    case PowerupType.SpeedBoost:
+                        _controller.Boost(settings.SpeedBoostMultiplier, settings.SpeedBoostSeconds);
+                        break;
+                }
             }
             // The shield is the server's job, because the bomb rules run there.
             UsePowerupOnServer(type);
@@ -123,7 +124,7 @@ namespace Code.Powerup {
         }
 
         private void ShowHeld(PowerupType value) {
-            _isUseSent = false;
+            _useGuard.OnHeldChanged();
             var material = settings.GetMaterial(value);
             heldMarker.gameObject.SetActive(material != null);
             if (material != null) {

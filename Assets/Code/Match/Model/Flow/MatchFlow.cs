@@ -1,5 +1,7 @@
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 
 namespace Code.Match {
 
@@ -88,8 +90,22 @@ namespace Code.Match {
         // Clients don't wait for the host to stop the network: through Relay they only notice that after a timeout.
         private async UniTask PlayGame(CancellationToken gameCancellation, CancellationToken cancellation) {
             var playerCount = _data.IsHost ? _network.GetConnectedPlayerCount() : 0;
-            var game = _data.PlayGame(playerCount, gameCancellation).SuppressCancellationThrow();
-            await UniTask.WhenAny(game.AsUniTask(), _endRequested.Task.AttachExternalCancellation(cancellation));
+            var game = RunGame(playerCount, gameCancellation);
+            await UniTask.WhenAny(game, _endRequested.Task.AttachExternalCancellation(cancellation));
+        }
+
+        // A game that fails ends the match like one that finished, so everyone gets back to the lobby
+        // instead of the error ending the whole game loop.
+        private async UniTask RunGame(int playerCount, CancellationToken gameCancellation) {
+            try {
+                await _data.PlayGame(playerCount, gameCancellation);
+            }
+            catch (OperationCanceledException) {
+                // The match ended some other way.
+            }
+            catch (Exception exception) {
+                Debug.LogException(exception);
+            }
         }
 
         // Returns the join code, or an empty string if the network didn't start.

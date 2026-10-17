@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using PurrNet;
 using TMPro;
 using UnityEngine;
@@ -6,6 +7,10 @@ namespace Code.Match {
 
     // On the player prefab: the player's name, shown above the character to everyone.
     public class MatchPlayer : NetworkBehaviour {
+
+        // Every player object in the scene, so finding one doesn't search the whole scene.
+        public static IReadOnlyList<MatchPlayer> Active => Registry.Items;
+        private static readonly ActiveRegistry<MatchPlayer> Registry = new();
 
         [SerializeField] private TMP_Text nameLabel;
         // The owner sets it once spawned, because only their client knows the name.
@@ -18,6 +23,14 @@ namespace Code.Match {
         private void Awake() {
             playerName.onChanged += ShowName;
             ShowName(playerName.value);
+        }
+
+        private void OnEnable() {
+            Registry.Add(this);
+        }
+
+        private void OnDisable() {
+            Registry.Remove(this);
         }
 
         protected override void OnDestroy() {

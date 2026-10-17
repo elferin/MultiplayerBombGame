@@ -1,8 +1,11 @@
+using System;
 using System.Collections;
+using System.Text.RegularExpressions;
 using System.Threading;
 using Code.Match;
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
+using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace Code.Tests.Match {
@@ -62,6 +65,21 @@ namespace Code.Tests.Match {
             Assert.AreEqual(1, _spawning.StopCount);
             Assert.AreEqual(1, _spawning.RemoveCount);
             Assert.IsTrue(_view.IsClosed);
+        });
+
+        [UnityTest]
+        public IEnumerator FailingGameEndsTheMatchInsteadOfThrowing() => UniTask.ToCoroutine(async () => {
+            _network.ConnectedPlayerCount = 2;
+            var run = StartFlow(HostData(4, 2));
+            await UniTask.WaitUntil(() => _status.GetStatus() == MatchStatus.InProgress, cancellationToken: _cancellation.Token);
+
+            LogAssert.Expect(LogType.Exception, new Regex("Game failed"));
+            _game.TrySetException(new InvalidOperationException("Game failed"));
+            var result = await run;
+
+            Assert.IsFalse(result.StartFailed);
+            Assert.AreEqual(1, _network.StopCount);
+            Assert.AreEqual(1, _spawning.RemoveCount);
         });
 
         [UnityTest]

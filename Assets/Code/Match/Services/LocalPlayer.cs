@@ -1,7 +1,6 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
-using UnityEngine;
 
 namespace Code.Match {
 
@@ -16,7 +15,7 @@ namespace Code.Match {
         }
 
         private bool TryFindOwned(out MatchPlayer owned) {
-            foreach (var player in Object.FindObjectsByType<MatchPlayer>()) {
+            foreach (var player in MatchPlayer.Active) {
                 if (player.isOwner) {
                     owned = player;
                     return true;

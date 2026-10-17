@@ -71,7 +71,7 @@ namespace Code.Powerup {
         private void ApplyUses(IReadOnlyList<PowerupPlayer> players) {
             foreach (var use in _players.TakeUses()) {
                 // Ignored unless they really hold it, e.g. after a late or repeated request.
-                if (!TryFind(players, use.PlayerId, out var player) || player.Held != use.Type) {
+                if (!players.TryFindById(use.PlayerId, out var player) || player.Held != use.Type) {
                     continue;
                 }
                 _players.SetHeld(use.PlayerId, PowerupType.None);
@@ -141,17 +141,6 @@ namespace Code.Powerup {
         // Players stand higher than power-ups lie, so only the floor distance counts.
         private float GetFlatDistance(Vector3 a, Vector3 b) {
             return Vector2.Distance(new Vector2(a.x, a.z), new Vector2(b.x, b.z));
-        }
-
-        private bool TryFind(IReadOnlyList<PowerupPlayer> players, int playerId, out PowerupPlayer found) {
-            foreach (var player in players) {
-                if (player.Id == playerId) {
-                    found = player;
-                    return true;
-                }
-            }
-            found = default;
-            return false;
         }
     }
 }

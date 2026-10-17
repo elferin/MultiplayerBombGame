@@ -49,7 +49,7 @@ namespace Code.BombTag {
                     TickPlaying(deltaTime);
                     break;
             }
-            return !AreEqual(oldState, _state);
+            return !oldState.Equals(_state);
         }
 
         private void TickCountdown(float deltaTime) {
@@ -94,10 +94,6 @@ namespace Code.BombTag {
             if (_rules.Apply()) {
                 _state = new BombTagState(BombTagPhase.Finished, 0, _alivePlayers.GetWinnerName());
             }
-        }
-
-        private bool AreEqual(BombTagState a, BombTagState b) {
-            return a.Phase == b.Phase && a.CountdownSeconds == b.CountdownSeconds && a.WinnerName == b.WinnerName;
         }
     }
 }

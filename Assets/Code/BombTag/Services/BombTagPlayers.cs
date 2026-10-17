@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-using Code.Match;
-using Code.Powerup;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -16,11 +14,7 @@ namespace Code.BombTag {
         public IReadOnlyList<BombTagPlayer> GetPlayers() {
             _players.Clear();
             foreach (var holder in BombHolder.Active) {
-                var matchPlayer = holder.GetComponent<MatchPlayer>();
-                var name = matchPlayer != null ? matchPlayer.PlayerName : string.Empty;
-                var powerupHolder = holder.GetComponent<PowerupHolder>();
-                var isShielded = powerupHolder != null && powerupHolder.IsShielded;
-                _players.Add(new BombTagPlayer(holder.PlayerId, name, holder.transform.position, isShielded));
+                _players.Add(new BombTagPlayer(holder.PlayerId, holder.PlayerName, holder.transform.position, holder.IsShielded));
             }
             return _players;
         }
@@ -42,20 +36,14 @@ namespace Code.BombTag {
 
         public void StopMovement() {
             foreach (var holder in BombHolder.Active) {
-                var matchPlayer = holder.GetComponent<MatchPlayer>();
-                if (matchPlayer != null) {
-                    matchPlayer.SetCanMove(false);
+                if (holder.MatchPlayer != null) {
+                    holder.MatchPlayer.SetCanMove(false);
                 }
             }
         }
 
         private BombHolder Find(int playerId) {
-            foreach (var holder in BombHolder.Active) {
-                if (holder.PlayerId == playerId) {
-                    return holder;
-                }
-            }
-            return null;
+            return BombHolder.Active.TryFindById(playerId, out var holder) ? holder : null;
         }
     }
 }
