@@ -14,32 +14,24 @@ namespace Code.Tests.Powerup {
 
         [Test]
         public void NothingHeldCannotBeUsed() {
-            Assert.IsFalse(_guard.CanUse(PowerupType.None, 0f));
-            Assert.IsTrue(_guard.CanUse(PowerupType.Dash, 0f));
+            Assert.IsFalse(_guard.CanUse(PowerupType.None));
+            Assert.IsTrue(_guard.CanUse(PowerupType.Dash));
         }
 
         [Test]
         public void SecondPressWaitsForTheHost() {
-            _guard.MarkSent(10f);
+            _guard.MarkSent();
 
-            Assert.IsFalse(_guard.CanUse(PowerupType.Dash, 10.5f));
+            Assert.IsFalse(_guard.CanUse(PowerupType.Dash));
         }
 
         [Test]
         public void HostAnsweringAllowsTheNextUse() {
-            _guard.MarkSent(10f);
+            _guard.MarkSent();
 
             _guard.OnHeldChanged();
 
-            Assert.IsTrue(_guard.CanUse(PowerupType.Shield, 10.1f));
-        }
-
-        [Test]
-        public void NoAnswerAllowsAnotherTryAfterASecond() {
-            _guard.MarkSent(10f);
-
-            Assert.IsFalse(_guard.CanUse(PowerupType.Dash, 10.9f));
-            Assert.IsTrue(_guard.CanUse(PowerupType.Dash, 11f));
+            Assert.IsTrue(_guard.CanUse(PowerupType.Shield));
         }
     }
 }

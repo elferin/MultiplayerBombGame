@@ -44,11 +44,21 @@ namespace Code.Match {
                 var viewRun = _viewController.RunAsync(cancellation);
 
                 // Clients show "Match is starting..." while the host sets up the network and shares the code.
-                flowResult.UsedJoinCode = _data.IsHost ? await StartHost(cancellation) : await _data.GetJoinCode(cancellation);
-                var hasJoinCode = !string.IsNullOrEmpty(flowResult.UsedJoinCode);
-                isConnected = _data.IsHost
-                    ? hasJoinCode
-                    : hasJoinCode && await _network.StartClient(flowResult.UsedJoinCode, cancellation);
+                if (_data.IsHost) {
+                    // An empty code means the network didn't start.
+                    flowResult.UsedJoinCode = await _network.StartHost(_data.MaxPlayers, cancellation);
+                    // Set before sharing, so the network is stopped even if sharing fails.
+                    isConnected = !string.IsNullOrEmpty(flowResult.UsedJoinCode);
+                    if (isConnected) {
+                        // The other players start their clients when the code reaches them.
+                        await _data.ShareJoinCode(flowResult.UsedJoinCode);
+                    }
+                }
+                else {
+                    flowResult.UsedJoinCode = await _data.GetJoinCode(cancellation);
+                    isConnected = !string.IsNullOrEmpty(flowResult.UsedJoinCode)
+                                  && await _network.StartClient(flowResult.UsedJoinCode, cancellation);
+                }
 
                 if (isConnected) {
                     _localPlayer.SetName(_data.PlayerName, matchCancellation.Token).SuppressCancellationThrow().Forget();
@@ -106,16 +116,6 @@ namespace Code.Match {
             catch (Exception exception) {
                 Debug.LogException(exception);
             }
-        }
-
-        // Returns the join code, or an empty string if the network didn't start.
-        private async UniTask<string> StartHost(CancellationToken cancellation) {
-            var joinCode = await _network.StartHost(_data.MaxPlayers, cancellation);
-            if (!string.IsNullOrEmpty(joinCode)) {
-                // The other players start their clients when the code reaches them.
-                await _data.ShareJoinCode(joinCode);
-            }
-            return joinCode;
         }
 
         private void AddListeners() {

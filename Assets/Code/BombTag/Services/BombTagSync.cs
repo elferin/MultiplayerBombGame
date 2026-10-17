@@ -16,7 +16,7 @@ namespace Code.BombTag {
         private NetworkManager _listeningNetwork;
 
         public void StartListening() {
-            var network = GetNetworkManager();
+            var network = NetworkManagerLookup.Find();
             if (network == null) {
                 Debug.LogError(MISSING_NETWORK);
                 return;
@@ -35,7 +35,7 @@ namespace Code.BombTag {
         }
 
         public void Send(BombTagState state) {
-            var network = GetNetworkManager();
+            var network = NetworkManagerLookup.Find();
             if (network == null || !network.isServer) {
                 return;
             }
@@ -44,10 +44,6 @@ namespace Code.BombTag {
 
         private void OnStateReceived(PlayerID sender, BombTagState state, bool asServer) {
             StateReceived.Invoke(state);
-        }
-
-        private NetworkManager GetNetworkManager() {
-            return NetworkManager.main != null ? NetworkManager.main : UnityEngine.Object.FindAnyObjectByType<NetworkManager>();
         }
     }
 }

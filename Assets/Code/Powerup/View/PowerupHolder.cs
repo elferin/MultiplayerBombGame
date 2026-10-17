@@ -98,11 +98,11 @@ namespace Code.Powerup {
         }
 
         private bool CanUse() {
-            return _useGuard.CanUse(held.value, Time.time) && (_controller == null || _controller.CanMove());
+            return _useGuard.CanUse(held.value) &&(_controller == null || _controller.CanMove());
         }
 
         private void Use(PowerupType type) {
-            _useGuard.MarkSent(Time.time);
+            _useGuard.MarkSent();
             // Without a PlayerController there is nothing to move; the power-up is still used up.
             if (_controller != null) {
                 switch (type) {

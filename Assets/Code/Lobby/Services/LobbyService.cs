@@ -20,8 +20,10 @@ namespace Code.Lobby {
         private const string NAME_KEY = "Name";
         private const string MATCH_STARTING_KEY = "MatchStarting";
         private const string TRUE_VALUE = "True";
-        private const int IN_LOBBY_ATTEMPTS = 3;
-        private static readonly TimeSpan IN_LOBBY_RETRY_DELAY = TimeSpan.FromSeconds(1);
+        // Doubling delays (1, 2, 4, 8 seconds) outlast the rate limit when everyone returns at once,
+        // and still finish well before the host removes players who haven't returned.
+        private const int IN_LOBBY_ATTEMPTS = 5;
+        private static readonly TimeSpan IN_LOBBY_FIRST_RETRY_DELAY = TimeSpan.FromSeconds(1);
 
         public event Action<LobbyState> LobbyUpdated = delegate { };
 
@@ -135,6 +137,7 @@ namespace Code.Lobby {
                         UnityLobbies.Models.PlayerDataObject.VisibilityOptions.Public, isInLobby.ToString()) }
                 }
             };
+            var retryDelay = IN_LOBBY_FIRST_RETRY_DELAY;
             for (var attempt = 1; ; attempt++) {
                 try {
                     await UnityLobbies.LobbyService.Instance.UpdatePlayerAsync(_currentLobby.LobbyId, _provider.LocalPlayerId, options);
@@ -147,7 +150,8 @@ namespace Code.Lobby {
                         return;
                     }
                 }
-                await UniTask.Delay(IN_LOBBY_RETRY_DELAY, DelayType.Realtime, cancellationToken: cancellation);
+                await UniTask.Delay(retryDelay, DelayType.Realtime, cancellationToken: cancellation);
+                retryDelay += retryDelay;
             }
         }
 
@@ -206,7 +210,8 @@ namespace Code.Lobby {
         private void OnProviderLobbyUpdated(PurrLobby.Lobby lobby) {
             // Lobby events can arrive off the main thread; Unity objects must only be touched on it.
             UniTask.Post(() => {
-                if (!_currentLobby.IsValid || !lobby.IsValid) {
+                // A late update for a lobby already left mustn't replace the one the player is in now.
+                if (!_currentLobby.IsValid || !lobby.IsValid || lobby.LobbyId != _currentLobby.LobbyId) {
                     return;
                 }
                 SetCurrentLobby(lobby);

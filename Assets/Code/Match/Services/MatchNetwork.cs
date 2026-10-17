@@ -68,7 +68,7 @@ namespace Code.Match {
         }
 
         public int GetConnectedPlayerCount() {
-            var network = GetNetworkManager();
+            var network = NetworkManagerLookup.Find();
             return network != null && network.isServer ? network.playerCount : 0;
         }
 
@@ -117,12 +117,8 @@ namespace Code.Match {
             }
         }
 
-        private NetworkManager GetNetworkManager() {
-            return NetworkManager.main != null ? NetworkManager.main : UnityEngine.Object.FindAnyObjectByType<NetworkManager>();
-        }
-
         private bool TryGetNetwork(out NetworkManager network, out UTPTransport transport) {
-            network = GetNetworkManager();
+            network = NetworkManagerLookup.Find();
             transport = network != null ? network.transport as UTPTransport : null;
             if (transport == null) {
                 Debug.LogError(MISSING_NETWORK);

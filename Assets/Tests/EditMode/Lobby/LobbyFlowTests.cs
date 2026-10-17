@@ -225,6 +225,15 @@ namespace Code.Tests.Lobby {
         });
 
         [Test]
+        public void ReturningToAClosedLobbyShowsClosed() {
+            _lobbyService.CurrentLobby = LobbyState.None;
+
+            StartFlow(LobbyFlowData.ReturnFromMatch("RELAY1", false));
+
+            Assert.AreEqual(LobbyStatus.Closed, _status.GetStatus());
+        }
+
+        [Test]
         public void FailedMatchStartShowsStartFailed() {
             _lobbyService.CurrentLobby = CreateHostedLobby(string.Empty);
 

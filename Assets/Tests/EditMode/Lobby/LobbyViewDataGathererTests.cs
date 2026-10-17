@@ -21,6 +21,7 @@ namespace Code.Tests.Lobby {
         [TestCase(LobbyStatus.Failed, "Failed to create lobby")]
         [TestCase(LobbyStatus.Leaving, "Leaving lobby...")]
         [TestCase(LobbyStatus.StartFailed, "Failed to start match")]
+        [TestCase(LobbyStatus.Closed, "The lobby was closed")]
         [TestCase(LobbyStatus.Starting, "Starting match...")]
         [TestCase(LobbyStatus.Ready, "")]
         public void ShowsStatusText(LobbyStatus status, string expected) {

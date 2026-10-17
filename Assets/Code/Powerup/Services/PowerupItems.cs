@@ -34,7 +34,7 @@ namespace Code.Powerup {
             }
 
             var pickup = Object.Instantiate(_settings.PickupPrefab, position, Quaternion.identity);
-            var network = NetworkManager.main;
+            var network = NetworkManagerLookup.Find();
             if (network != null && !pickup.isSpawned) {
                 network.Spawn(pickup.gameObject);
             }

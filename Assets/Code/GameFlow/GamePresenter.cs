@@ -3,7 +3,9 @@ using System.Threading;
 using Code.FlowSystem;
 using Code.Lobby;
 using Code.MainMenu;
+using Code.Match;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 using VContainer.Unity;
 
 namespace Code.GameFlow {
@@ -43,12 +45,24 @@ namespace Code.GameFlow {
                         return;
                     }
 
-                    var lobbyResult = await RunLobbyAndMatches(lobbyData, cancellation);
-                    mainMenuData = _lobbyToMainMenu.GetMainMenuData(lobbyResult);
+                    mainMenuData = await RunLobby(lobbyData, cancellation);
                 }
             }
             catch (OperationCanceledException) when (cancellation.IsCancellationRequested) {
                 // Expected when the scope is destroyed; VContainer would otherwise log it as an error.
+            }
+        }
+
+        // A lobby that fails (e.g. a lobby request throws) goes back to the main menu instead of ending the game loop.
+        // The lobby flow leaves the lobby itself when it fails.
+        private async UniTask<MainMenuFlowData> RunLobby(LobbyFlowData lobbyData, CancellationToken cancellation) {
+            try {
+                var lobbyResult = await RunLobbyAndMatches(lobbyData, cancellation);
+                return _lobbyToMainMenu.GetMainMenuData(lobbyResult);
+            }
+            catch (Exception exception) when (!(exception is OperationCanceledException)) {
+                Debug.LogException(exception);
+                return MainMenuFlowData.Default();
             }
         }
 
@@ -60,8 +74,20 @@ namespace Code.GameFlow {
                     return lobbyResult;
                 }
 
-                var matchResult = await _flowRunner.Run(_lobbyToMatch.GetMatchData(lobbyResult), cancellation);
+                var matchResult = await RunMatch(_lobbyToMatch.GetMatchData(lobbyResult), cancellation);
                 lobbyData = _matchToLobby.GetLobbyData(matchResult);
+            }
+        }
+
+        // A match that fails (e.g. a Relay or lobby request throws) counts as one that failed to start,
+        // so everyone gets back to the lobby and the host can try again.
+        private async UniTask<MatchFlowResult> RunMatch(MatchFlowData matchData, CancellationToken cancellation) {
+            try {
+                return await _flowRunner.Run(matchData, cancellation);
+            }
+            catch (Exception exception) when (!(exception is OperationCanceledException)) {
+                Debug.LogException(exception);
+                return new MatchFlowResult { StartFailed = true };
             }
         }
 

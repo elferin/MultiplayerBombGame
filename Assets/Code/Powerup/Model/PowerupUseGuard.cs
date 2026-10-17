@@ -1,22 +1,18 @@
 namespace Code.Powerup {
 
     // On the owner: stops a second press from using the held power-up again before the host has cleared it.
-    // After a moment a press is allowed again, in case the request was lost or refused.
+    // No retry: the request is reliable, and the host only refuses one when what the player holds has already changed,
+    // which the owner hears about too. A retry would apply Dash or Speed boost locally a second time.
     public class PowerupUseGuard {
 
-        // Long enough for the host to answer.
-        private const float RETRY_SECONDS = 1f;
-
         private bool _isWaitingForHost;
-        private float _sentTime;
 
-        public bool CanUse(PowerupType held, float now) {
-            return held != PowerupType.None && (!_isWaitingForHost || now - _sentTime >= RETRY_SECONDS);
+        public bool CanUse(PowerupType held) {
+            return held != PowerupType.None && !_isWaitingForHost;
         }
 
-        public void MarkSent(float now) {
+        public void MarkSent() {
             _isWaitingForHost = true;
-            _sentTime = now;
         }
 
         // The host changed what the player holds, so it has answered.

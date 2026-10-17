@@ -128,7 +128,7 @@ namespace Code.Lobby {
 
         private LobbyStatus GetReturnedStatus(LobbyState lobby) {
             if (!lobby.IsValid) {
-                return LobbyStatus.Failed;
+                return LobbyStatus.Closed;
             }
             return _data.MatchStartFailed ? LobbyStatus.StartFailed : LobbyStatus.Ready;
         }

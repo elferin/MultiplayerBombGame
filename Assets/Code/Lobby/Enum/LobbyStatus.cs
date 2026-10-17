@@ -10,6 +10,8 @@ namespace Code.Lobby {
         Removed,
         // The host tapped Start; the lobby requests before the match screen are still finishing.
         Starting,
-        Joining
+        Joining,
+        // Back from a match, but the lobby no longer exists.
+        Closed
     }
 }
