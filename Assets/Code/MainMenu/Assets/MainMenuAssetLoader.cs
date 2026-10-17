@@ -1,17 +1,24 @@
 using System.Threading;
+using Code.Util;
 using Cysharp.Threading.Tasks;
-using UnityEngine;
 
 namespace Code.MainMenu {
     public class MainMenuAssetLoader {
 
-        private const string MAIN_MENU_VIEW_PATH = "MainMenuView";
+        private const string MAIN_MENU_VIEW_ADDRESS = "MainMenuView";
 
-        public async UniTask<MainMenuView> CreateMainMenu(CancellationToken cancellation) {
-            var prefab = (MainMenuView)await Resources.LoadAsync<MainMenuView>(MAIN_MENU_VIEW_PATH).WithCancellation(cancellation);
-            var view = Object.Instantiate(prefab);
+        private readonly IAddressableAssets _assets;
 
-            return view;
+        public MainMenuAssetLoader(IAddressableAssets assets) {
+            _assets = assets;
+        }
+
+        public UniTask<MainMenuView> CreateMainMenu(CancellationToken cancellation) {
+            return _assets.Instantiate<MainMenuView>(MAIN_MENU_VIEW_ADDRESS, cancellation);
+        }
+
+        public void DestroyMainMenu(MainMenuView view) {
+            _assets.Release(view);
         }
     }
 }

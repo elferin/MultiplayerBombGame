@@ -1,26 +1,36 @@
 using System.Threading;
+using Code.Util;
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
-using UnityEngine;
 
 namespace Code.Match {
 
     [UsedImplicitly]
     public class MatchAssetLoader {
 
-        private const string MATCH_VIEW_PATH = "MatchView";
-        private const string ARENA_PATH = "Arena";
+        private const string MATCH_VIEW_ADDRESS = "MatchView";
+        private const string ARENA_ADDRESS = "Arena";
 
-        public async UniTask<MatchView> CreateMatchView(CancellationToken cancellation) {
-            var prefab = (MatchView)await Resources.LoadAsync<MatchView>(MATCH_VIEW_PATH).WithCancellation(cancellation);
-            var view = Object.Instantiate(prefab);
+        private readonly IAddressableAssets _assets;
 
-            return view;
+        public MatchAssetLoader(IAddressableAssets assets) {
+            _assets = assets;
         }
 
-        public async UniTask<Arena> CreateArena(CancellationToken cancellation) {
-            var prefab = (Arena)await Resources.LoadAsync<Arena>(ARENA_PATH).WithCancellation(cancellation);
-            return Object.Instantiate(prefab);
+        public UniTask<MatchView> CreateMatchView(CancellationToken cancellation) {
+            return _assets.Instantiate<MatchView>(MATCH_VIEW_ADDRESS, cancellation);
+        }
+
+        public void DestroyMatchView(MatchView view) {
+            _assets.Release(view);
+        }
+
+        public UniTask<Arena> CreateArena(CancellationToken cancellation) {
+            return _assets.Instantiate<Arena>(ARENA_ADDRESS, cancellation);
+        }
+
+        public void DestroyArena(Arena arena) {
+            _assets.Release(arena);
         }
     }
 }

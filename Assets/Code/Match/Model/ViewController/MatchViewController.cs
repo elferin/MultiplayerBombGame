@@ -32,7 +32,7 @@ namespace Code.Match {
             }
             finally {
                 if (_view != null) {
-                    UnityEngine.Object.Destroy(_view.gameObject);
+                    _assetLoader.DestroyMatchView(_view);
                 }
             }
         }

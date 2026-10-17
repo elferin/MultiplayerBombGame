@@ -4,7 +4,6 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace Code.Match {
 
@@ -32,7 +31,7 @@ namespace Code.Match {
         // Already gone when Play mode or the scene ended first.
         public void Remove() {
             if (_arena != null) {
-                Object.Destroy(_arena.gameObject);
+                _assetLoader.DestroyArena(_arena);
             }
             _arena = null;
         }

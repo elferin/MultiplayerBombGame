@@ -1,20 +1,27 @@
 using System.Threading;
+using Code.Util;
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
-using UnityEngine;
 
 namespace Code.Lobby {
-    
+
     [UsedImplicitly]
     public class LobbyAssetLoader {
 
-        private const string LOBBY_VIEW_PATH = "LobbyView";
+        private const string LOBBY_VIEW_ADDRESS = "LobbyView";
 
-        public async UniTask<LobbyView> CreateLobbyView(CancellationToken cancellation) {
-            var prefab = (LobbyView)await Resources.LoadAsync<LobbyView>(LOBBY_VIEW_PATH).WithCancellation(cancellation);
-            var view = Object.Instantiate(prefab);
+        private readonly IAddressableAssets _assets;
 
-            return view;
+        public LobbyAssetLoader(IAddressableAssets assets) {
+            _assets = assets;
+        }
+
+        public UniTask<LobbyView> CreateLobbyView(CancellationToken cancellation) {
+            return _assets.Instantiate<LobbyView>(LOBBY_VIEW_ADDRESS, cancellation);
+        }
+
+        public void DestroyLobbyView(LobbyView view) {
+            _assets.Release(view);
         }
     }
 }

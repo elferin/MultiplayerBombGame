@@ -15,5 +15,6 @@ EditorBuildSettings:
     path: Assets/Test1.unity
     guid: 4b88696c4d724304e963d74e15fb65ee
   m_configObjects:
+    com.unity.addressableassets: {fileID: 11400000, guid: 3b87e12f3d7cd0f4bb5b5bf17a6e1cc5, type: 2}
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

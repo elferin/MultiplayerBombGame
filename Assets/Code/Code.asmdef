@@ -12,7 +12,9 @@
         "Unity.Services.Multiplayer",
         "Unity.Services.Core",
         "ParrelSync",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Unity.Addressables",
+        "Unity.ResourceManager"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

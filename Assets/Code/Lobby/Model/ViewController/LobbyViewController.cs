@@ -38,7 +38,7 @@ namespace Code.Lobby {
             finally {
                 if (_view != null) {
                     RemoveListeners();
-                    UnityEngine.Object.Destroy(_view.gameObject);
+                    _assetLoader.DestroyLobbyView(_view);
                 }
             }
         }

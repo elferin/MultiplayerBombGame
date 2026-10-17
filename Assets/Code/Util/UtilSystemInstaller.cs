@@ -9,6 +9,7 @@ namespace Code.Util {
         protected override void InstallInternal(IContainerBuilder builder) {
             builder.Register<IClipboard, Clipboard>(Lifetime.Singleton);
             builder.Register<IRandom, UnityRandom>(Lifetime.Singleton);
+            builder.Register<IAddressableAssets, AddressableAssets>(Lifetime.Singleton);
         }
 
         protected override void InstallPublic(SystemExports exports) {
@@ -16,6 +17,8 @@ namespace Code.Util {
             exports.Expose<IClipboard>();
             // Bomb tag picks who gets the bomb and how long its fuse is.
             exports.Expose<IRandom>();
+            // Each system's asset loader creates its views and arena from addressable prefabs.
+            exports.Expose<IAddressableAssets>();
         }
 
     }

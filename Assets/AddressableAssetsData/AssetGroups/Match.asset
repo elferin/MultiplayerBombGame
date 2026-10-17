@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Match
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Match
+  m_GUID: c9e530cf15defaf41b2d8a08f74d40f1
+  m_SerializeEntries:
+  - m_GUID: 7e77f75e52b072b45b8b34eaea363408
+    m_Address: MatchView
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a5993e742f735064684f5b3c98219c09
+    m_Address: BombTagView
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ad7fd87228dfbf648a5fbdf520e2ccf5
+    m_Address: PowerupSettings
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f281390c3e110c943b1926677379f4f4
+    m_Address: Arena
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 94f0a2c333887ae4dada5f518cf97c74, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: d32684d2bb878f744be98d5a952f3a4e, type: 2}
+    - {fileID: 11400000, guid: f8ed71c14504d2949ad80886a8949e81, type: 2}
+    m_SchemaDisplayOrder:
+    - Match_BundledAssetGroupSchema
+    - Match_ContentUpdateGroupSchema
+  m_IncludeInBuild: 1
+  m_IncludeInBuildMigrated: 1

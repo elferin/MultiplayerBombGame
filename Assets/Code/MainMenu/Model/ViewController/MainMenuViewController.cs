@@ -45,7 +45,7 @@ namespace Code.MainMenu {
                 // The view can already be destroyed when Play mode or the scene ends.
                 if (_view != null) {
                     RemoveListeners();
-                    UnityEngine.Object.Destroy(_view.gameObject);
+                    _assetLoader.DestroyMainMenu(_view);
                 }
             }
         }
