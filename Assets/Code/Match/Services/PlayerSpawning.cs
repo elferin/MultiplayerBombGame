@@ -13,12 +13,15 @@ namespace Code.Match {
         private const string MISSING_SPAWNER = "PlayerSpawning needs a PlayerSpawner in the scene.";
 
         private readonly IRandom _random;
+        private readonly IMatchArena _arena;
 
-        public PlayerSpawning(IRandom random) {
+        public PlayerSpawning(IRandom random, IMatchArena arena) {
             _random = random;
+            _arena = arena;
         }
 
         // Every round shuffles the spawn points again, so each player starts somewhere random.
+        // The points come from the arena the match created, because the scene has none of its own.
         public void StartSpawning() {
             var spawner = FindSpawner();
             if (spawner == null) {
@@ -26,7 +29,7 @@ namespace Code.Match {
                 return;
             }
 
-            var spawnPoints = new RandomSpawnPoints(spawner.SpawnPoints, _random);
+            var spawnPoints = new RandomSpawnPoints(_arena.GetSpawnPoints(), _random);
             if (spawnPoints.HasPoints()) {
                 spawner.SetRespawnPointProvider(spawnPoints);
             }

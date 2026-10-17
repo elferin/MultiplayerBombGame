@@ -18,6 +18,7 @@ namespace Code.Tests.Match {
         private FakeMatchViewController _view;
         private FakeMatchNetwork _network;
         private FakePlayerSpawning _spawning;
+        private FakeMatchArena _arena;
         private FakeLocalPlayer _localPlayer;
         private UniTaskCompletionSource _game;
         private int _gamePlayerCount;
@@ -30,6 +31,7 @@ namespace Code.Tests.Match {
             _view = new FakeMatchViewController(_status);
             _network = new FakeMatchNetwork();
             _spawning = new FakePlayerSpawning();
+            _arena = new FakeMatchArena(_network);
             _localPlayer = new FakeLocalPlayer();
             _game = new UniTaskCompletionSource();
             _gamePlayerCount = -1;
@@ -68,6 +70,22 @@ namespace Code.Tests.Match {
         });
 
         [UnityTest]
+        public IEnumerator ArenaLoadsBeforeTheNetworkAndIsRemovedAtTheEnd() => UniTask.ToCoroutine(async () => {
+            _network.ConnectedPlayerCount = 2;
+            var run = StartFlow(HostData(4, 2));
+
+            await UniTask.WaitUntil(() => _status.GetStatus() == MatchStatus.InProgress, cancellationToken: _cancellation.Token);
+            Assert.AreEqual(1, _arena.CreateCount);
+            Assert.IsFalse(_arena.WasNetworkStartedOnCreate);
+            Assert.AreEqual(0, _arena.RemoveCount);
+
+            _game.TrySetResult();
+            await run;
+
+            Assert.AreEqual(1, _arena.RemoveCount);
+        });
+
+        [UnityTest]
         public IEnumerator FailingGameEndsTheMatchInsteadOfThrowing() => UniTask.ToCoroutine(async () => {
             _network.ConnectedPlayerCount = 2;
             var run = StartFlow(HostData(4, 2));
@@ -92,6 +110,7 @@ namespace Code.Tests.Match {
             Assert.AreEqual(string.Empty, _sharedJoinCode);
             Assert.AreEqual(0, _spawning.StartCount);
             Assert.AreEqual(0, _network.StopCount);
+            Assert.AreEqual(1, _arena.RemoveCount);
             Assert.IsTrue(_view.IsClosed);
         });
 
@@ -180,7 +199,7 @@ namespace Code.Tests.Match {
         }
 
         private UniTask<MatchFlowResult> StartFlow(MatchFlowData data) {
-            var flow = new MatchFlow(data, _view, _network, new MatchPlayerSpawner(_network, _spawning), _spawning, _localPlayer, _status);
+            var flow = new MatchFlow(data, _view, _network, new MatchPlayerSpawner(_network, _spawning), _spawning, _arena, _localPlayer, _status);
             return flow.RunAsync(_cancellation.Token).Preserve();
         }
     }

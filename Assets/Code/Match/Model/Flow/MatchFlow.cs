@@ -13,6 +13,7 @@ namespace Code.Match {
         private readonly IMatchNetwork _network;
         private readonly MatchPlayerSpawner _playerSpawner;
         private readonly IPlayerSpawning _spawning;
+        private readonly IMatchArena _arena;
         private readonly ILocalPlayer _localPlayer;
         private readonly IMatchStatus _status;
 
@@ -20,12 +21,14 @@ namespace Code.Match {
         private UniTaskCompletionSource _endRequested;
 
         public MatchFlow(MatchFlowData data, IMatchViewControllerFactory viewControllerFactory, IMatchNetwork network,
-            MatchPlayerSpawner playerSpawner, IPlayerSpawning spawning, ILocalPlayer localPlayer, IMatchStatus status) {
+            MatchPlayerSpawner playerSpawner, IPlayerSpawning spawning, IMatchArena arena, ILocalPlayer localPlayer,
+            IMatchStatus status) {
             _data = data;
             _viewControllerFactory = viewControllerFactory;
             _network = network;
             _playerSpawner = playerSpawner;
             _spawning = spawning;
+            _arena = arena;
             _localPlayer = localPlayer;
             _status = status;
         }
@@ -42,6 +45,9 @@ namespace Code.Match {
             AddListeners();
             try {
                 var viewRun = _viewController.RunAsync(cancellation);
+
+                // Everyone loads the arena first: the players spawn on its spawn points, before the game's countdown.
+                await _arena.Create(cancellation);
 
                 // Clients show "Match is starting..." while the host sets up the network and shares the code.
                 if (_data.IsHost) {
@@ -91,6 +97,7 @@ namespace Code.Match {
                         _spawning.StopSpawning();
                     }
                 }
+                _arena.Remove();
             }
 
             return flowResult;
