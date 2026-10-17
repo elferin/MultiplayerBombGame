@@ -29,7 +29,8 @@ namespace Code.Match {
             }
 
             try {
-                // The host's own client doesn't use a relay connection.
+                // The allocation counts only the other players: the host's own client connects through the relay too
+                // but doesn't take one of its connections. Tested with 2 players.
                 var allocation = await RelayService.Instance.CreateAllocationAsync(maxPlayers - 1);
                 var joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
                 cancellation.ThrowIfCancellationRequested();
