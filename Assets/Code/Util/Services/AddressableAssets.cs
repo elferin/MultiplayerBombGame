@@ -20,7 +20,11 @@ namespace Code.Util {
                     created.TrySetResult(handle.Result);
                 }
                 else {
-                    created.TrySetException(new InvalidOperationException($"Couldn't create '{address}'.", handle.OperationException));
+                    // Read before releasing: the handle is invalid afterwards.
+                    var error = new InvalidOperationException($"Couldn't create '{address}'.", handle.OperationException);
+                    // A failed load has no instance for ReleaseInstance to take, so its handle is released here.
+                    Addressables.Release(handle);
+                    created.TrySetException(error);
                 }
             };
 
