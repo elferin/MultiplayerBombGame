@@ -84,8 +84,15 @@ namespace Code.Powerup {
                 _hasEnabledInput = true;
             }
 
-            if (useAction.action.WasPressedThisFrame() && CanUse()) {
+            if (!useAction.action.WasPressedThisFrame()) {
+                return;
+            }
+            if (CanUse()) {
                 Use(held.value);
+            }
+            else if (_useGuard.ShouldResend(Time.time)) {
+                // The host hasn't answered; the effect already ran here, so only the request is sent again.
+                SendUse(held.value);
             }
         }
 
@@ -98,11 +105,10 @@ namespace Code.Powerup {
         }
 
         private bool CanUse() {
-            return _useGuard.CanUse(held.value) &&(_controller == null || _controller.CanMove());
+            return _useGuard.CanUse(held.value) && (_controller == null || _controller.CanMove());
         }
 
         private void Use(PowerupType type) {
-            _useGuard.MarkSent();
             // Without a PlayerController there is nothing to move; the power-up is still used up.
             if (_controller != null) {
                 switch (type) {
@@ -115,6 +121,12 @@ namespace Code.Powerup {
                 }
             }
             // The shield is the server's job, because the bomb rules run there.
+            SendUse(type);
+        }
+
+        // A repeated request is ignored: the host has already cleared what the player holds.
+        private void SendUse(PowerupType type) {
+            _useGuard.MarkSent(Time.time);
             UsePowerupOnServer(type);
         }
 
