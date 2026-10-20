@@ -39,6 +39,9 @@ namespace Code.Tests.Lobby {
         public int ReturnCount { get; private set; }
         // False makes ReturnToLobby report that the host removed this player.
         public bool IsStillMember { get; set; } = true;
+        // Make EndMatch or ReturnToLobby fail like a request that throws.
+        public bool EndMatchThrows { get; set; }
+        public bool ReturnThrows { get; set; }
         public List<string> RemovedPlayerIds { get; } = new List<string>();
         // What FetchPlayers returns; empty, like a failed request, until a test adds players.
         public List<LobbyPlayer> FetchedPlayers { get; } = new List<LobbyPlayer>();
@@ -107,6 +110,9 @@ namespace Code.Tests.Lobby {
 
         public UniTask EndMatch() {
             EndMatchCount++;
+            if (EndMatchThrows) {
+                return UniTask.FromException(new InvalidOperationException("End match failed"));
+            }
             IsMatchStartAnnounced = false;
             IsLocked = false;
             MatchJoinCode = string.Empty;
@@ -125,6 +131,9 @@ namespace Code.Tests.Lobby {
 
         public UniTask<bool> ReturnToLobby(CancellationToken cancellation) {
             ReturnCount++;
+            if (ReturnThrows) {
+                return UniTask.FromException<bool>(new InvalidOperationException("Return failed"));
+            }
             if (IsStillMember) {
                 LastInLobby = true;
             }

@@ -211,6 +211,45 @@ namespace Code.Tests.Lobby {
         });
 
         [UnityTest]
+        public IEnumerator HostWhoseReturnFailsLeavesTheLobby() => UniTask.ToCoroutine(async () => {
+            _lobbyService.EndMatchThrows = true;
+            _lobbyService.CurrentLobby = new LobbyState(true, "ABC123", 4, FakeLobbyService.CreatePlayers("Ana", "Luka"), true,
+                "RELAY1", false);
+
+            var isThrown = false;
+            try {
+                await StartFlow(LobbyFlowData.ReturnFromMatch("RELAY1", false));
+            }
+            catch (InvalidOperationException) {
+                isThrown = true;
+            }
+
+            Assert.IsTrue(isThrown);
+            Assert.AreEqual(1, _lobbyService.EndMatchCount);
+            Assert.AreEqual(1, _lobbyService.LeaveCount);
+            Assert.IsTrue(_view.IsClosed);
+        });
+
+        // The membership check failed, so whether the player is still in is unknown; leaving is the safe choice.
+        [UnityTest]
+        public IEnumerator ReturnThatFailsBeforeTheMembershipCheckLeavesTheLobby() => UniTask.ToCoroutine(async () => {
+            _lobbyService.ReturnThrows = true;
+            _lobbyService.CurrentLobby = CreateJoinedLobby("RELAY1");
+
+            var isThrown = false;
+            try {
+                await StartFlow(LobbyFlowData.ReturnFromMatch("RELAY1", false));
+            }
+            catch (InvalidOperationException) {
+                isThrown = true;
+            }
+
+            Assert.IsTrue(isThrown);
+            Assert.AreEqual(1, _lobbyService.LeaveCount);
+            Assert.IsTrue(_view.IsClosed);
+        });
+
+        [UnityTest]
         public IEnumerator LeavingStopsRemovingMissingPlayers() => UniTask.ToCoroutine(async () => {
             _lobbyService.CurrentLobby = new LobbyState(true, "ABC123", 4, new[] {
                 new LobbyPlayer("host", "Luka", true, true), new LobbyPlayer("ana", "Ana", false, false)

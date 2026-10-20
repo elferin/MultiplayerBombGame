@@ -78,8 +78,9 @@ namespace Code.Lobby {
                 RemoveListeners();
                 _viewController.Close();
 
-                // Cancelled while still in the lobby: leave it so it doesn't stay open on the server.
-                if (isInLobby && !flowResult.ShouldStartMatch) {
+                // Ended without starting a match while still in the lobby (cancelled, or a request threw): leave it,
+                // so it doesn't stay open on the server. Asks the service, which knows even when a request failed midway.
+                if (!flowResult.ShouldStartMatch && _lobbyService.CurrentLobby.IsValid) {
                     _lobbyService.LeaveLobby().Forget();
                 }
             }
