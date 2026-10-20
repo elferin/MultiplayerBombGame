@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Code.Powerup {
 
-    // Tuning for power-ups, edited in Resources/PowerupSettings.asset.
+    // Tuning for power-ups, edited in Addressables/Match/PowerupSettings.asset and loaded through Addressables.
     [CreateAssetMenu(fileName = "PowerupSettings", menuName = "Game/Powerup Settings")]
     public class PowerupSettings : ScriptableObject {
 

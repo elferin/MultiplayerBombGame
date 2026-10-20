@@ -36,9 +36,7 @@ namespace Code.BombTag {
 
         public void StopMovement() {
             foreach (var holder in BombHolder.Active) {
-                if (holder.MatchPlayer != null) {
-                    holder.MatchPlayer.SetCanMove(false);
-                }
+                holder.MatchPlayer.SetCanMove(false);
             }
         }
 

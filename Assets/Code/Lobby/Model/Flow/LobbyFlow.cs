@@ -67,7 +67,7 @@ namespace Code.Lobby {
                 CheckMatchStarted(_currentLobby.GetCurrentLobby());
 
                 var exit = await _exitRequested.Task.AttachExternalCancellation(cancellation);
-                isInLobby = await HandleExit(exit, isInLobby, flowResult, cancellation);
+                await HandleExit(exit, isInLobby, flowResult, cancellation);
 
                 _viewController.Close();
                 await viewRun;
@@ -134,8 +134,8 @@ namespace Code.Lobby {
             return _data.MatchStartFailed ? LobbyStatus.StartFailed : LobbyStatus.Ready;
         }
 
-        // Leaves the lobby, or gets ready for the match. Returns whether the player is still in the lobby.
-        private async UniTask<bool> HandleExit(LobbyFlowExit exit, bool isInLobby, LobbyFlowResult flowResult,
+        // Leaves the lobby, or gets ready for the match.
+        private async UniTask HandleExit(LobbyFlowExit exit, bool isInLobby, LobbyFlowResult flowResult,
             CancellationToken cancellation) {
             if (exit != LobbyFlowExit.Leave) {
                 if (exit == LobbyFlowExit.StartAsHost) {
@@ -149,14 +149,13 @@ namespace Code.Lobby {
                 // The host waits for everyone to be back on this screen before the next match.
                 await _lobbyService.SetInLobby(false, cancellation);
                 SetMatchResult(flowResult, exit);
-                return isInLobby;
+                return;
             }
             if (isInLobby) {
                 _status.SetStatus(LobbyStatus.Leaving);
                 _viewController.Refresh();
                 await _lobbyService.LeaveLobby();
             }
-            return false;
         }
 
         private void SetMatchResult(LobbyFlowResult flowResult, LobbyFlowExit exit) {
