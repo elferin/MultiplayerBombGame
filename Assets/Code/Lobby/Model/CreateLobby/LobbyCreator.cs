@@ -25,7 +25,7 @@ namespace Code.Lobby {
 
             var lobby = await _lobbyMembership.CreateLobby(maxPlayers, playerName, cancellation);
             _currentLobby.SetCurrentLobby(lobby);
-            _status.SetStatus(lobby.IsValid ? LobbyStatus.Ready : LobbyStatus.Failed);
+            _status.SetStatus(lobby.IsValid ? LobbyStatus.Ready : LobbyStatus.CreateFailed);
             return lobby.IsValid;
         }
     }

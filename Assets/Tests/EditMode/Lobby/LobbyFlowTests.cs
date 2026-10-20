@@ -48,7 +48,7 @@ namespace Code.Tests.Lobby {
 
         [Test]
         public void NewRunDoesNotShowPreviousRunsState() {
-            _status.SetStatus(LobbyStatus.Failed);
+            _status.SetStatus(LobbyStatus.CreateFailed);
             _currentLobby.SetCurrentLobby(FakeLobbyService.CreateLobbyState("OLD123", 4, "Luka"));
 
             StartFlow(LobbyFlowData.CreateLobby(4, "Luka"));
@@ -298,7 +298,7 @@ namespace Code.Tests.Lobby {
             var run = StartFlow(LobbyFlowData.CreateLobby(6, "Luka"));
 
             _lobbyService.FailCreate();
-            Assert.AreEqual(LobbyStatus.Failed, _status.GetStatus());
+            Assert.AreEqual(LobbyStatus.CreateFailed, _status.GetStatus());
 
             _view.ClickLeave();
             await run;

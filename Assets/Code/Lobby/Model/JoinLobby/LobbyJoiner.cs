@@ -27,14 +27,14 @@ namespace Code.Lobby {
             var result = await _lobbyMembership.JoinLobby(lobbyCode, playerName, cancellation);
             var lobby = result.Lobby;
             if (!lobby.IsValid) {
-                _status.SetStatus(LobbyStatus.Failed);
+                _status.SetStatus(LobbyStatus.JoinFailed);
                 return result.Failure;
             }
 
             // Joined in the moment between the host starting the match and the lobby being locked.
             if (lobby.IsMatchStarting || !string.IsNullOrEmpty(lobby.MatchJoinCode)) {
                 await _lobbyMembership.LeaveLobby();
-                _status.SetStatus(LobbyStatus.Failed);
+                _status.SetStatus(LobbyStatus.JoinFailed);
                 return LobbyJoinFailure.MatchInProgress;
             }
 

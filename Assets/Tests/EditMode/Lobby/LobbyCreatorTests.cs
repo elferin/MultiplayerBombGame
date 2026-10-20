@@ -35,7 +35,7 @@ namespace Code.Tests.Lobby {
 
         [Test]
         public void IsCreatingWithoutALobbyAsSoonAsCalled() {
-            _status.SetStatus(LobbyStatus.Failed);
+            _status.SetStatus(LobbyStatus.CreateFailed);
             _currentLobby.SetCurrentLobby(FakeLobbyService.CreateLobbyState("OLD123", 4, "Luka"));
 
             _creator.TryCreateLobby(6, "Luka", _cancellation.Token).Forget();
@@ -71,7 +71,7 @@ namespace Code.Tests.Lobby {
             _lobbyService.FailCreate();
 
             Assert.IsFalse(await create);
-            Assert.AreEqual(LobbyStatus.Failed, _status.GetStatus());
+            Assert.AreEqual(LobbyStatus.CreateFailed, _status.GetStatus());
             Assert.IsFalse(_currentLobby.GetCurrentLobby().IsValid);
         });
 

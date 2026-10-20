@@ -70,7 +70,7 @@ namespace Code.Tests.Lobby {
             _lobbyService.FailJoin(LobbyJoinFailure.LobbyFull);
 
             Assert.AreEqual(LobbyJoinFailure.LobbyFull, await join);
-            Assert.AreEqual(LobbyStatus.Failed, _status.GetStatus());
+            Assert.AreEqual(LobbyStatus.JoinFailed, _status.GetStatus());
             Assert.AreSame(LobbyState.None, _currentLobby.GetCurrentLobby());
         });
 

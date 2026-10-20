@@ -18,7 +18,8 @@ namespace Code.Tests.Lobby {
 
         [TestCase(LobbyStatus.Creating, "Creating lobby...")]
         [TestCase(LobbyStatus.Joining, "Joining lobby...")]
-        [TestCase(LobbyStatus.Failed, "Failed to create lobby")]
+        [TestCase(LobbyStatus.CreateFailed, "Failed to create lobby")]
+        [TestCase(LobbyStatus.JoinFailed, "Failed to join lobby")]
         [TestCase(LobbyStatus.Leaving, "Leaving lobby...")]
         [TestCase(LobbyStatus.StartFailed, "Failed to start match")]
         [TestCase(LobbyStatus.Closed, "The lobby was closed")]
