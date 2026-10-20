@@ -8,6 +8,8 @@ namespace Code.MatchMenu {
     public class MatchMenuSystemInstaller : SystemInstaller {
 
         protected override void InstallInternal(IContainerBuilder builder) {
+            // Registered as its getter, setter and combined interface.
+            builder.Register<MatchMenuStateHolder>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<MatchMenuAssetLoader>(Lifetime.Singleton);
             builder.Register<IMatchMenuViewControllerFactory, MatchMenuViewControllerFactory>(Lifetime.Singleton);
             builder.Register<IMatchMenuFlowFactory, MatchMenuFlowFactory>(Lifetime.Singleton);
@@ -16,6 +18,8 @@ namespace Code.MatchMenu {
 
         protected override void InstallPublic(SystemExports exports) {
             exports.RegisterFlow<MatchMenuFlowResult, MatchMenuFlowData>();
+            // The match blocks the local character's input while the menu is open.
+            exports.Expose<IMatchMenuStateGetter>();
         }
     }
 }

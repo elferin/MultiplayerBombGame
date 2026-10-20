@@ -7,18 +7,21 @@ namespace Code.MatchMenu {
     public class MatchMenuFlow : IMatchMenuFlow {
 
         private readonly IMatchMenuViewControllerFactory _viewControllerFactory;
+        private readonly IMatchMenuStateSetter _state;
 
         private IMatchMenuViewController _viewController;
         private UniTaskCompletionSource<MatchMenuChoice> _choice;
 
-        public MatchMenuFlow(IMatchMenuViewControllerFactory viewControllerFactory) {
+        public MatchMenuFlow(IMatchMenuViewControllerFactory viewControllerFactory, IMatchMenuStateSetter state) {
             _viewControllerFactory = viewControllerFactory;
+            _state = state;
         }
 
         public async UniTask<MatchMenuFlowResult> RunAsync(CancellationToken cancellation) {
             var flowResult = new MatchMenuFlowResult();
             _viewController = _viewControllerFactory.CreateViewController();
             _choice = new UniTaskCompletionSource<MatchMenuChoice>();
+            _state.SetOpen(true);
 
             AddListeners();
             try {
@@ -32,6 +35,8 @@ namespace Code.MatchMenu {
             finally {
                 RemoveListeners();
                 _viewController.Close();
+                // Every way out closes it: a choice, a second Esc, or the match ending.
+                _state.SetOpen(false);
             }
 
             return flowResult;

@@ -167,7 +167,6 @@ namespace Code.Match {
         // Closed by a second Esc, by the match ending, or by a choice. Only Leave ends the match.
         private async UniTaskVoid RunMenu() {
             _menuCancellation = CancellationTokenSource.CreateLinkedTokenSource(_matchCancellation);
-            _localPlayer.SetMenuOpen(true);
             try {
                 var (isClosed, result) = await _flowRunner.Run(new MatchMenuFlowData(), _menuCancellation.Token)
                     .SuppressCancellationThrow();
@@ -179,7 +178,6 @@ namespace Code.Match {
             finally {
                 _menuCancellation.Dispose();
                 _menuCancellation = null;
-                _localPlayer.SetMenuOpen(false);
             }
         }
 

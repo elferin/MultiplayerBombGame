@@ -12,11 +12,13 @@ namespace Code.Tests.MatchMenu {
         private const int TIMEOUT_MS = 5000;
 
         private FakeMatchMenuViewController _view;
+        private MatchMenuStateHolder _state;
         private CancellationTokenSource _cancellation;
 
         [SetUp]
         public void SetUp() {
             _view = new FakeMatchMenuViewController();
+            _state = new MatchMenuStateHolder();
             _cancellation = new CancellationTokenSource(TIMEOUT_MS);
         }
 
@@ -30,11 +32,13 @@ namespace Code.Tests.MatchMenu {
         public IEnumerator ContinueReturnsContinueAndClosesTheView() => UniTask.ToCoroutine(async () => {
             var run = StartFlow(_cancellation.Token);
             Assert.IsTrue(_view.IsRunning);
+            Assert.IsTrue(_state.IsOpen());
 
             _view.ClickContinue();
             var result = await run;
 
             Assert.AreEqual(MatchMenuChoice.Continue, result.Choice);
+            Assert.IsFalse(_state.IsOpen());
             Assert.IsTrue(_view.IsClosed);
             Assert.IsFalse(_view.IsRunning);
         });
@@ -48,6 +52,7 @@ namespace Code.Tests.MatchMenu {
 
             Assert.AreEqual(MatchMenuChoice.Leave, result.Choice);
             Assert.IsTrue(_view.IsClosed);
+            Assert.IsFalse(_state.IsOpen());
         });
 
         [UnityTest]
@@ -60,6 +65,7 @@ namespace Code.Tests.MatchMenu {
 
                 Assert.IsTrue(isCanceled);
                 Assert.IsTrue(_view.IsClosed);
+                Assert.IsFalse(_state.IsOpen());
                 Assert.IsFalse(_view.IsRunning);
             }
         });
@@ -76,7 +82,7 @@ namespace Code.Tests.MatchMenu {
         });
 
         private UniTask<MatchMenuFlowResult> StartFlow(CancellationToken cancellation) {
-            return new MatchMenuFlow(_view).RunAsync(cancellation).Preserve();
+            return new MatchMenuFlow(_view, _state).RunAsync(cancellation).Preserve();
         }
     }
 }

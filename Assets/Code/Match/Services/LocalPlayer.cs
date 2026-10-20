@@ -1,11 +1,23 @@
+using System;
 using System.Threading;
+using Code.MatchMenu;
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
 
 namespace Code.Match {
 
+    // Also keeps the character from taking input while the match menu is open, including a character that only
+    // appears while it's already open.
     [UsedImplicitly]
-    public class LocalPlayer : ILocalPlayer {
+    public class LocalPlayer : ILocalPlayer, IDisposable {
+
+        private readonly IMatchMenuStateGetter _menuState;
+
+        public LocalPlayer(IMatchMenuStateGetter menuState) {
+            _menuState = menuState;
+            _menuState.OpenChanged += OnMenuOpenChanged;
+            MatchPlayer.OwnedLocally += OnOwnedLocally;
+        }
 
         public async UniTask SetName(string playerName, CancellationToken cancellation) {
             MatchPlayer owned = null;
@@ -14,10 +26,19 @@ namespace Code.Match {
             owned.SetPlayerName(playerName);
         }
 
-        public void SetMenuOpen(bool isMenuOpen) {
+        public void Dispose() {
+            _menuState.OpenChanged -= OnMenuOpenChanged;
+            MatchPlayer.OwnedLocally -= OnOwnedLocally;
+        }
+
+        private void OnMenuOpenChanged(bool isOpen) {
             if (TryFindOwned(out var owned)) {
-                owned.SetMenuOpen(isMenuOpen);
+                owned.SetInputBlocked(isOpen);
             }
+        }
+
+        private void OnOwnedLocally(MatchPlayer player) {
+            player.SetInputBlocked(_menuState.IsOpen());
         }
 
         private bool TryFindOwned(out MatchPlayer owned) {

@@ -232,7 +232,6 @@ namespace Code.Tests.Match {
             joinCode.TrySetResult("RELAY1");
             _view.RaiseMenuRequested();
             Assert.AreEqual(1, _menu.StartCount);
-            Assert.IsTrue(_localPlayer.IsMenuOpen);
 
             _network.RaiseDisconnected();
             await run;
@@ -247,7 +246,6 @@ namespace Code.Tests.Match {
             await UniTask.Yield();
 
             Assert.IsTrue(_menu.LastCancellation.IsCancellationRequested);
-            Assert.IsFalse(_localPlayer.IsMenuOpen);
             Assert.AreEqual(UniTaskStatus.Pending, run.Status);
 
             _view.RaiseMenuRequested();
@@ -265,7 +263,6 @@ namespace Code.Tests.Match {
             _menu.Complete(new MatchMenuFlowResult { Choice = MatchMenuChoice.Continue });
             await UniTask.Yield();
 
-            Assert.IsFalse(_localPlayer.IsMenuOpen);
             Assert.AreEqual(UniTaskStatus.Pending, run.Status);
             Assert.AreEqual(0, _network.StopCount);
 
@@ -288,7 +285,6 @@ namespace Code.Tests.Match {
             Assert.IsFalse(_network.WasStoppedOnAnnounce);
             Assert.AreEqual(1, _network.StopCount);
             Assert.AreEqual(1, _spawning.RemoveCount);
-            Assert.IsFalse(_localPlayer.IsMenuOpen);
         });
 
         [UnityTest]
@@ -329,7 +325,6 @@ namespace Code.Tests.Match {
             await UniTask.Yield();
 
             Assert.IsTrue(_menu.LastCancellation.IsCancellationRequested);
-            Assert.IsFalse(_localPlayer.IsMenuOpen);
         });
 
         private MatchFlowData ClientData(string joinCode) {
