@@ -158,6 +158,23 @@ namespace Code.Tests.Match {
             Assert.AreEqual(0, _network.StopCount);
         });
 
+        // A lobby can't start with one player, so the count of 1 only stands in for nobody else connecting in time.
+        [UnityTest]
+        public IEnumerator HostAloneEndsTheMatchWithoutPlaying() => UniTask.ToCoroutine(async () => {
+            _network.ConnectedPlayerCount = 1;
+
+            var result = await StartFlow(HostData(4, 1));
+
+            Assert.IsTrue(result.StartFailed);
+            Assert.AreEqual("RELAY1", result.UsedJoinCode);
+            Assert.AreEqual(0, _spawning.StartCount);
+            Assert.AreEqual(-1, _gamePlayerCount);
+            Assert.AreEqual(MatchStatus.Starting, _status.GetStatus());
+            Assert.AreEqual(1, _network.StopCount);
+            Assert.AreEqual(1, _arena.RemoveCount);
+            Assert.IsTrue(_view.IsClosed);
+        });
+
         [UnityTest]
         public IEnumerator FailingClientStartKeepsTheJoinCode() => UniTask.ToCoroutine(async () => {
             _network.ClientThrows = true;

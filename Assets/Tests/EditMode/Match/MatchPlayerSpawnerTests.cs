@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Threading;
 using Code.Match;
@@ -50,9 +51,30 @@ namespace Code.Tests.Match {
         public IEnumerator SpawnsRightAwayWhenEveryoneIsConnected() => UniTask.ToCoroutine(async () => {
             _network.ConnectedPlayerCount = 2;
 
-            await _spawner.SpawnWhenAllJoined(2, _cancellation.Token);
+            var hasEnoughPlayers = await _spawner.SpawnWhenAllJoined(2, _cancellation.Token);
 
+            Assert.IsTrue(hasEnoughPlayers);
             Assert.AreEqual(1, _spawning.StartCount);
+        });
+
+        [UnityTest]
+        public IEnumerator SpawnsWhoeverConnectedWhenTheWaitRunsOut() => UniTask.ToCoroutine(async () => {
+            _network.ConnectedPlayerCount = 2;
+
+            var hasEnoughPlayers = await _spawner.SpawnWhenAllJoined(3, TimeSpan.FromMilliseconds(50), _cancellation.Token);
+
+            Assert.IsTrue(hasEnoughPlayers);
+            Assert.AreEqual(1, _spawning.StartCount);
+        });
+
+        [UnityTest]
+        public IEnumerator HostAloneWhenTheWaitRunsOutDoesNotSpawn() => UniTask.ToCoroutine(async () => {
+            _network.ConnectedPlayerCount = 1;
+
+            var hasEnoughPlayers = await _spawner.SpawnWhenAllJoined(2, TimeSpan.FromMilliseconds(50), _cancellation.Token);
+
+            Assert.IsFalse(hasEnoughPlayers);
+            Assert.AreEqual(0, _spawning.StartCount);
         });
     }
 }
