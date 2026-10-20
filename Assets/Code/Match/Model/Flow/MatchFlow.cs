@@ -186,6 +186,10 @@ namespace Code.Match {
                     _endRequested.TrySetResult();
                 }
             }
+            // A menu that fails (e.g. its view doesn't load) only closes; the match goes on and Esc can try again.
+            catch (Exception exception) {
+                Debug.LogException(exception);
+            }
             finally {
                 _menuCancellation.Dispose();
                 _menuCancellation = null;

@@ -13,6 +13,8 @@ namespace Code.Tests.MatchMenu {
 
         private readonly UniTaskCompletionSource _closed = new();
 
+        // RunAsync throws at once, like a view that fails to load.
+        public bool FailsToLoad { get; set; }
         public bool IsRunning { get; private set; }
         public bool IsClosed { get; private set; }
 
@@ -21,6 +23,9 @@ namespace Code.Tests.MatchMenu {
         }
 
         public async UniTask RunAsync(CancellationToken cancellation) {
+            if (FailsToLoad) {
+                throw new InvalidOperationException("Menu view failed to load");
+            }
             IsRunning = true;
             try {
                 await _closed.Task.AttachExternalCancellation(cancellation);

@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using Code.FlowSystem;
 using Cysharp.Threading.Tasks;
@@ -24,6 +25,10 @@ namespace Code.Tests.FlowSystem {
 
         public void Complete(TResult result) {
             _pending.TrySetResult(result);
+        }
+
+        public void Fail(Exception exception) {
+            _pending.TrySetException(exception);
         }
     }
 }

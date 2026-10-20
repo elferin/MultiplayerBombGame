@@ -288,6 +288,23 @@ namespace Code.Tests.Match {
         });
 
         [UnityTest]
+        public IEnumerator MenuThatFailsIsLoggedAndTheMatchGoesOn() => UniTask.ToCoroutine(async () => {
+            var run = StartFlow(ClientData("RELAY1"));
+
+            _view.RaiseMenuRequested();
+            LogAssert.Expect(LogType.Exception, new Regex("Menu failed"));
+            _menu.Fail(new InvalidOperationException("Menu failed"));
+            await UniTask.Yield();
+
+            Assert.AreEqual(UniTaskStatus.Pending, run.Status);
+            _view.RaiseMenuRequested();
+            Assert.AreEqual(2, _menu.StartCount);
+
+            _network.RaiseDisconnected();
+            await run;
+        });
+
+        [UnityTest]
         public IEnumerator ClientLeavingEndsOnlyItsOwnMatch() => UniTask.ToCoroutine(async () => {
             var run = StartFlow(ClientData("RELAY1"));
 

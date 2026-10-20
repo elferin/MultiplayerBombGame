@@ -25,9 +25,13 @@ namespace Code.MatchMenu {
 
             AddListeners();
             try {
-                var viewRun = _viewController.RunAsync(cancellation);
+                // Awaited twice: here, and below once the menu is closing.
+                var viewRun = _viewController.RunAsync(cancellation).Preserve();
 
-                flowResult.Choice = await _choice.Task.AttachExternalCancellation(cancellation);
+                // A view that fails to load ends the menu at once with its error, instead of leaving it open with nothing
+                // on screen and the character's input blocked.
+                var (hasChoice, choice) = await UniTask.WhenAny(_choice.Task.AttachExternalCancellation(cancellation), viewRun);
+                flowResult.Choice = hasChoice ? choice : MatchMenuChoice.Continue;
 
                 _viewController.Close();
                 await viewRun;

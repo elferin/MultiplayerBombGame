@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Threading;
 using Code.MatchMenu;
@@ -68,6 +69,22 @@ namespace Code.Tests.MatchMenu {
                 Assert.IsFalse(_state.IsOpen());
                 Assert.IsFalse(_view.IsRunning);
             }
+        });
+
+        [UnityTest]
+        public IEnumerator ViewThatFailsToLoadEndsTheMenuWithItsError() => UniTask.ToCoroutine(async () => {
+            _view.FailsToLoad = true;
+
+            var isThrown = false;
+            try {
+                await StartFlow(_cancellation.Token);
+            }
+            catch (InvalidOperationException) {
+                isThrown = true;
+            }
+
+            Assert.IsTrue(isThrown);
+            Assert.IsFalse(_state.IsOpen());
         });
 
         [UnityTest]
