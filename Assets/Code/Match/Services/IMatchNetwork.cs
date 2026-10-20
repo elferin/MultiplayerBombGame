@@ -19,6 +19,8 @@ namespace Code.Match {
         int GetConnectedPlayerCount();
         // On the host: tells every client the match is over. Does nothing when not hosting.
         void AnnounceMatchEnd();
+        // On a client: tells the host this player is leaving, so the host removes them at once. Does nothing on the host.
+        void AnnounceLeaving();
         // Stops the server and client started here.
         void Stop();
     }

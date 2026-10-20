@@ -284,6 +284,8 @@ namespace Code.Tests.Match {
             Assert.IsFalse(result.StartFailed);
             Assert.AreEqual("RELAY1", result.UsedJoinCode);
             Assert.AreEqual(0, _network.AnnounceEndCount);
+            Assert.AreEqual(1, _network.AnnounceLeavingCount);
+            Assert.IsFalse(_network.WasStoppedOnAnnounce);
             Assert.AreEqual(1, _network.StopCount);
             Assert.AreEqual(1, _spawning.RemoveCount);
             Assert.IsFalse(_localPlayer.IsMenuOpen);
@@ -300,6 +302,7 @@ namespace Code.Tests.Match {
             await run;
 
             Assert.AreEqual(1, _network.AnnounceEndCount);
+            Assert.AreEqual(0, _network.AnnounceLeavingCount);
             Assert.IsFalse(_network.WasStoppedOnAnnounce);
             Assert.AreEqual(1, _network.StopCount);
             Assert.AreEqual(1, _spawning.StopCount);

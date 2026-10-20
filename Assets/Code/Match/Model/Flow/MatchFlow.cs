@@ -11,7 +11,7 @@ namespace Code.Match {
     // Esc opens the match menu over the running game; leaving through it ends the match for this player.
     public class MatchFlow : IMatchFlow {
 
-        // Long enough for the host's "match ended" message to go out before its network stops.
+        // Long enough for a leaving player's message to go out before their network stops.
         private static readonly TimeSpan END_ANNOUNCE_DELAY = TimeSpan.FromSeconds(0.5);
 
         private readonly MatchFlowData _data;
@@ -89,8 +89,8 @@ namespace Code.Match {
                         _viewController.Refresh();
 
                         await PlayGame(matchCancellation.Token, cancellation);
-                        if (_isLeaving && _data.IsHost) {
-                            await EndForEveryone(cancellation);
+                        if (_isLeaving) {
+                            await AnnounceLeaving(cancellation);
                         }
                     }
                     else {
@@ -152,9 +152,15 @@ namespace Code.Match {
             }
         }
 
-        // The host's network carries the match, so the host leaving ends it for everyone.
-        private async UniTask EndForEveryone(CancellationToken cancellation) {
-            _network.AnnounceMatchEnd();
+        // Through Relay nobody notices a player stopping until a timeout, so the others are told first.
+        // The host's network carries the match, so the host leaving ends it for everyone; a client leaving is only removed.
+        private async UniTask AnnounceLeaving(CancellationToken cancellation) {
+            if (_data.IsHost) {
+                _network.AnnounceMatchEnd();
+            }
+            else {
+                _network.AnnounceLeaving();
+            }
             await UniTask.Delay(END_ANNOUNCE_DELAY, DelayType.Realtime, cancellationToken: cancellation);
         }
 

@@ -22,7 +22,8 @@ namespace Code.Tests.Match {
         public string LastClientJoinCode { get; private set; }
         public int StopCount { get; private set; }
         public int AnnounceEndCount { get; private set; }
-        // Whether the network was already stopped when the end was announced.
+        public int AnnounceLeavingCount { get; private set; }
+        // Whether the network was already stopped when the end or the leaving was announced.
         public bool WasStoppedOnAnnounce { get; private set; }
 
         public UniTask<string> StartHost(int maxPlayers, CancellationToken cancellation) {
@@ -46,6 +47,11 @@ namespace Code.Tests.Match {
 
         public void AnnounceMatchEnd() {
             AnnounceEndCount++;
+            WasStoppedOnAnnounce = StopCount > 0;
+        }
+
+        public void AnnounceLeaving() {
+            AnnounceLeavingCount++;
             WasStoppedOnAnnounce = StopCount > 0;
         }
 

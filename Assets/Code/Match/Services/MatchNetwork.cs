@@ -3,6 +3,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
 using PurrNet;
+using PurrNet.Modules;
 using PurrNet.Transports;
 using PurrNet.UTP;
 using Unity.Services.Relay;
@@ -81,6 +82,13 @@ namespace Code.Match {
             _startedNetwork.SendToAll(new MatchEndedMessage());
         }
 
+        public void AnnounceLeaving() {
+            if (_startedNetwork == null || _startedNetwork.isServer || !_startedNetwork.isClient) {
+                return;
+            }
+            _startedNetwork.SendToServer(new PlayerLeavingMessage());
+        }
+
         public void Stop() {
             if (_startedNetwork == null) {
                 return;
@@ -89,6 +97,7 @@ namespace Code.Match {
             // Stopped on purpose, so this isn't reported as a lost connection.
             _startedNetwork.onClientConnectionState -= OnClientConnectionState;
             _startedNetwork.Unsubscribe<MatchEndedMessage>(OnMatchEnded, false);
+            _startedNetwork.Unsubscribe<PlayerLeavingMessage>(OnPlayerLeaving, true);
             if (_startedNetwork.isServer) {
                 _startedNetwork.StopServer();
             }
@@ -121,6 +130,8 @@ namespace Code.Match {
             network.onClientConnectionState += OnClientConnectionState;
             // As a client, so the host's own client hears it too; the host is already ending then.
             network.Subscribe<MatchEndedMessage>(OnMatchEnded, false);
+            // Only heard on the host; PurrNet keeps the subscription until the server starts.
+            network.Subscribe<PlayerLeavingMessage>(OnPlayerLeaving, true);
         }
 
         private void OnClientConnectionState(ConnectionState state) {
@@ -131,6 +142,14 @@ namespace Code.Match {
 
         private void OnMatchEnded(PlayerID sender, MatchEndedMessage message, bool asServer) {
             HostEndedMatch.Invoke();
+        }
+
+        // Kicking runs PurrNet's usual player-left handling, so the network rules despawn the player's character now
+        // instead of after the Relay timeout.
+        private void OnPlayerLeaving(PlayerID sender, PlayerLeavingMessage message, bool asServer) {
+            if (_startedNetwork != null && _startedNetwork.TryGetModule<PlayersManager>(out var players, true)) {
+                players.KickPlayer(sender);
+            }
         }
 
         private bool TryGetNetwork(out NetworkManager network, out UTPTransport transport) {
