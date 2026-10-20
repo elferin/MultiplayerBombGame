@@ -83,6 +83,12 @@ namespace Code.Match {
                 _viewController.Close();
                 await viewRun;
             }
+            // A failure (e.g. a Relay request throws) counts as a failed start. Returning the result instead of throwing
+            // keeps the join code already received, so back in the lobby this match isn't mistaken for a new one.
+            catch (Exception exception) when (!(exception is OperationCanceledException)) {
+                Debug.LogException(exception);
+                flowResult.StartFailed = true;
+            }
             finally {
                 matchCancellation.Cancel();
                 matchCancellation.Dispose();

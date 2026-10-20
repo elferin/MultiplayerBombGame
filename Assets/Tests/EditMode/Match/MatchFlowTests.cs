@@ -159,6 +159,20 @@ namespace Code.Tests.Match {
         });
 
         [UnityTest]
+        public IEnumerator FailingClientStartKeepsTheJoinCode() => UniTask.ToCoroutine(async () => {
+            _network.ClientThrows = true;
+
+            LogAssert.Expect(LogType.Exception, new Regex("Client start failed"));
+            var result = await StartFlow(ClientData("RELAY1"));
+
+            Assert.IsTrue(result.StartFailed);
+            Assert.AreEqual("RELAY1", result.UsedJoinCode);
+            Assert.AreEqual(0, _network.StopCount);
+            Assert.AreEqual(1, _arena.RemoveCount);
+            Assert.IsTrue(_view.IsClosed);
+        });
+
+        [UnityTest]
         public IEnumerator ClientWithoutJoinCodeReturnsStartFailed() => UniTask.ToCoroutine(async () => {
             var result = await StartFlow(ClientData(string.Empty));
 

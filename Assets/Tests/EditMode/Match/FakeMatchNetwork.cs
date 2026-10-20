@@ -12,6 +12,7 @@ namespace Code.Tests.Match {
 
         public string HostJoinCode { get; set; } = "RELAY1";
         public bool ClientSucceeds { get; set; } = true;
+        public bool ClientThrows { get; set; }
         public int ConnectedPlayerCount { get; set; }
 
         public int HostStartCount { get; private set; }
@@ -29,6 +30,9 @@ namespace Code.Tests.Match {
         public UniTask<bool> StartClient(string joinCode, CancellationToken cancellation) {
             ClientStartCount++;
             LastClientJoinCode = joinCode;
+            if (ClientThrows) {
+                throw new InvalidOperationException("Client start failed");
+            }
             return UniTask.FromResult(ClientSucceeds);
         }
 

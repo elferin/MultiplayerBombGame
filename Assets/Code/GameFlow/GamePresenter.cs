@@ -79,8 +79,8 @@ namespace Code.GameFlow {
             }
         }
 
-        // A match that fails (e.g. a Relay or lobby request throws) counts as one that failed to start,
-        // so everyone gets back to the lobby and the host can try again.
+        // A match that fails counts as one that failed to start, so everyone gets back to the lobby and the host can try again.
+        // MatchFlow handles its own failures and keeps the join code; this only catches what fails before it runs.
         private async UniTask<MatchFlowResult> RunMatch(MatchFlowData matchData, CancellationToken cancellation) {
             try {
                 return await _flowRunner.Run(matchData, cancellation);
