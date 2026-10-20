@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using PurrLobby;
 using PurrLobby.Providers;
@@ -40,43 +41,12 @@ namespace Code.Lobby {
         }
 
         public async UniTask<LobbyState> CreateLobby(int maxPlayers, string playerName, CancellationToken cancellation) {
-            // Signs in to Unity Services on first use; does nothing once signed in.
-            await _provider.InitializeAsync();
-            cancellation.ThrowIfCancellationRequested();
-
-            // The provider sends this as the player's name when it creates or joins a lobby.
-            _provider.playerName = playerName;
-
-            // The provider's request can't be interrupted, so cancellation is checked once it finishes.
-            var lobby = await _provider.CreateLobbyAsync(maxPlayers, new Dictionary<string, string>());
-            if (cancellation.IsCancellationRequested) {
-                // Created after the caller stopped waiting; leave so it doesn't stay open on the server.
-                if (lobby.IsValid) {
-                    await _provider.LeaveLobbyAsync(lobby.LobbyId);
-                }
-                cancellation.ThrowIfCancellationRequested();
-            }
-
-            SetCurrentLobby(lobby);
+            await EnterLobby(() => _provider.CreateLobbyAsync(maxPlayers, new Dictionary<string, string>()), playerName, cancellation);
             return CurrentLobby;
         }
 
         public async UniTask<LobbyJoinResult> JoinLobby(string lobbyCode, string playerName, CancellationToken cancellation) {
-            await _provider.InitializeAsync();
-            cancellation.ThrowIfCancellationRequested();
-
-            _provider.playerName = playerName;
-
-            var lobby = await _provider.JoinLobbyByCodeAsync(lobbyCode);
-            if (cancellation.IsCancellationRequested) {
-                // Joined after the caller stopped waiting; leave so the player doesn't stay in it.
-                if (lobby.IsValid) {
-                    await _provider.LeaveLobbyAsync(lobby.LobbyId);
-                }
-                cancellation.ThrowIfCancellationRequested();
-            }
-
-            SetCurrentLobby(lobby);
+            var lobby = await EnterLobby(() => _provider.JoinLobbyByCodeAsync(lobbyCode), playerName, cancellation);
             return new LobbyJoinResult(CurrentLobby, lobby.IsValid ? LobbyJoinFailure.None : GetJoinFailure());
         }
 
@@ -205,6 +175,30 @@ namespace Code.Lobby {
         public void Dispose() {
             _isDisposed = true;
             _provider.OnLobbyUpdated -= OnProviderLobbyUpdated;
+        }
+
+        // Signs in, sends the request under the player's name, and stores the lobby it returns.
+        private async UniTask<PurrLobby.Lobby> EnterLobby(Func<Task<PurrLobby.Lobby>> request, string playerName,
+            CancellationToken cancellation) {
+            // Signs in to Unity Services on first use; does nothing once signed in.
+            await _provider.InitializeAsync();
+            cancellation.ThrowIfCancellationRequested();
+
+            // The provider sends this as the player's name when it creates or joins a lobby.
+            _provider.playerName = playerName;
+
+            // The provider's request can't be interrupted, so cancellation is checked once it finishes.
+            var lobby = await request();
+            if (cancellation.IsCancellationRequested) {
+                // Arrived after the caller stopped waiting; leave so it doesn't stay open on the server or keep the player in it.
+                if (lobby.IsValid) {
+                    await _provider.LeaveLobbyAsync(lobby.LobbyId);
+                }
+                cancellation.ThrowIfCancellationRequested();
+            }
+
+            SetCurrentLobby(lobby);
+            return lobby;
         }
 
         private void OnProviderLobbyUpdated(PurrLobby.Lobby lobby) {
