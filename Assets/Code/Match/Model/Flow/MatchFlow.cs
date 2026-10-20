@@ -26,7 +26,8 @@ namespace Code.Match {
 
         private IMatchViewController _viewController;
         private UniTaskCompletionSource _endRequested;
-        private CancellationToken _matchCancellation;
+        // Stops the game and the menu when the match ends.
+        private CancellationTokenSource _matchCancellation;
         // Set while the menu is open; cancelling it closes the menu.
         private CancellationTokenSource _menuCancellation;
         private bool _isLeaving;
@@ -52,9 +53,7 @@ namespace Code.Match {
             _isLeaving = false;
             _status.SetStatus(MatchStatus.Starting);
             var isConnected = false;
-            // Stops the game, the name setting and the menu when the match ends.
-            var matchCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
-            _matchCancellation = matchCancellation.Token;
+            _matchCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
 
             AddListeners();
             try {
@@ -81,7 +80,7 @@ namespace Code.Match {
                 }
 
                 if (isConnected) {
-                    _localPlayer.SetName(_data.PlayerName, matchCancellation.Token).SuppressCancellationThrow().Forget();
+                    _localPlayer.SetName(_data.PlayerName);
                     // On the host, too few players connecting in time ends the match; clients always play.
                     var hasEnoughPlayers = !_data.IsHost
                                            || await _playerSpawner.SpawnWhenAllJoined(_data.PlayerCount, _data.MinPlayers, cancellation);
@@ -89,7 +88,7 @@ namespace Code.Match {
                         _status.SetStatus(MatchStatus.InProgress);
                         _viewController.Refresh();
 
-                        await PlayGame(matchCancellation.Token, cancellation);
+                        await PlayGame(_matchCancellation.Token, cancellation);
                         if (_isLeaving) {
                             await AnnounceLeaving(cancellation);
                         }
@@ -112,8 +111,8 @@ namespace Code.Match {
                 flowResult.StartFailed = true;
             }
             finally {
-                matchCancellation.Cancel();
-                matchCancellation.Dispose();
+                _matchCancellation.Cancel();
+                _matchCancellation.Dispose();
                 RemoveListeners();
                 _viewController.Close();
 
@@ -178,7 +177,7 @@ namespace Code.Match {
 
         // Closed by a second Esc, by the match ending, or by a choice. Only Leave ends the match.
         private async UniTaskVoid RunMenu() {
-            _menuCancellation = CancellationTokenSource.CreateLinkedTokenSource(_matchCancellation);
+            _menuCancellation = CancellationTokenSource.CreateLinkedTokenSource(_matchCancellation.Token);
             try {
                 var (isClosed, result) = await _flowRunner.Run(new MatchMenuFlowData(), _menuCancellation.Token)
                     .SuppressCancellationThrow();

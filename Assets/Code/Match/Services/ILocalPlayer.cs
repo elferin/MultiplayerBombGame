@@ -1,12 +1,9 @@
-using System.Threading;
-using Cysharp.Threading.Tasks;
-
 namespace Code.Match {
 
     // The player object this client owns.
     public interface ILocalPlayer {
 
-        // Waits for the object to spawn, then shows the name to everyone.
-        UniTask SetName(string playerName, CancellationToken cancellation);
+        // Shows the name to everyone on the local character, now or as soon as it appears.
+        void SetName(string playerName);
     }
 }

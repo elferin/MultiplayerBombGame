@@ -71,8 +71,7 @@ namespace Code.Match {
         }
 
         public int GetConnectedPlayerCount() {
-            var network = NetworkManagerLookup.Find();
-            return network != null && network.isServer ? network.playerCount : 0;
+            return _startedNetwork != null && _startedNetwork.isServer ? _startedNetwork.playerCount : 0;
         }
 
         public void AnnounceMatchEnd() {

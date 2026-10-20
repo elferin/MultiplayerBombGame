@@ -1,17 +1,17 @@
 using System;
-using System.Threading;
 using Code.MatchMenu;
-using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
 
 namespace Code.Match {
 
-    // Also keeps the character from taking input while the match menu is open, including a character that only
-    // appears while it's already open.
+    // Applies what this client decides about its own character: the name everyone sees, and no input while the match
+    // menu is open. A character that only appears later, e.g. once the host spawns everyone, gets both as it appears.
     [UsedImplicitly]
     public class LocalPlayer : ILocalPlayer, IDisposable {
 
         private readonly IMatchMenuStateGetter _menuState;
+
+        private string _playerName = string.Empty;
 
         public LocalPlayer(IMatchMenuStateGetter menuState) {
             _menuState = menuState;
@@ -19,11 +19,11 @@ namespace Code.Match {
             MatchPlayer.OwnedLocally += OnOwnedLocally;
         }
 
-        public async UniTask SetName(string playerName, CancellationToken cancellation) {
-            MatchPlayer owned = null;
-            // Ownership is given right after spawning, so this waits for it rather than checking once.
-            await UniTask.WaitUntil(() => TryFindOwned(out owned), cancellationToken: cancellation);
-            owned.SetPlayerName(playerName);
+        public void SetName(string playerName) {
+            _playerName = playerName ?? string.Empty;
+            if (TryFindOwned(out var owned)) {
+                owned.SetPlayerName(_playerName);
+            }
         }
 
         public void Dispose() {
@@ -38,6 +38,7 @@ namespace Code.Match {
         }
 
         private void OnOwnedLocally(MatchPlayer player) {
+            player.SetPlayerName(_playerName);
             player.SetInputBlocked(_menuState.IsOpen());
         }
 
