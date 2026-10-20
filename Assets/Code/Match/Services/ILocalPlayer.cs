@@ -8,5 +8,7 @@ namespace Code.Match {
 
         // Waits for the object to spawn, then shows the name to everyone.
         UniTask SetName(string playerName, CancellationToken cancellation);
+        // Stops the character taking move and power-up input while the match menu is open. Does nothing before it spawns.
+        void SetMenuOpen(bool isMenuOpen);
     }
 }

@@ -14,6 +14,12 @@ namespace Code.Match {
             owned.SetPlayerName(playerName);
         }
 
+        public void SetMenuOpen(bool isMenuOpen) {
+            if (TryFindOwned(out var owned)) {
+                owned.SetMenuOpen(isMenuOpen);
+            }
+        }
+
         private bool TryFindOwned(out MatchPlayer owned) {
             foreach (var player in MatchPlayer.Active) {
                 if (player.isOwner) {

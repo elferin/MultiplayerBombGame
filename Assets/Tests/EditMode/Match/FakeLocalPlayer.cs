@@ -8,10 +8,15 @@ namespace Code.Tests.Match {
     public class FakeLocalPlayer : ILocalPlayer {
 
         public string LastName { get; private set; }
+        public bool IsMenuOpen { get; private set; }
 
         public UniTask SetName(string playerName, CancellationToken cancellation) {
             LastName = playerName;
             return UniTask.CompletedTask;
+        }
+
+        public void SetMenuOpen(bool isMenuOpen) {
+            IsMenuOpen = isMenuOpen;
         }
     }
 }

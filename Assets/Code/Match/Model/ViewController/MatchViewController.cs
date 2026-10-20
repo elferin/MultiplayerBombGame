@@ -1,9 +1,12 @@
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 
 namespace Code.Match {
 
     public class MatchViewController : IMatchViewController {
+
+        public event Action MenuRequested = delegate { };
 
         private readonly MatchAssetLoader _assetLoader;
         private readonly IViewDataGatherer<MatchViewData> _dataGatherer;
@@ -32,6 +35,7 @@ namespace Code.Match {
             }
             finally {
                 if (_view != null) {
+                    RemoveListeners();
                     _assetLoader.DestroyMatchView(_view);
                 }
             }
@@ -43,7 +47,20 @@ namespace Code.Match {
 
         private async UniTask Initialize(CancellationToken cancellation) {
             _view = await _assetLoader.CreateMatchView(cancellation);
+            AddListeners();
             Refresh();
+        }
+
+        private void AddListeners() {
+            _view.MenuRequested += OnMenuRequested;
+        }
+
+        private void RemoveListeners() {
+            _view.MenuRequested -= OnMenuRequested;
+        }
+
+        private void OnMenuRequested() {
+            MenuRequested.Invoke();
         }
     }
 }

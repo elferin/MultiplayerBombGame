@@ -9,6 +9,7 @@ namespace Code.Tests.Match {
     public class FakeMatchNetwork : IMatchNetwork {
 
         public event Action Disconnected = delegate { };
+        public event Action HostEndedMatch = delegate { };
 
         public string HostJoinCode { get; set; } = "RELAY1";
         public bool ClientSucceeds { get; set; } = true;
@@ -20,6 +21,9 @@ namespace Code.Tests.Match {
         public int ClientStartCount { get; private set; }
         public string LastClientJoinCode { get; private set; }
         public int StopCount { get; private set; }
+        public int AnnounceEndCount { get; private set; }
+        // Whether the network was already stopped when the end was announced.
+        public bool WasStoppedOnAnnounce { get; private set; }
 
         public UniTask<string> StartHost(int maxPlayers, CancellationToken cancellation) {
             HostStartCount++;
@@ -40,10 +44,17 @@ namespace Code.Tests.Match {
             return ConnectedPlayerCount;
         }
 
+        public void AnnounceMatchEnd() {
+            AnnounceEndCount++;
+            WasStoppedOnAnnounce = StopCount > 0;
+        }
+
         public void Stop() {
             StopCount++;
         }
 
         public void RaiseDisconnected() => Disconnected();
+
+        public void RaiseHostEndedMatch() => HostEndedMatch();
     }
 }

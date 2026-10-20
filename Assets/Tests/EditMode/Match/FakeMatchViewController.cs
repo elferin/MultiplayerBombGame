@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Code.Match;
@@ -7,6 +8,8 @@ namespace Code.Tests.Match {
 
     // Stands in for the real match view and records the status shown at each refresh.
     public class FakeMatchViewController : IMatchViewController, IMatchViewControllerFactory {
+
+        public event Action MenuRequested = delegate { };
 
         private readonly IMatchStatusGetter _statusGetter;
         private readonly UniTaskCompletionSource _closed = new UniTaskCompletionSource();
@@ -36,5 +39,7 @@ namespace Code.Tests.Match {
             IsClosed = true;
             _closed.TrySetResult();
         }
+
+        public void RaiseMenuRequested() => MenuRequested();
     }
 }

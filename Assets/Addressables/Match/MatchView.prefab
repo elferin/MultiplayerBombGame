@@ -254,6 +254,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Code::Code.Match.MatchView
   statusText: {fileID: 2352189495848709291}
+  menuAction: {fileID: -3710453587158299280, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!1 &8745075535014312519
 GameObject:
   m_ObjectHideFlags: 0

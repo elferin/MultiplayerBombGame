@@ -2,7 +2,10 @@ using System;
 using System.Collections;
 using System.Text.RegularExpressions;
 using System.Threading;
+using Code.FlowSystem;
 using Code.Match;
+using Code.MatchMenu;
+using Code.Tests.FlowSystem;
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine;
@@ -24,6 +27,8 @@ namespace Code.Tests.Match {
         private int _gamePlayerCount;
         private CancellationTokenSource _cancellation;
         private string _sharedJoinCode;
+        private FakeFlowInstantiator<MatchMenuFlowResult, MatchMenuFlowData> _menu;
+        private FlowManager _flowRunner;
 
         [SetUp]
         public void SetUp() {
@@ -37,6 +42,9 @@ namespace Code.Tests.Match {
             _gamePlayerCount = -1;
             _cancellation = new CancellationTokenSource(TIMEOUT_MS);
             _sharedJoinCode = string.Empty;
+            _menu = new FakeFlowInstantiator<MatchMenuFlowResult, MatchMenuFlowData>();
+            _flowRunner = new FlowManager();
+            _flowRunner.Register(_menu);
         }
 
         [TearDown]
@@ -213,6 +221,114 @@ namespace Code.Tests.Match {
             await run;
         });
 
+        [UnityTest]
+        public IEnumerator MenuOpensOnlyOnceTheGameRuns() => UniTask.ToCoroutine(async () => {
+            var joinCode = new UniTaskCompletionSource<string>();
+            var run = StartFlow(MatchFlowData.Client("Ana", _ => joinCode.Task, PlayGame));
+
+            _view.RaiseMenuRequested();
+            Assert.AreEqual(0, _menu.StartCount);
+
+            joinCode.TrySetResult("RELAY1");
+            _view.RaiseMenuRequested();
+            Assert.AreEqual(1, _menu.StartCount);
+            Assert.IsTrue(_localPlayer.IsMenuOpen);
+
+            _network.RaiseDisconnected();
+            await run;
+        });
+
+        [UnityTest]
+        public IEnumerator SecondMenuRequestClosesTheMenuAndTheGameGoesOn() => UniTask.ToCoroutine(async () => {
+            var run = StartFlow(ClientData("RELAY1"));
+
+            _view.RaiseMenuRequested();
+            _view.RaiseMenuRequested();
+            await UniTask.Yield();
+
+            Assert.IsTrue(_menu.LastCancellation.IsCancellationRequested);
+            Assert.IsFalse(_localPlayer.IsMenuOpen);
+            Assert.AreEqual(UniTaskStatus.Pending, run.Status);
+
+            _view.RaiseMenuRequested();
+            Assert.AreEqual(2, _menu.StartCount);
+
+            _network.RaiseDisconnected();
+            await run;
+        });
+
+        [UnityTest]
+        public IEnumerator ContinueClosesTheMenuAndTheGameGoesOn() => UniTask.ToCoroutine(async () => {
+            var run = StartFlow(ClientData("RELAY1"));
+
+            _view.RaiseMenuRequested();
+            _menu.Complete(new MatchMenuFlowResult { Choice = MatchMenuChoice.Continue });
+            await UniTask.Yield();
+
+            Assert.IsFalse(_localPlayer.IsMenuOpen);
+            Assert.AreEqual(UniTaskStatus.Pending, run.Status);
+            Assert.AreEqual(0, _network.StopCount);
+
+            _network.RaiseDisconnected();
+            await run;
+        });
+
+        [UnityTest]
+        public IEnumerator ClientLeavingEndsOnlyItsOwnMatch() => UniTask.ToCoroutine(async () => {
+            var run = StartFlow(ClientData("RELAY1"));
+
+            _view.RaiseMenuRequested();
+            _menu.Complete(new MatchMenuFlowResult { Choice = MatchMenuChoice.Leave });
+            var result = await run;
+
+            Assert.IsFalse(result.StartFailed);
+            Assert.AreEqual("RELAY1", result.UsedJoinCode);
+            Assert.AreEqual(0, _network.AnnounceEndCount);
+            Assert.AreEqual(1, _network.StopCount);
+            Assert.AreEqual(1, _spawning.RemoveCount);
+            Assert.IsFalse(_localPlayer.IsMenuOpen);
+        });
+
+        [UnityTest]
+        public IEnumerator HostLeavingTellsEveryoneBeforeStopping() => UniTask.ToCoroutine(async () => {
+            _network.ConnectedPlayerCount = 2;
+            var run = StartFlow(HostData(4, 2));
+            await UniTask.WaitUntil(() => _status.GetStatus() == MatchStatus.InProgress, cancellationToken: _cancellation.Token);
+
+            _view.RaiseMenuRequested();
+            _menu.Complete(new MatchMenuFlowResult { Choice = MatchMenuChoice.Leave });
+            await run;
+
+            Assert.AreEqual(1, _network.AnnounceEndCount);
+            Assert.IsFalse(_network.WasStoppedOnAnnounce);
+            Assert.AreEqual(1, _network.StopCount);
+            Assert.AreEqual(1, _spawning.StopCount);
+        });
+
+        [UnityTest]
+        public IEnumerator ClientEndsWhenTheHostEndsTheMatch() => UniTask.ToCoroutine(async () => {
+            var run = StartFlow(ClientData("RELAY1"));
+
+            _network.RaiseHostEndedMatch();
+            var result = await run;
+
+            Assert.IsFalse(result.StartFailed);
+            Assert.AreEqual(1, _network.StopCount);
+        });
+
+        [UnityTest]
+        public IEnumerator MatchEndingClosesAnOpenMenu() => UniTask.ToCoroutine(async () => {
+            var run = StartFlow(ClientData("RELAY1"));
+
+            _view.RaiseMenuRequested();
+            _game.TrySetResult();
+            await run;
+            await UniTask.Yield();
+
+            Assert.IsTrue(_menu.LastCancellation.IsCancellationRequested);
+            Assert.IsFalse(_localPlayer.IsMenuOpen);
+        });
+
         private MatchFlowData ClientData(string joinCode) {
             return MatchFlowData.Client("Ana", _ => UniTask.FromResult(joinCode), PlayGame);
         }
@@ -230,7 +346,7 @@ namespace Code.Tests.Match {
         }
 
         private UniTask<MatchFlowResult> StartFlow(MatchFlowData data) {
-            var flow = new MatchFlow(data, _view, _network, new MatchPlayerSpawner(_network, _spawning), _spawning, _arena, _localPlayer, _status);
+            var flow = new MatchFlow(data, _view, _network, new MatchPlayerSpawner(_network, _spawning), _spawning, _arena, _localPlayer, _status, _flowRunner);
             return flow.RunAsync(_cancellation.Token).Preserve();
         }
     }

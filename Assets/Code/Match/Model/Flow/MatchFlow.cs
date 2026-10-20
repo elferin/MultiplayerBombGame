@@ -1,12 +1,18 @@
 using System;
 using System.Threading;
+using Code.FlowSystem;
+using Code.MatchMenu;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace Code.Match {
 
     // Starts the match network, spawns the players on the host, plays the game, and stops the network when it ends.
+    // Esc opens the match menu over the running game; leaving through it ends the match for this player.
     public class MatchFlow : IMatchFlow {
+
+        // Long enough for the host's "match ended" message to go out before its network stops.
+        private static readonly TimeSpan END_ANNOUNCE_DELAY = TimeSpan.FromSeconds(0.5);
 
         private readonly MatchFlowData _data;
         private readonly IMatchViewControllerFactory _viewControllerFactory;
@@ -16,13 +22,18 @@ namespace Code.Match {
         private readonly IMatchArena _arena;
         private readonly ILocalPlayer _localPlayer;
         private readonly IMatchStatus _status;
+        private readonly IFlowRunner _flowRunner;
 
         private IMatchViewController _viewController;
         private UniTaskCompletionSource _endRequested;
+        private CancellationToken _matchCancellation;
+        // Set while the menu is open; cancelling it closes the menu.
+        private CancellationTokenSource _menuCancellation;
+        private bool _isLeaving;
 
         public MatchFlow(MatchFlowData data, IMatchViewControllerFactory viewControllerFactory, IMatchNetwork network,
             MatchPlayerSpawner playerSpawner, IPlayerSpawning spawning, IMatchArena arena, ILocalPlayer localPlayer,
-            IMatchStatus status) {
+            IMatchStatus status, IFlowRunner flowRunner) {
             _data = data;
             _viewControllerFactory = viewControllerFactory;
             _network = network;
@@ -31,16 +42,19 @@ namespace Code.Match {
             _arena = arena;
             _localPlayer = localPlayer;
             _status = status;
+            _flowRunner = flowRunner;
         }
 
         public async UniTask<MatchFlowResult> RunAsync(CancellationToken cancellation) {
             var flowResult = new MatchFlowResult();
             _viewController = _viewControllerFactory.CreateViewController();
             _endRequested = new UniTaskCompletionSource();
+            _isLeaving = false;
             _status.SetStatus(MatchStatus.Starting);
             var isConnected = false;
-            // Stops the game and the name setting when the match ends.
+            // Stops the game, the name setting and the menu when the match ends.
             var matchCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+            _matchCancellation = matchCancellation.Token;
 
             AddListeners();
             try {
@@ -75,6 +89,9 @@ namespace Code.Match {
                         _viewController.Refresh();
 
                         await PlayGame(matchCancellation.Token, cancellation);
+                        if (_isLeaving && _data.IsHost) {
+                            await EndForEveryone(cancellation);
+                        }
                     }
                     else {
                         flowResult.StartFailed = true;
@@ -135,16 +152,57 @@ namespace Code.Match {
             }
         }
 
+        // The host's network carries the match, so the host leaving ends it for everyone.
+        private async UniTask EndForEveryone(CancellationToken cancellation) {
+            _network.AnnounceMatchEnd();
+            await UniTask.Delay(END_ANNOUNCE_DELAY, DelayType.Realtime, cancellationToken: cancellation);
+        }
+
+        // Closed by a second Esc, by the match ending, or by a choice. Only Leave ends the match.
+        private async UniTaskVoid RunMenu() {
+            _menuCancellation = CancellationTokenSource.CreateLinkedTokenSource(_matchCancellation);
+            _localPlayer.SetMenuOpen(true);
+            try {
+                var (isClosed, result) = await _flowRunner.Run(new MatchMenuFlowData(), _menuCancellation.Token)
+                    .SuppressCancellationThrow();
+                if (!isClosed && result.Choice == MatchMenuChoice.Leave) {
+                    _isLeaving = true;
+                    _endRequested.TrySetResult();
+                }
+            }
+            finally {
+                _menuCancellation.Dispose();
+                _menuCancellation = null;
+                _localPlayer.SetMenuOpen(false);
+            }
+        }
+
         private void AddListeners() {
             _network.Disconnected += OnEndRequested;
+            _network.HostEndedMatch += OnEndRequested;
+            _viewController.MenuRequested += OnMenuRequested;
         }
 
         private void RemoveListeners() {
             _network.Disconnected -= OnEndRequested;
+            _network.HostEndedMatch -= OnEndRequested;
+            _viewController.MenuRequested -= OnMenuRequested;
         }
 
         private void OnEndRequested() {
             _endRequested.TrySetResult();
+        }
+
+        // Only while the game runs: there is nothing to leave while the match is still starting.
+        private void OnMenuRequested() {
+            if (_status.GetStatus() != MatchStatus.InProgress || _isLeaving) {
+                return;
+            }
+            if (_menuCancellation != null) {
+                _menuCancellation.Cancel();
+                return;
+            }
+            RunMenu().Forget();
         }
     }
 }

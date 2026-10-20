@@ -30,6 +30,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b8c3e316eca0b144097e069c95871a39
+    m_Address: MatchMenuView
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f281390c3e110c943b1926677379f4f4
     m_Address: Arena
     m_ReadOnly: 0

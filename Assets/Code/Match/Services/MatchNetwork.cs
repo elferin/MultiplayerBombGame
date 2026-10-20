@@ -20,6 +20,7 @@ namespace Code.Match {
             "UTPTransport.clientState has no setter any more; check whether PurrNet fixed Disconnect() and remove ResetClientState.";
 
         public event Action Disconnected = delegate { };
+        public event Action HostEndedMatch = delegate { };
 
         private NetworkManager _startedNetwork;
 
@@ -73,6 +74,13 @@ namespace Code.Match {
             return network != null && network.isServer ? network.playerCount : 0;
         }
 
+        public void AnnounceMatchEnd() {
+            if (_startedNetwork == null || !_startedNetwork.isServer) {
+                return;
+            }
+            _startedNetwork.SendToAll(new MatchEndedMessage());
+        }
+
         public void Stop() {
             if (_startedNetwork == null) {
                 return;
@@ -80,6 +88,7 @@ namespace Code.Match {
 
             // Stopped on purpose, so this isn't reported as a lost connection.
             _startedNetwork.onClientConnectionState -= OnClientConnectionState;
+            _startedNetwork.Unsubscribe<MatchEndedMessage>(OnMatchEnded, false);
             if (_startedNetwork.isServer) {
                 _startedNetwork.StopServer();
             }
@@ -110,12 +119,18 @@ namespace Code.Match {
         private void Listen(NetworkManager network) {
             _startedNetwork = network;
             network.onClientConnectionState += OnClientConnectionState;
+            // As a client, so the host's own client hears it too; the host is already ending then.
+            network.Subscribe<MatchEndedMessage>(OnMatchEnded, false);
         }
 
         private void OnClientConnectionState(ConnectionState state) {
             if (state == ConnectionState.Disconnected) {
                 Disconnected.Invoke();
             }
+        }
+
+        private void OnMatchEnded(PlayerID sender, MatchEndedMessage message, bool asServer) {
+            HostEndedMatch.Invoke();
         }
 
         private bool TryGetNetwork(out NetworkManager network, out UTPTransport transport) {

@@ -16,9 +16,13 @@ namespace Code.Match {
         // The owner sets it once spawned, because only their client knows the name.
         [SerializeField] private SyncVar<string> playerName = new SyncVar<string>(string.Empty, ownerAuth: true);
 
-        public string PlayerName => playerName.value ?? string.Empty;
         // Local only: each client stops its own character, e.g. when the match is over.
-        public bool CanMove { get; private set; } = true;
+        private bool _canMove = true;
+        // Local only, and kept apart from _canMove so closing the menu on the winner screen doesn't free the character.
+        private bool _isMenuOpen;
+
+        public string PlayerName => playerName.value ?? string.Empty;
+        public bool CanMove => _canMove && !_isMenuOpen;
 
         private void Awake() {
             playerName.onChanged += ShowName;
@@ -44,7 +48,11 @@ namespace Code.Match {
         }
 
         public void SetCanMove(bool canMove) {
-            CanMove = canMove;
+            _canMove = canMove;
+        }
+
+        public void SetMenuOpen(bool isMenuOpen) {
+            _isMenuOpen = isMenuOpen;
         }
 
         // Keeps the label facing the camera however the player moves.
