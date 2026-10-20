@@ -6,14 +6,15 @@ namespace Code.Lobby {
     [UsedImplicitly]
     public class LobbyStartRules {
 
-        private const int MIN_PLAYERS_TO_START = 2;
-
         private readonly ILobbyStatusGetter _statusGetter;
         private readonly ICurrentLobbyGetter _currentLobbyGetter;
+        private readonly IHostLobbySettingsGetter _hostLobbySettings;
 
-        public LobbyStartRules(ILobbyStatusGetter statusGetter, ICurrentLobbyGetter currentLobbyGetter) {
+        public LobbyStartRules(ILobbyStatusGetter statusGetter, ICurrentLobbyGetter currentLobbyGetter,
+            IHostLobbySettingsGetter hostLobbySettings) {
             _statusGetter = statusGetter;
             _currentLobbyGetter = currentLobbyGetter;
+            _hostLobbySettings = hostLobbySettings;
         }
 
         // Only the host starts the match, and only while nothing else is in progress; a failed start can be retried.
@@ -28,7 +29,7 @@ namespace Code.Lobby {
         }
 
         public bool HasEnoughPlayers() {
-            return _currentLobbyGetter.GetCurrentLobby().Players.Count >= MIN_PLAYERS_TO_START;
+            return _currentLobbyGetter.GetCurrentLobby().Players.Count >= _hostLobbySettings.GetMinPlayers();
         }
 
         // Everyone has come back from the last match.

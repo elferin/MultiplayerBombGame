@@ -5,6 +5,7 @@ namespace Code.Lobby {
     [UsedImplicitly]
     public class HostLobbySettings : IHostLobbySettings {
 
+        // Nobody can play alone. The lobby's start rule and the match's player check use this too.
         private const int MIN_PLAYERS = 2;
         private const int MAX_PLAYERS = 8;
         private const int DEFAULT_PLAYERS = 4;

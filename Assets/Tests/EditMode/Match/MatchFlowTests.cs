@@ -365,8 +365,8 @@ namespace Code.Tests.Match {
             return MatchFlowData.Client("Ana", _ => UniTask.FromResult(joinCode), PlayGame);
         }
 
-        private MatchFlowData HostData(int maxPlayers, int playerCount) {
-            return MatchFlowData.Host(maxPlayers, playerCount, "Ana", joinCode => {
+        private MatchFlowData HostData(int maxPlayers, int playerCount, int minPlayers = 2) {
+            return MatchFlowData.Host(maxPlayers, playerCount, minPlayers, "Ana", joinCode => {
                 _sharedJoinCode = joinCode;
                 return UniTask.CompletedTask;
             }, PlayGame);

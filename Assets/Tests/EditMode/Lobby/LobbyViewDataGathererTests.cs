@@ -13,7 +13,7 @@ namespace Code.Tests.Lobby {
         public void SetUp() {
             _status = new LobbyStatusHolder();
             _currentLobby = new CurrentLobbyHolder();
-            _gatherer = new LobbyViewDataGatherer(_status, _currentLobby, new LobbyStartRules(_status, _currentLobby));
+            _gatherer = new LobbyViewDataGatherer(_status, _currentLobby, new LobbyStartRules(_status, _currentLobby, new HostLobbySettings()));
         }
 
         [TestCase(LobbyStatus.Creating, "Creating lobby...")]

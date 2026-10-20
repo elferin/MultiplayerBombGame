@@ -34,7 +34,7 @@ namespace Code.Tests.Match {
         [UnityTest]
         public IEnumerator WaitsForAllPlayersBeforeSpawning() => UniTask.ToCoroutine(async () => {
             _network.ConnectedPlayerCount = 1;
-            var run = _spawner.SpawnWhenAllJoined(3, _cancellation.Token).Preserve();
+            var run = _spawner.SpawnWhenAllJoined(3, 2, _cancellation.Token).Preserve();
 
             await UniTask.Yield();
             _network.ConnectedPlayerCount = 2;
@@ -51,7 +51,7 @@ namespace Code.Tests.Match {
         public IEnumerator SpawnsRightAwayWhenEveryoneIsConnected() => UniTask.ToCoroutine(async () => {
             _network.ConnectedPlayerCount = 2;
 
-            var hasEnoughPlayers = await _spawner.SpawnWhenAllJoined(2, _cancellation.Token);
+            var hasEnoughPlayers = await _spawner.SpawnWhenAllJoined(2, 2, _cancellation.Token);
 
             Assert.IsTrue(hasEnoughPlayers);
             Assert.AreEqual(1, _spawning.StartCount);
@@ -61,7 +61,7 @@ namespace Code.Tests.Match {
         public IEnumerator SpawnsWhoeverConnectedWhenTheWaitRunsOut() => UniTask.ToCoroutine(async () => {
             _network.ConnectedPlayerCount = 2;
 
-            var hasEnoughPlayers = await _spawner.SpawnWhenAllJoined(3, TimeSpan.FromMilliseconds(50), _cancellation.Token);
+            var hasEnoughPlayers = await _spawner.SpawnWhenAllJoined(3, 2, TimeSpan.FromMilliseconds(50), _cancellation.Token);
 
             Assert.IsTrue(hasEnoughPlayers);
             Assert.AreEqual(1, _spawning.StartCount);
@@ -71,7 +71,7 @@ namespace Code.Tests.Match {
         public IEnumerator HostAloneWhenTheWaitRunsOutDoesNotSpawn() => UniTask.ToCoroutine(async () => {
             _network.ConnectedPlayerCount = 1;
 
-            var hasEnoughPlayers = await _spawner.SpawnWhenAllJoined(2, TimeSpan.FromMilliseconds(50), _cancellation.Token);
+            var hasEnoughPlayers = await _spawner.SpawnWhenAllJoined(2, 2, TimeSpan.FromMilliseconds(50), _cancellation.Token);
 
             Assert.IsFalse(hasEnoughPlayers);
             Assert.AreEqual(0, _spawning.StartCount);

@@ -83,7 +83,8 @@ namespace Code.Match {
                 if (isConnected) {
                     _localPlayer.SetName(_data.PlayerName, matchCancellation.Token).SuppressCancellationThrow().Forget();
                     // On the host, too few players connecting in time ends the match; clients always play.
-                    var hasEnoughPlayers = !_data.IsHost || await _playerSpawner.SpawnWhenAllJoined(_data.PlayerCount, cancellation);
+                    var hasEnoughPlayers = !_data.IsHost
+                                           || await _playerSpawner.SpawnWhenAllJoined(_data.PlayerCount, _data.MinPlayers, cancellation);
                     if (hasEnoughPlayers) {
                         _status.SetStatus(MatchStatus.InProgress);
                         _viewController.Refresh();

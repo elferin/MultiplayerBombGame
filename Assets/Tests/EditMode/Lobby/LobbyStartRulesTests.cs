@@ -13,7 +13,7 @@ namespace Code.Tests.Lobby {
         public void SetUp() {
             _status = new LobbyStatusHolder();
             _currentLobby = new CurrentLobbyHolder();
-            _rules = new LobbyStartRules(_status, _currentLobby);
+            _rules = new LobbyStartRules(_status, _currentLobby, new HostLobbySettings());
         }
 
         [TestCase(true, LobbyStatus.Ready, 2, true)]

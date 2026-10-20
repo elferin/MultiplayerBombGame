@@ -34,7 +34,7 @@ namespace Code.Tests.GameFlow {
             var playerName = new PlayerNameHolder(new FakePlayerNameStorage());
             playerName.SetPlayerName("  Ana ");
             _transition = new LobbyToMatch(new MatchJoinCodeSharer(_lobbyService), new MatchJoinCodeReceiver(_lobbyService),
-                _usedJoinCode, playerName, flowManager);
+                _usedJoinCode, playerName, new HostLobbySettings(), flowManager);
             _cancellation = new CancellationTokenSource(TIMEOUT_MS);
         }
 
@@ -51,6 +51,7 @@ namespace Code.Tests.GameFlow {
             Assert.IsTrue(data.IsHost);
             Assert.AreEqual(6, data.MaxPlayers);
             Assert.AreEqual(3, data.PlayerCount);
+            Assert.AreEqual(2, data.MinPlayers);
             Assert.AreEqual("Ana", data.PlayerName);
 
             await data.ShareJoinCode("RELAY1");

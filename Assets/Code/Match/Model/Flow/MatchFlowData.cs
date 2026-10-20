@@ -12,6 +12,8 @@ namespace Code.Match {
         public int MaxPlayers { get; }
         // Players the host waits for before spawning.
         public int PlayerCount { get; }
+        // With fewer connected once the wait is over, the host ends the match instead of playing it.
+        public int MinPlayers { get; }
         // Shown above the local player's character.
         public string PlayerName { get; }
         // Hands the host's join code to the other players once the network runs.
@@ -22,26 +24,27 @@ namespace Code.Match {
         // The host ends the match when it returns.
         public Func<int, CancellationToken, UniTask> PlayGame { get; }
 
-        private MatchFlowData(bool isHost, int maxPlayers, int playerCount, string playerName,
+        private MatchFlowData(bool isHost, int maxPlayers, int playerCount, int minPlayers, string playerName,
             Func<string, UniTask> shareJoinCode, Func<CancellationToken, UniTask<string>> getJoinCode,
             Func<int, CancellationToken, UniTask> playGame) {
             IsHost = isHost;
             MaxPlayers = maxPlayers;
             PlayerCount = playerCount;
+            MinPlayers = minPlayers;
             PlayerName = playerName;
             ShareJoinCode = shareJoinCode;
             GetJoinCode = getJoinCode;
             PlayGame = playGame;
         }
 
-        public static MatchFlowData Host(int maxPlayers, int playerCount, string playerName, Func<string, UniTask> shareJoinCode,
-            Func<int, CancellationToken, UniTask> playGame) {
-            return new MatchFlowData(true, maxPlayers, playerCount, playerName, shareJoinCode, null, playGame);
+        public static MatchFlowData Host(int maxPlayers, int playerCount, int minPlayers, string playerName,
+            Func<string, UniTask> shareJoinCode, Func<int, CancellationToken, UniTask> playGame) {
+            return new MatchFlowData(true, maxPlayers, playerCount, minPlayers, playerName, shareJoinCode, null, playGame);
         }
 
         public static MatchFlowData Client(string playerName, Func<CancellationToken, UniTask<string>> getJoinCode,
             Func<int, CancellationToken, UniTask> playGame) {
-            return new MatchFlowData(false, 0, 0, playerName, null, getJoinCode, playGame);
+            return new MatchFlowData(false, 0, 0, 0, playerName, null, getJoinCode, playGame);
         }
     }
 }

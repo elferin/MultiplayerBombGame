@@ -18,21 +18,25 @@ namespace Code.GameFlow {
         private readonly MatchJoinCodeReceiver _joinCodeReceiver;
         private readonly IUsedJoinCodeGetter _usedJoinCode;
         private readonly IPlayerNameGetter _playerName;
+        private readonly IHostLobbySettingsGetter _hostLobbySettings;
         private readonly IFlowRunner _flowRunner;
 
         public LobbyToMatch(MatchJoinCodeSharer joinCodeSharer, MatchJoinCodeReceiver joinCodeReceiver,
-            IUsedJoinCodeGetter usedJoinCode, IPlayerNameGetter playerName, IFlowRunner flowRunner) {
+            IUsedJoinCodeGetter usedJoinCode, IPlayerNameGetter playerName, IHostLobbySettingsGetter hostLobbySettings,
+            IFlowRunner flowRunner) {
             _joinCodeSharer = joinCodeSharer;
             _joinCodeReceiver = joinCodeReceiver;
             _usedJoinCode = usedJoinCode;
             _playerName = playerName;
+            _hostLobbySettings = hostLobbySettings;
             _flowRunner = flowRunner;
         }
 
         public MatchFlowData GetMatchData(LobbyFlowResult result) {
             var playerName = _playerName.GetTrimmedPlayerName();
             if (result.IsHost) {
-                return MatchFlowData.Host(result.MaxPlayers, result.PlayerCount, playerName, _joinCodeSharer.ShareJoinCode,
+                return MatchFlowData.Host(result.MaxPlayers, result.PlayerCount, _hostLobbySettings.GetMinPlayers(), playerName,
+                    _joinCodeSharer.ShareJoinCode,
                     (playerCount, cancellation) => PlayBombTag(BombTagFlowData.Host(playerCount), cancellation));
             }
             var usedJoinCode = _usedJoinCode.GetUsedJoinCode();

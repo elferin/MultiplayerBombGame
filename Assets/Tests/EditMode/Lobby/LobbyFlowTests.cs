@@ -471,7 +471,7 @@ namespace Code.Tests.Lobby {
         // LobbyFlow has no initial await, so the view is running as soon as this returns.
         private UniTask<LobbyFlowResult> StartFlow(LobbyFlowData data) {
             var flow = new LobbyFlow(data, _view, _lobbyService, new LobbyCreator(_lobbyService, _status, _currentLobby),
-                new LobbyJoiner(_lobbyService, _status, _currentLobby), new LobbyStartRules(_status, _currentLobby),
+                new LobbyJoiner(_lobbyService, _status, _currentLobby), new LobbyStartRules(_status, _currentLobby, new HostLobbySettings()),
                 new MissingPlayerRemover(_lobbyService), _clipboard, _status, _currentLobby);
             return flow.RunAsync(_cancellation.Token).Preserve();
         }
