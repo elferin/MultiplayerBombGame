@@ -5,8 +5,9 @@ using UnityEngine;
 
 namespace Code.Match {
 
-    // On the player prefab: the player's name, shown above the character to everyone.
-    public class MatchPlayer : NetworkBehaviour {
+    // On the player prefab: the player's id and name, shown above the character to everyone.
+    // The other player components use this id, so every system knows a player by the same one.
+    public class MatchPlayer : NetworkBehaviour, IHasId {
 
         // Every player object in the scene, so finding one doesn't search the whole scene.
         public static IReadOnlyList<MatchPlayer> Active => Registry.Items;
@@ -21,10 +22,14 @@ namespace Code.Match {
         // Local only, and kept apart from _canMove so closing the menu on the winner screen doesn't free the character.
         private bool _isMenuOpen;
 
+        // Only known on this machine, so it's not sent over the network.
+        public int PlayerId { get; private set; }
+        int IHasId.Id => PlayerId;
         public string PlayerName => playerName.value ?? string.Empty;
         public bool CanMove => _canMove && !_isMenuOpen;
 
         private void Awake() {
+            PlayerId = Registry.NextId();
             playerName.onChanged += ShowName;
             ShowName(playerName.value);
         }

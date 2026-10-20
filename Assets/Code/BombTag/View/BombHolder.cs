@@ -7,6 +7,7 @@ using UnityEngine;
 namespace Code.BombTag {
 
     // On the player prefab: shows the bomb on whoever has it. Only the server sets it.
+    [RequireComponent(typeof(MatchPlayer))]
     public class BombHolder : NetworkBehaviour, IHasId {
 
         // Every player object in the scene, so the host's rules don't have to search for them each frame.
@@ -20,15 +21,14 @@ namespace Code.BombTag {
         private MatchPlayer _matchPlayer;
         private PowerupHolder _powerupHolder;
 
-        // Only known on this machine, so it's not sent over the network.
-        public int PlayerId { get; private set; }
+        // Read each time rather than copied in Awake: MatchPlayer's Awake, which sets it, may run after this one's.
+        public int PlayerId => _matchPlayer.PlayerId;
         int IHasId.Id => PlayerId;
         public MatchPlayer MatchPlayer => _matchPlayer;
-        public string PlayerName => _matchPlayer != null ? _matchPlayer.PlayerName : string.Empty;
+        public string PlayerName => _matchPlayer.PlayerName;
         public bool IsShielded => _powerupHolder != null && _powerupHolder.IsShielded;
 
         private void Awake() {
-            PlayerId = Registry.NextId();
             _matchPlayer = GetComponent<MatchPlayer>();
             _powerupHolder = GetComponent<PowerupHolder>();
             hasBomb.onChanged += ShowBomb;

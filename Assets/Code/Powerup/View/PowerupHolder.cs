@@ -8,6 +8,7 @@ namespace Code.Powerup {
 
     // On the player prefab: the power-up this player holds and whether they're shielded, both set by the server.
     // The owner uses it with Space: movement effects happen on their client straight away, then the server is told.
+    [RequireComponent(typeof(MatchPlayer))]
     public class PowerupHolder : NetworkBehaviour, IHasId {
 
         // Every player object in the scene, so the host doesn't search for them each frame.
@@ -21,20 +22,21 @@ namespace Code.Powerup {
         [SerializeField] private SyncVar<PowerupType> held = new();
         [SerializeField] private SyncVar<bool> shielded = new();
 
+        private MatchPlayer _matchPlayer;
         private PlayerController _controller;
         private bool _hasEnabledInput;
         private readonly PowerupUseGuard _useGuard = new();
         // Set on the server by the owner's request; the host's PowerupField takes it.
         private PowerupType _usedOnServer = PowerupType.None;
 
-        // Only known on this machine, so it's not sent over the network.
-        public int PlayerId { get; private set; }
+        // Read each time rather than copied in Awake: MatchPlayer's Awake, which sets it, may run after this one's.
+        public int PlayerId => _matchPlayer.PlayerId;
         int IHasId.Id => PlayerId;
         public PowerupType Held => held.value;
         public bool IsShielded => shielded.value;
 
         private void Awake() {
-            PlayerId = Registry.NextId();
+            _matchPlayer = GetComponent<MatchPlayer>();
             _controller = GetComponent<PlayerController>();
             held.onChanged += ShowHeld;
             shielded.onChanged += ShowShield;
