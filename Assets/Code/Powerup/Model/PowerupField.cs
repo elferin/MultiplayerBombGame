@@ -55,7 +55,7 @@ namespace Code.Powerup {
             foreach (var item in _itemsThisTick) {
                 foreach (var player in players) {
                     if (player.Held != PowerupType.None || _pickedUpThisTick.Contains(player.Id)
-                        || GetFlatDistance(player.Position, item.Position) > _settings.PickupRadius) {
+                        || player.Position.FlatDistanceTo(item.Position) > _settings.PickupRadius) {
                         continue;
                     }
                     _players.SetHeld(player.Id, item.Type);
@@ -131,16 +131,11 @@ namespace Code.Powerup {
 
         private bool IsAwayFromPlayers(IReadOnlyList<PowerupPlayer> players, Vector3 position) {
             foreach (var player in players) {
-                if (GetFlatDistance(player.Position, position) < _settings.MinDistanceFromPlayers) {
+                if (player.Position.FlatDistanceTo(position) < _settings.MinDistanceFromPlayers) {
                     return false;
                 }
             }
             return true;
-        }
-
-        // Players stand higher than power-ups lie, so only the floor distance counts.
-        private float GetFlatDistance(Vector3 a, Vector3 b) {
-            return Vector2.Distance(new Vector2(a.x, a.z), new Vector2(b.x, b.z));
         }
     }
 }

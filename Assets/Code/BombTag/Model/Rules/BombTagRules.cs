@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Code.Util;
-using UnityEngine;
 
 namespace Code.BombTag {
 
@@ -11,7 +10,7 @@ namespace Code.BombTag {
 
         private const float MIN_FUSE_SECONDS = 5f;
         private const float MAX_FUSE_SECONDS = 10f;
-        // Player capsules are 1 wide, so centres closer than this are touching.
+        // Player capsules are 1 wide, so centres closer than this on the floor are touching, whatever their height.
         private const float TOUCH_DISTANCE = 1.1f;
 
         private readonly AlivePlayers _alivePlayers;
@@ -83,7 +82,7 @@ namespace Code.BombTag {
             }
             foreach (var player in _alivePlayers.GetAll()) {
                 if (player.Id != holder.Id && !player.IsShielded
-                    && Vector3.Distance(player.Position, holder.Position) <= TOUCH_DISTANCE) {
+                    && holder.Position.FlatDistanceTo(player.Position) <= TOUCH_DISTANCE) {
                     _bomb.PassTo(player.Id);
                     return;
                 }

@@ -53,6 +53,17 @@ namespace Code.Tests.BombTag {
             Assert.AreEqual(2, _players.GetHolder());
         }
 
+        // A player pushed up is still beside the holder; the 3D distance here would be about 1.28.
+        [Test]
+        public void PassesTheBombToATouchedPlayerAtADifferentHeight() {
+            _bomb.GiveTo(1, 5f);
+            Move(2, new Vector3(1f, 0.8f, 0f));
+
+            _rules.Apply();
+
+            Assert.AreEqual(2, _players.GetHolder());
+        }
+
         [Test]
         public void DoesNotPassToPlayersWhoAreNotTouching() {
             _bomb.GiveTo(1, 5f);
