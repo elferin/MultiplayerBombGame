@@ -109,6 +109,23 @@ namespace Code.Tests.Match {
         });
 
         [UnityTest]
+        public IEnumerator ViewThatFailsToLoadDoesNotFailAPlayedMatch() => UniTask.ToCoroutine(async () => {
+            _view.FailsToLoad = true;
+            _network.ConnectedPlayerCount = 2;
+
+            LogAssert.Expect(LogType.Exception, new Regex("Match view failed to load"));
+            var run = StartFlow(HostData(4, 2));
+            await UniTask.WaitUntil(() => _status.GetStatus() == MatchStatus.InProgress, cancellationToken: _cancellation.Token);
+
+            _game.TrySetResult();
+            var result = await run;
+
+            Assert.IsFalse(result.StartFailed);
+            Assert.AreEqual(2, _gamePlayerCount);
+            Assert.AreEqual(1, _network.StopCount);
+        });
+
+        [UnityTest]
         public IEnumerator FailedHostStartReturnsStartFailed() => UniTask.ToCoroutine(async () => {
             _network.HostJoinCode = string.Empty;
 

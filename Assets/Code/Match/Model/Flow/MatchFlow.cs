@@ -58,7 +58,7 @@ namespace Code.Match {
 
             AddListeners();
             try {
-                var viewRun = _viewController.RunAsync(cancellation);
+                var viewRun = RunView(cancellation);
 
                 // Everyone loads the arena first: the players spawn on its spawn points, before the game's countdown.
                 await _arena.Create(cancellation);
@@ -136,6 +136,17 @@ namespace Code.Match {
             var playerCount = _data.IsHost ? _network.GetConnectedPlayerCount() : 0;
             var game = RunGame(playerCount, gameCancellation);
             await UniTask.WhenAny(game, _endRequested.Task.AttachExternalCancellation(cancellation));
+        }
+
+        // A view that fails to load only loses the status text, so the match goes on without it. Logged now rather than
+        // when the match ends, and never thrown, so it can't turn a played match into a failed start.
+        private async UniTask RunView(CancellationToken cancellation) {
+            try {
+                await _viewController.RunAsync(cancellation);
+            }
+            catch (Exception exception) when (!(exception is OperationCanceledException)) {
+                Debug.LogException(exception);
+            }
         }
 
         // A game that fails ends the match like one that finished, so everyone gets back to the lobby

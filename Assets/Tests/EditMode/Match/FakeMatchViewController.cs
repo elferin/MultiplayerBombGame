@@ -14,6 +14,8 @@ namespace Code.Tests.Match {
         private readonly IMatchStatusGetter _statusGetter;
         private readonly UniTaskCompletionSource _closed = new UniTaskCompletionSource();
 
+        // RunAsync throws at once, like a view that fails to load.
+        public bool FailsToLoad { get; set; }
         public bool IsRunning { get; private set; }
         public bool IsClosed { get; private set; }
         public List<MatchStatus> RefreshedStatuses { get; } = new List<MatchStatus>();
@@ -27,6 +29,9 @@ namespace Code.Tests.Match {
         }
 
         public async UniTask RunAsync(CancellationToken cancellation) {
+            if (FailsToLoad) {
+                throw new InvalidOperationException("Match view failed to load");
+            }
             IsRunning = true;
             await _closed.Task.AttachExternalCancellation(cancellation);
         }
