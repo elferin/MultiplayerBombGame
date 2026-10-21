@@ -254,3 +254,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Code::Code.BombTag.BombTagView
   centerText: {fileID: 8628325031790011288}
+  explosionPrefab: {fileID: 1626258098540650600, guid: 6a31617e6af5b794f8e394af5c036f47, type: 3}
+  explosionShakeStrength: 0.6
+  explosionShakeSeconds: 0.4

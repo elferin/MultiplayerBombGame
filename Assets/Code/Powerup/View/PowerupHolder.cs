@@ -19,6 +19,8 @@ namespace Code.Powerup {
         [SerializeField] private InputActionReference useAction;
         [SerializeField] private Renderer heldMarker;
         [SerializeField] private GameObject shieldMarker;
+        // Sparkles when this player picks a power-up up.
+        [SerializeField] private ParticleSystem pickupEffect;
         [SerializeField] private SyncVar<PowerupType> held = new();
         [SerializeField] private SyncVar<bool> shielded = new();
 
@@ -38,7 +40,7 @@ namespace Code.Powerup {
         private void Awake() {
             _matchPlayer = GetComponent<MatchPlayer>();
             _controller = GetComponent<PlayerController>();
-            held.onChanged += ShowHeld;
+            held.onChanged += OnHeldChanged;
             shielded.onChanged += ShowShield;
             ShowHeld(held.value);
             ShowShield(shielded.value);
@@ -54,7 +56,7 @@ namespace Code.Powerup {
 
         protected override void OnDestroy() {
             base.OnDestroy();
-            held.onChanged -= ShowHeld;
+            held.onChanged -= OnHeldChanged;
             shielded.onChanged -= ShowShield;
         }
 
@@ -135,6 +137,14 @@ namespace Code.Powerup {
         [ServerRpc]
         private void UsePowerupOnServer(PowerupType type) {
             _usedOnServer = type;
+        }
+
+        // Only a change sparkles, not the value a late-joining client starts with. Using one sets it back to None.
+        private void OnHeldChanged(PowerupType value) {
+            ShowHeld(value);
+            if (value != PowerupType.None) {
+                pickupEffect.Play();
+            }
         }
 
         private void ShowHeld(PowerupType value) {

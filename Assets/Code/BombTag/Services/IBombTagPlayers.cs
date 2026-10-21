@@ -9,7 +9,7 @@ namespace Code.BombTag {
         IReadOnlyList<BombTagPlayer> GetPlayers();
         // Every client sees the bomb on that player.
         void SetHasBomb(int playerId, bool hasBomb);
-        // Despawns the player's object for everyone.
+        // Shows the explosion and despawns the player's object for everyone.
         void Eliminate(int playerId);
         // Stops this client's own character; works on every client, not only the host.
         void StopMovement();

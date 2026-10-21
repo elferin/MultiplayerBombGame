@@ -94,12 +94,18 @@ namespace Code.BombTag {
 
         private void AddListeners() {
             _sync.StateReceived += ShowState;
+            _sync.ExplodedReceived += ShowExplosion;
             _sync.StartListening();
         }
 
         private void RemoveListeners() {
             _sync.StopListening();
             _sync.StateReceived -= ShowState;
+            _sync.ExplodedReceived -= ShowExplosion;
+        }
+
+        private void ShowExplosion(Vector3 position) {
+            _viewController.ShowExplosion(position);
         }
 
         private void ShowState(BombTagState state) {

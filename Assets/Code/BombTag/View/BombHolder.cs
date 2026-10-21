@@ -15,6 +15,8 @@ namespace Code.BombTag {
         private static readonly ActiveRegistry<BombHolder> Registry = new();
 
         [SerializeField] private GameObject bombMarker;
+        // Bursts when this player gets the bomb, so everyone sees who was tagged.
+        [SerializeField] private ParticleSystem taggedEffect;
         [SerializeField] private SyncVar<bool> hasBomb = new SyncVar<bool>();
 
         // The player's other components, found once, because the host reads them every frame.
@@ -31,7 +33,7 @@ namespace Code.BombTag {
         private void Awake() {
             _matchPlayer = GetComponent<MatchPlayer>();
             _powerupHolder = GetComponent<PowerupHolder>();
-            hasBomb.onChanged += ShowBomb;
+            hasBomb.onChanged += OnHasBombChanged;
             ShowBomb(hasBomb.value);
         }
 
@@ -45,11 +47,19 @@ namespace Code.BombTag {
 
         protected override void OnDestroy() {
             base.OnDestroy();
-            hasBomb.onChanged -= ShowBomb;
+            hasBomb.onChanged -= OnHasBombChanged;
         }
 
         public void SetHasBomb(bool value) {
             hasBomb.value = value;
+        }
+
+        // Only a change bursts, not the value a late-joining client starts with.
+        private void OnHasBombChanged(bool value) {
+            ShowBomb(value);
+            if (value) {
+                taggedEffect.Play();
+            }
         }
 
         private void ShowBomb(bool value) {

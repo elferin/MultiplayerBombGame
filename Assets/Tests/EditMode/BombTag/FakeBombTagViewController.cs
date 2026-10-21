@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Code.BombTag;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 
 namespace Code.Tests.BombTag {
 
@@ -13,6 +14,7 @@ namespace Code.Tests.BombTag {
 
         public bool IsClosed { get; private set; }
         public List<BombTagState> RefreshedStates { get; } = new();
+        public List<Vector3> Explosions { get; } = new();
 
         public FakeBombTagViewController(IBombTagStatusGetter statusGetter) {
             _statusGetter = statusGetter;
@@ -28,6 +30,10 @@ namespace Code.Tests.BombTag {
 
         public void Refresh() {
             RefreshedStates.Add(_statusGetter.GetState());
+        }
+
+        public void ShowExplosion(Vector3 position) {
+            Explosions.Add(position);
         }
 
         public void Close() {

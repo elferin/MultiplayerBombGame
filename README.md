@@ -35,7 +35,7 @@ An online bomb-tag game for 2–8 players, made in Unity. One player holds a bom
    ```
 2. Open the project in Unity **6000.6.3f1**. The git packages (PurrNet, VContainer, UniTask, ParrelSync) download on first open.
 3. Link the project to a Unity Cloud project (**Edit → Project Settings → Services**) with **Lobby** and **Relay** turned on. Without it you can't create or join lobbies.
-4. Open `Assets/Test.unity` and press Play.
+4. Open `Assets/Main.unity` and press Play.
 5. To test with a second player on the same machine, make a clone with **ParrelSync → Clones Manager**, open it in a second Editor and join the first Editor's lobby by its code.
 
 ### Optional: merging scenes and prefabs

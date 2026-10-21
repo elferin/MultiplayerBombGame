@@ -1,5 +1,6 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 
 namespace Code.BombTag {
 
@@ -23,6 +24,13 @@ namespace Code.BombTag {
                 return;
             }
             _view.Show(_dataGatherer.Get());
+        }
+
+        public void ShowExplosion(Vector3 position) {
+            if (_view == null) {
+                return;
+            }
+            _view.ShowExplosion(position);
         }
 
         public async UniTask RunAsync(CancellationToken cancellation) {

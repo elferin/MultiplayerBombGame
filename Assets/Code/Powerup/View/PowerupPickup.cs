@@ -8,6 +8,8 @@ namespace Code.Powerup {
     public class PowerupPickup : NetworkBehaviour, IHasId {
 
         private const float SPIN_DEGREES_PER_SECOND = 90f;
+        private const float BOB_HEIGHT = 0.15f;
+        private const float BOBS_PER_SECOND = 0.6f;
 
         // Every pickup in the scene, so the host doesn't search for them each frame.
         public static IReadOnlyList<PowerupPickup> Active => Registry.Items;
@@ -22,8 +24,11 @@ namespace Code.Powerup {
         int IHasId.Id => PickupId;
         public PowerupType Type => type.value;
 
+        private Vector3 _lookRestPosition;
+
         private void Awake() {
             PickupId = Registry.NextId();
+            _lookRestPosition = look.transform.localPosition;
             type.onChanged += ShowType;
             ShowType(type.value);
         }
@@ -48,6 +53,8 @@ namespace Code.Powerup {
 
         private void Update() {
             look.transform.Rotate(0f, SPIN_DEGREES_PER_SECOND * Time.deltaTime, 0f, Space.World);
+            var bob = Mathf.Sin(Time.time * BOBS_PER_SECOND * 2f * Mathf.PI) * BOB_HEIGHT;
+            look.transform.localPosition = _lookRestPosition + Vector3.up * bob;
         }
 
         // Hidden until the server has set a type.

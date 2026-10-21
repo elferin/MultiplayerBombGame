@@ -10,6 +10,11 @@ namespace Code.BombTag {
 
         // Reused, because the rules ask for the players every frame.
         private readonly List<BombTagPlayer> _players = new List<BombTagPlayer>();
+        private readonly IBombTagSync _sync;
+
+        public BombTagPlayers(IBombTagSync sync) {
+            _sync = sync;
+        }
 
         public IReadOnlyList<BombTagPlayer> GetPlayers() {
             _players.Clear();
@@ -29,6 +34,8 @@ namespace Code.BombTag {
         public void Eliminate(int playerId) {
             var holder = Find(playerId);
             if (holder != null) {
+                // A player is only ever eliminated by the bomb going off. Sent first, while the position is still known.
+                _sync.SendExploded(holder.transform.position);
                 // Destroying a spawned object on the server despawns it on every client.
                 Object.Destroy(holder.gameObject);
             }

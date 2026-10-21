@@ -60,6 +60,17 @@ namespace Code.Tests.BombTag {
         });
 
         [UnityTest]
+        public IEnumerator ShowsEachExplosionItReceives() => UniTask.ToCoroutine(async () => {
+            var run = StartFlow(BombTagFlowData.Client());
+
+            _sync.ReceiveExploded(new Vector3(1f, 0f, 2f));
+
+            CollectionAssert.AreEqual(new[] { new Vector3(1f, 0f, 2f) }, _view.Explosions);
+            _sync.Receive(new BombTagState(BombTagPhase.Finished, 0, string.Empty));
+            await run;
+        });
+
+        [UnityTest]
         public IEnumerator ClientKeepsWaitingUntilTheMatchIsFinished() => UniTask.ToCoroutine(async () => {
             var run = StartFlow(BombTagFlowData.Client());
 
