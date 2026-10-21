@@ -1,6 +1,6 @@
 # Multiplayer Bomb Game
 
-An online bomb-tag game for 2–8 players, made in Unity. One player holds a bomb with a random fuse and passes it on by touching someone else. When the fuse runs out, the holder is out. Power-ups on the arena floor help players escape or catch others.
+An online bomb-tag game for 2–8 players, made in Unity. One player holds a bomb with a random fuse and passes it on by touching someone else. When the fuse runs out, the holder is out, and the last player alive wins. Power-ups on the arena floor help players escape or catch others.
 
 ## How to play
 
@@ -12,7 +12,7 @@ An online bomb-tag game for 2–8 players, made in Unity. One player holds a bom
    - **Dash**: a burst of speed in the direction you last moved.
    - **Speed Boost**: a higher top speed for a while.
    - **Shield**: nobody can pass you the bomb for a while.
-6. When the match ends, everyone goes back to the lobby, ready for the next one.
+6. The last player alive wins the match. Then everyone goes back to the lobby, ready for the next one.
 
 ## Tech stack
 
