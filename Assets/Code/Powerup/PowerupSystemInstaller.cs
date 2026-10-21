@@ -13,6 +13,7 @@ namespace Code.Powerup {
             // Registered as their narrow and combined interfaces, like the lobby service.
             builder.Register<PowerupPlayers>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<PowerupItems>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<IPowerupObstacles, PowerupObstacles>(Lifetime.Singleton);
             builder.Register<IPowerupsFactory, PowerupsFactory>(Lifetime.Singleton);
         }
 

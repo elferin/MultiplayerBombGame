@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Code.Util;
 
 namespace Code.Tests.Util {
@@ -7,6 +8,8 @@ namespace Code.Tests.Util {
 
         // 0 picks min, 1 picks max.
         public float FloatFraction { get; set; }
+        // Used one by one before FloatFraction, for code that draws several different values.
+        public Queue<float> NextFloatFractions { get; } = new();
         // Added to min for whole numbers, wrapped into the range.
         public int IntOffset { get; set; }
 
@@ -15,7 +18,8 @@ namespace Code.Tests.Util {
         }
 
         public float Range(float min, float max) {
-            return min + (max - min) * FloatFraction;
+            var fraction = NextFloatFractions.Count > 0 ? NextFloatFractions.Dequeue() : FloatFraction;
+            return min + (max - min) * fraction;
         }
     }
 }

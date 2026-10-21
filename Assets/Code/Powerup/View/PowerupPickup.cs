@@ -17,6 +17,7 @@ namespace Code.Powerup {
 
         [SerializeField] private PowerupSettings settings;
         [SerializeField] private Renderer look;
+        [SerializeField] private MeshFilter lookShape;
         [SerializeField] private SyncVar<PowerupType> type = new();
 
         // Only known on this machine, so it's not sent over the network.
@@ -63,6 +64,7 @@ namespace Code.Powerup {
             look.enabled = material != null;
             if (material != null) {
                 look.sharedMaterial = material;
+                lookShape.sharedMesh = settings.GetMesh(value);
             }
         }
     }

@@ -16,6 +16,7 @@ namespace Code.Powerup {
         private readonly IPowerupPlayers _players;
         private readonly IPowerupItems _items;
         private readonly IRandom _random;
+        private readonly IPowerupObstacles _obstacles;
         private readonly PowerupSettings _settings;
         private readonly Dictionary<int, float> _shieldSecondsLeft = new();
         // Reused, because shields are ticked every frame.
@@ -28,10 +29,12 @@ namespace Code.Powerup {
         private bool _isWaitingToSpawn;
         private float _secondsUntilSpawn;
 
-        public PowerupField(IPowerupPlayers players, IPowerupItems items, IRandom random, PowerupSettings settings) {
+        public PowerupField(IPowerupPlayers players, IPowerupItems items, IRandom random, IPowerupObstacles obstacles,
+            PowerupSettings settings) {
             _players = players;
             _items = items;
             _random = random;
+            _obstacles = obstacles;
             _settings = settings;
         }
 
@@ -115,13 +118,18 @@ namespace Code.Powerup {
             _items.Spawn(type, FindSpawnPosition());
         }
 
-        // A random spot away from every player; if none is found, the last one tried.
+        // A random spot clear of cover and away from every player. If none is found, the last one clear of cover,
+        // because one inside cover couldn't be picked up; the arena centre is kept open for when even that fails.
         private Vector3 FindSpawnPosition() {
             var players = _players.GetPlayers();
             var halfSize = _settings.ArenaHalfSize;
-            var position = Vector3.zero;
+            var position = new Vector3(0f, SPAWN_HEIGHT, 0f);
             for (var i = 0; i < SPAWN_TRIES; i++) {
-                position = new Vector3(_random.Range(-halfSize, halfSize), SPAWN_HEIGHT, _random.Range(-halfSize, halfSize));
+                var candidate = new Vector3(_random.Range(-halfSize, halfSize), SPAWN_HEIGHT, _random.Range(-halfSize, halfSize));
+                if (_obstacles.IsBlocked(candidate, _settings.PickupRadius)) {
+                    continue;
+                }
+                position = candidate;
                 if (IsAwayFromPlayers(players, position)) {
                     break;
                 }

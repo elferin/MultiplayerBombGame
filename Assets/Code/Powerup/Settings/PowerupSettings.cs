@@ -26,6 +26,9 @@ namespace Code.Powerup {
         [SerializeField] private Material dashMaterial;
         [SerializeField] private Material shieldMaterial;
         [SerializeField] private Material speedBoostMaterial;
+        [SerializeField] private Mesh dashMesh;
+        [SerializeField] private Mesh shieldMesh;
+        [SerializeField] private Mesh speedBoostMesh;
 
         public PowerupPickup PickupPrefab => pickupPrefab;
         public float SpawnDelaySeconds => spawnDelaySeconds;
@@ -46,6 +49,20 @@ namespace Code.Powerup {
                     return shieldMaterial;
                 case PowerupType.SpeedBoost:
                     return speedBoostMaterial;
+                default:
+                    return null;
+            }
+        }
+
+        // Null for None.
+        public Mesh GetMesh(PowerupType type) {
+            switch (type) {
+                case PowerupType.Dash:
+                    return dashMesh;
+                case PowerupType.Shield:
+                    return shieldMesh;
+                case PowerupType.SpeedBoost:
+                    return speedBoostMesh;
                 default:
                     return null;
             }

@@ -18,6 +18,7 @@ namespace Code.Powerup {
         [SerializeField] private PowerupSettings settings;
         [SerializeField] private InputActionReference useAction;
         [SerializeField] private Renderer heldMarker;
+        [SerializeField] private MeshFilter heldMarkerShape;
         [SerializeField] private GameObject shieldMarker;
         // Sparkles when this player picks a power-up up.
         [SerializeField] private ParticleSystem pickupEffect;
@@ -153,6 +154,7 @@ namespace Code.Powerup {
             heldMarker.gameObject.SetActive(material != null);
             if (material != null) {
                 heldMarker.sharedMaterial = material;
+                heldMarkerShape.sharedMesh = settings.GetMesh(value);
             }
         }
 

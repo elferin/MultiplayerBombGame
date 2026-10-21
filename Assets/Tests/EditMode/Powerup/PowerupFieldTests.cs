@@ -10,6 +10,7 @@ namespace Code.Tests.Powerup {
         private FakePowerupPlayers _players;
         private FakePowerupItems _items;
         private FakeRandom _random;
+        private FakePowerupObstacles _obstacles;
         private PowerupSettings _settings;
         private PowerupField _field;
 
@@ -18,9 +19,10 @@ namespace Code.Tests.Powerup {
             _players = new FakePowerupPlayers();
             _items = new FakePowerupItems();
             _random = new FakeRandom();
+            _obstacles = new FakePowerupObstacles();
             // Default values: 5s spawn delay, 1 unit pickup radius, 4s shield, arena half size 7.
             _settings = ScriptableObject.CreateInstance<PowerupSettings>();
-            _field = new PowerupField(_players, _items, _random, _settings);
+            _field = new PowerupField(_players, _items, _random, _obstacles, _settings);
 
             _players.Add(1, new Vector3(0f, 1f, 0f));
             _players.Add(2, new Vector3(5f, 1f, 0f));
@@ -42,6 +44,18 @@ namespace Code.Tests.Powerup {
             var item = _items.GetItems()[0];
             Assert.AreEqual(PowerupType.Shield, item.Type);
             Assert.AreEqual(new Vector3(7f, 0.5f, 7f), item.Position);
+        }
+
+        [Test]
+        public void SpotInsideCoverIsSkipped() {
+            _obstacles.Block(7f, 7f);
+            // The first spot tried is (7, 7), the next (-7, -7).
+            _random.NextFloatFractions.Enqueue(1f);
+            _random.NextFloatFractions.Enqueue(1f);
+
+            _field.Start();
+
+            Assert.AreEqual(new Vector3(-7f, 0.5f, -7f), _items.GetItems()[0].Position);
         }
 
         [Test]
